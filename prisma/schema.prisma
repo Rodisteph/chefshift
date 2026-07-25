@@ -1,0 +1,404 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String  @map("user_id")
+  type              String
+  provider          String
+  providerAccountId String  @map("provider_account_id")
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique @map("session_token")
+  userId       String   @map("user_id")
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  emailVerified DateTime? @map("email_verified")
+  password      String?
+  role          UserRole  @default(KOK)
+  name          String?
+  image         String?
+  phone         String?
+  isActive      Boolean   @default(true) @map("is_active")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  accounts      Account[]
+  sessions      Session[]
+  horecaProfile HorecaProfile?
+  kokProfile    KokProfile?
+  shifts        Shift[]        @relation("HorecaShifts")
+  shiftsAsKok   Shift[]        @relation("KokShifts")
+  applications  Application[]
+  messagesSent  Message[]      @relation("MessagesSent")
+  messagesReceived Message[]   @relation("MessagesReceived")
+  reviewsGiven  Review[]       @relation("ReviewsGiven")
+  reviewsReceived Review[]     @relation("ReviewsReceived")
+  notifications Notification[]
+  invoices      Invoice[]
+
+  @@map("users")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verificationtokens")
+}
+
+enum UserRole {
+  HORECA
+  KOK
+  ADMIN
+}
+
+model HorecaProfile {
+  id          String   @id @default(cuid())
+  userId      String   @unique @map("user_id")
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  companyName String   @map("company_name")
+  kvkNumber   String   @unique @map("kvk_number")
+  vatNumber   String?  @map("vat_number")
+
+  street      String?
+  houseNumber String?  @map("house_number")
+  postalCode  String   @map("postal_code")
+  city        String
+  province    String?
+  latitude    Float?
+  longitude   Float?
+
+  contactName String?  @map("contact_name")
+  contactRole String?  @map("contact_role")
+
+  horecaType  String?  @map("horeca_type")
+  seats       Int?
+  kitchenTypes String[] @map("kitchen_types")
+  description String?  @db.Text
+  logoUrl     String?  @map("logo_url")
+  website     String?
+
+  averageScore Float    @default(0) @map("average_score")
+  reviewCount  Int      @default(0) @map("review_count")
+
+  subscriptionType String @default("free") @map("subscription_type")
+  subscriptionUntil DateTime? @map("subscription_until")
+
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("horeca_profiles")
+}
+
+model KokProfile {
+  id            String   @id @default(cuid())
+  userId        String   @unique @map("user_id")
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  firstName     String   @map("first_name")
+  lastName      String   @map("last_name")
+  dateOfBirth   DateTime? @map("date_of_birth")
+  profileImage  String?  @map("profile_image")
+
+  kvkNumber     String   @unique @map("kvk_number")
+  vatNumber     String?  @map("vat_number")
+
+  postalCode    String?  @map("postal_code")
+  city          String?
+  latitude      Float?
+  longitude     Float?
+
+  yearsExperience Int?   @map("years_experience")
+  functions     String[]
+  specialties   String[]
+  description   String?  @db.Text
+
+  hourlyRateMin Float?   @map("hourly_rate_min")
+  hourlyRateMax Float?   @map("hourly_rate_max")
+
+  haccpCertified Boolean @default(false) @map("haccp_certified")
+  haccpDocument  String? @map("haccp_document")
+  svhCertified   Boolean @default(false) @map("svh_certified")
+  svhLevel       String?  @map("svh_level")
+  otherCerts     String?  @map("other_certs")
+
+  availability   Json?    @db.JsonB
+
+  averageScore   Float    @default(0) @map("average_score")
+  reviewCount    Int      @default(0) @map("review_count")
+
+  profileComplete Boolean @default(false) @map("profile_complete")
+  isVisible       Boolean @default(true) @map("is_visible")
+
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  workExperience WorkExperience[]
+
+  @@map("kok_profiles")
+}
+
+model WorkExperience {
+  id          String   @id @default(cuid())
+  kokId       String   @map("kok_id")
+  kok         KokProfile @relation(fields: [kokId], references: [id], onDelete: Cascade)
+
+  function    String
+  companyName String?  @map("company_name")
+  location    String?
+  fromDate    DateTime @map("from_date")
+  toDate      DateTime? @map("to_date")
+  isCurrent   Boolean  @default(false) @map("is_current")
+  description String?  @db.Text
+
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@map("work_experience")
+}
+
+model Shift {
+  id              String      @id @default(cuid())
+  horecaId        String      @map("horeca_id")
+  horeca          User        @relation("HorecaShifts", fields: [horecaId], references: [id], onDelete: Cascade)
+
+  title           String
+  function        String
+  kitchenType     String?     @map("kitchen_type")
+  description     String?     @db.Text
+
+  date            DateTime    @db.Date
+  startTime       DateTime    @map("start_time") @db.Time
+  endTime         DateTime    @map("end_time") @db.Time
+  breakMinutes    Int         @default(30) @map("break_minutes")
+
+  locationStreet  String?     @map("location_street")
+  locationPostal  String?     @map("location_postal")
+  locationCity    String?     @map("location_city")
+  locationLat     Float?      @map("location_lat")
+  locationLng     Float?      @map("location_lng")
+
+  requiredExperience Int?     @default(0) @map("required_experience")
+  requiredCerts   String?     @map("required_certs")
+
+  hourlyRate      Float       @map("hourly_rate")
+  vatRate         Float       @default(9) @map("vat_rate")
+  totalAmount     Float?      @map("total_amount")
+
+  status          ShiftStatus @default(OPEN)
+  isUrgent        Boolean     @default(false) @map("is_urgent")
+
+  chosenKokId     String?     @map("chosen_kok_id")
+  chosenKok       User?       @relation("KokShifts", fields: [chosenKokId], references: [id])
+  confirmedAt     DateTime?   @map("confirmed_at")
+
+  horecaReviewed  Boolean     @default(false) @map("horeca_reviewed")
+  kokReviewed     Boolean     @default(false) @map("kok_reviewed")
+
+  applications    Application[]
+  messages        Message[]
+  invoice         Invoice?
+
+  createdAt       DateTime    @default(now()) @map("created_at")
+  updatedAt       DateTime    @updatedAt @map("updated_at")
+
+  @@map("shifts")
+}
+
+enum ShiftStatus {
+  OPEN
+  CLOSED
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+}
+
+model Application {
+  id          String              @id @default(cuid())
+  shiftId     String              @map("shift_id")
+  shift       Shift               @relation(fields: [shiftId], references: [id], onDelete: Cascade)
+  kokId       String              @map("kok_id")
+  kok         User                @relation(fields: [kokId], references: [id], onDelete: Cascade)
+
+  message     String?             @db.Text
+  proposedRate Float?             @map("proposed_rate")
+
+  status      ApplicationStatus   @default(PENDING)
+
+  submittedAt DateTime            @default(now()) @map("submitted_at")
+  viewedAt    DateTime?           @map("viewed_at")
+  respondedAt DateTime?           @map("responded_at")
+
+  @@unique([shiftId, kokId])
+  @@map("applications")
+}
+
+enum ApplicationStatus {
+  PENDING
+  VIEWED
+  ACCEPTED
+  REJECTED
+  WITHDRAWN
+}
+
+model Invoice {
+  id            String          @id @default(cuid())
+  shiftId       String          @unique @map("shift_id")
+  shift         Shift           @relation(fields: [shiftId], references: [id], onDelete: Cascade)
+
+  amountExclVat Float           @map("amount_excl_vat")
+  vatAmount     Float           @map("vat_amount")
+  amountInclVat Float           @map("amount_incl_vat")
+  platformFee   Float           @map("platform_fee")
+  kokPayout     Float           @map("kok_payout")
+
+  status        InvoiceStatus   @default(PENDING)
+
+  paymentProvider String?       @map("payment_provider")
+  paymentId     String?         @map("payment_id")
+  paymentUrl    String?         @map("payment_url")
+
+  invoiceNumber String?         @map("invoice_number")
+  invoiceUrl    String?         @map("invoice_url")
+
+  createdAt     DateTime        @default(now()) @map("created_at")
+  paidAt        DateTime?       @map("paid_at")
+  payoutAt      DateTime?       @map("payout_at")
+
+  horecaId      String          @map("horeca_id")
+  horeca        User            @relation(fields: [horecaId], references: [id], onDelete: Cascade)
+
+  @@map("invoices")
+}
+
+enum InvoiceStatus {
+  PENDING
+  INVOICED
+  PAID
+  REFUNDED
+  FAILED
+}
+
+model Review {
+  id          String   @id @default(cuid())
+  shiftId     String   @map("shift_id")
+
+  fromUserId  String   @map("from_user_id")
+  fromUser    User     @relation("ReviewsGiven", fields: [fromUserId], references: [id], onDelete: Cascade)
+  toUserId    String   @map("to_user_id")
+  toUser      User     @relation("ReviewsReceived", fields: [toUserId], references: [id], onDelete: Cascade)
+
+  overallScore Int     @map("overall_score")
+  punctuality  Int?
+  quality      Int?
+  communication Int?
+  hygiene      Int?
+
+  reviewText   String? @db.Text @map("review_text")
+  isPublic     Boolean @default(true) @map("is_public")
+  flaggedAt    DateTime? @map("flagged_at")
+
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  @@unique([shiftId, fromUserId])
+  @@map("reviews")
+}
+
+model Message {
+  id          String   @id @default(cuid())
+  senderId    String   @map("sender_id")
+  sender      User     @relation("MessagesSent", fields: [senderId], references: [id], onDelete: Cascade)
+  receiverId  String   @map("receiver_id")
+  receiver    User     @relation("MessagesReceived", fields: [receiverId], references: [id], onDelete: Cascade)
+
+  shiftId     String?  @map("shift_id")
+  shift       Shift?   @relation(fields: [shiftId], references: [id], onDelete: SetNull)
+
+  content     String   @db.Text
+
+  isRead      Boolean  @default(false) @map("is_read")
+  readAt      DateTime? @map("read_at")
+
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@map("messages")
+}
+
+model Notification {
+  id          String              @id @default(cuid())
+  userId      String              @map("user_id")
+  user        User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  type        NotificationType
+  title       String
+  message     String              @db.Text
+
+  shiftId     String?             @map("shift_id")
+  applicationId String?           @map("application_id")
+
+  isRead      Boolean             @default(false) @map("is_read")
+  readAt      DateTime?           @map("read_at")
+
+  pushSent    Boolean             @default(false) @map("push_sent")
+  emailSent   Boolean             @default(false) @map("email_sent")
+
+  createdAt   DateTime            @default(now()) @map("created_at")
+
+  @@map("notifications")
+}
+
+enum NotificationType {
+  NEW_SHIFT
+  NEW_APPLICATION
+  SHIFT_CONFIRMED
+  SHIFT_CANCELLED
+  PAYMENT_RECEIVED
+  REVIEW_REQUESTED
+  MESSAGE_RECEIVED
+}
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  userId      String?  @map("user_id")
+  action      String
+  entityType  String?  @map("entity_type")
+  entityId    String?  @map("entity_id")
+  oldValues   Json?    @map("old_values")
+  newValues   Json?    @map("new_values")
+  ipAddress   String?  @map("ip_address")
+  userAgent   String?  @map("user_agent")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@map("audit_logs")
+}
