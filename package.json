@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
+    "db:seed": "tsx prisma/seed.ts",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
@@ -10,7 +11,7 @@
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:studio": "prisma studio",
-    "db:seed": "tsx prisma/seed.ts",
+    
     "db:reset": "prisma migrate reset --force && npm run db:seed",
     "setup": "npm install && npm run db:generate && docker-compose up -d && sleep 5 && npm run db:migrate && npm run db:seed"
   },
