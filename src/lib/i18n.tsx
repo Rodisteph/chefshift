@@ -116,7 +116,6 @@ const dict = {
     apply_fail: 'Reageren is mislukt',
     empty_shifts: 'Nog geen shifts beschikbaar. Kom later terug!',
     total: 'Totaal',
-    // Detail shift & candidats
     status_confirmed: 'Bevestigd',
     back_shifts: '← Terug naar shifts',
     shift_confirmed: 'Shift bevestigd',
@@ -130,6 +129,10 @@ const dict = {
     chosen: 'Gekozen ✓',
     work_history: 'Werkervaring',
     current: 'heden',
+    years_old: 'jaar',
+    functions_title: 'Functies & parties',
+    specialties_title: 'Specialiteiten',
+    rate_range: 'Gewenst tarief',
   },
   en: {
     nav_login: 'Log in',
@@ -247,6 +250,10 @@ const dict = {
     chosen: 'Chosen ✓',
     work_history: 'Work history',
     current: 'present',
+    years_old: 'years old',
+    functions_title: 'Stations & roles',
+    specialties_title: 'Specialties',
+    rate_range: 'Preferred rate',
   },
 } as const
 
