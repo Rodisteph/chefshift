@@ -23,6 +23,8 @@ export default function PushSetup() {
   const { t } = useT()
   const [etat, setEtat] = useState<Etat>('chargement')
   const [envoi, setEnvoi] = useState(false)
+  const [testEnvoi, setTestEnvoi] = useState(false)
+  const [testMsg, setTestMsg] = useState('')
 
   useEffect(() => {
     if (typeof window === 'undefined') return
@@ -75,16 +77,47 @@ export default function PushSetup() {
     setEnvoi(false)
   }
 
+  async function tester() {
+    setTestEnvoi(true)
+    setTestMsg('')
+    try {
+      const res = await fetch('/api/push/test', { method: 'POST' })
+      const data = await res.json()
+      setTestMsg(data.ok ? t('push_test_sent') : t('push_test_none'))
+    } catch {
+      setTestMsg(t('push_test_none'))
+    }
+    setTestEnvoi(false)
+  }
+
   if (etat === 'chargement' || etat === 'indisponible') return null
 
   if (etat === 'actif') {
     return (
       <div className="cs-fade cs-d2" style={{
-        display: 'flex', alignItems: 'center', gap: 10, marginBottom: 24,
-        background: '#f0f7ec', border: '1px solid #d9e8cf', borderRadius: 14, padding: '12px 18px',
-        fontSize: 13.5, color: '#3d6b34', fontWeight: 700, fontFamily: FONT,
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap',
+        marginBottom: 24, background: '#f0f7ec', border: '1px solid #d9e8cf', borderRadius: 14,
+        padding: '12px 18px', fontSize: 13.5, color: '#3d6b34', fontWeight: 700, fontFamily: FONT,
       }}>
-        <Ico n="check" s={15} /> {t('push_ok')}
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 10 }}>
+          <Ico n="check" s={15} /> {t('push_ok')}
+        </span>
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 10 }}>
+          {testMsg && <span style={{ fontWeight: 600, fontSize: 12.5 }}>{testMsg}</span>}
+          <button
+            type="button"
+            onClick={tester}
+            disabled={testEnvoi}
+            className="cs-btn"
+            style={{
+              background: 'none', border: '1.5px solid #b9d3a8', borderRadius: 999,
+              padding: '7px 16px', fontWeight: 700, fontSize: 12.5, cursor: testEnvoi ? 'wait' : 'pointer',
+              color: '#3d6b34', fontFamily: FONT,
+            }}
+          >
+            {testEnvoi ? t('form_loading') : t('push_test')}
+          </button>
+        </span>
       </div>
     )
   }

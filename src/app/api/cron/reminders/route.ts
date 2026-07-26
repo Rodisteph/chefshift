@@ -54,6 +54,7 @@ export async function GET(req: NextRequest) {
     ]
 
     let envoyes = 0
+    let shiftsTrouves = 0
     const erreurs: string[] = []
 
     for (const f of fenetres) {
@@ -64,6 +65,7 @@ export async function GET(req: NextRequest) {
           startTime: { gte: new Date(f.min), lte: new Date(f.max) },
         },
       })
+      shiftsTrouves += shifts.length
 
       for (const shift of shifts) {
         const deja: { shift_id: string }[] = await prisma.$queryRaw`
@@ -103,7 +105,11 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    return NextResponse.json({ ok: true, envoyes, erreurs: erreurs.slice(0, 5) })
+    // Diagnostic : nombre total d'abonnements push en base
+    const compte: { n: bigint }[] = await prisma.$queryRaw`SELECT COUNT(*)::int AS n FROM kok_push`
+    const abonnements = Number(compte[0]?.n || 0)
+
+    return NextResponse.json({ ok: true, envoyes, shiftsTrouves, abonnements, erreurs: erreurs.slice(0, 5) })
   } catch (error: any) {
     return NextResponse.json(
       { ok: false, error: error?.message || 'Internal server error' },
