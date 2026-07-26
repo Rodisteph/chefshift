@@ -16,13 +16,19 @@ type Kandidaat = {
     kokProfile?: {
       firstName: string
       lastName: string
+      dateOfBirth?: string | null
       yearsExperience?: number | null
       averageScore: number
       reviewCount: number
-      specialties: string[]
       functions: string[]
+      specialties: string[]
       description?: string | null
       city?: string | null
+      haccpCertified: boolean
+      svhCertified: boolean
+      svhLevel?: string | null
+      hourlyRateMin?: number | null
+      hourlyRateMax?: number | null
       workExperience: {
         id: string
         function: string
@@ -31,6 +37,7 @@ type Kandidaat = {
         fromDate: string
         toDate?: string | null
         isCurrent: boolean
+        description?: string | null
       }[]
     } | null
   }
@@ -47,6 +54,15 @@ type ShiftDetail = {
   status: string
   chosenKokId?: string | null
   applications: Kandidaat[]
+}
+
+function calculerAge(dateNaissance: string): number {
+  const n = new Date(dateNaissance)
+  const maintenant = new Date()
+  let age = maintenant.getFullYear() - n.getFullYear()
+  const m = maintenant.getMonth() - n.getMonth()
+  if (m < 0 || (m === 0 && maintenant.getDate() < n.getDate())) age--
+  return age
 }
 
 export default function ShiftDetailPage({ params }: { params: { id: string } }) {
@@ -95,6 +111,18 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
 
   const carte: React.CSSProperties = {
     background: '#fff', borderRadius: 18, boxShadow: '0 4px 14px rgba(46,52,43,0.06)', padding: 26,
+  }
+  const badgeSauge: React.CSSProperties = {
+    background: '#e4e9dd', color: '#5f7052', fontSize: 12.5, fontWeight: 700,
+    padding: '5px 12px', borderRadius: 999,
+  }
+  const badgePoste: React.CSSProperties = {
+    background: '#2e342b', color: '#e4e9dd', fontSize: 12.5, fontWeight: 700,
+    padding: '5px 12px', borderRadius: 999,
+  }
+  const titreSection: React.CSSProperties = {
+    fontSize: 12, fontWeight: 800, textTransform: 'uppercase', letterSpacing: 1.5,
+    color: '#5f7052', marginBottom: 8, marginTop: 18,
   }
 
   if (chargement) {
@@ -181,16 +209,21 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
               const p = k.kok.kokProfile
               const nom = p ? `${p.firstName} ${p.lastName}`.trim() : k.kok.name || k.kok.email
               const estChoisi = shift.chosenKokId === k.kok.id
+              const age = p?.dateOfBirth ? calculerAge(p.dateOfBirth) : null
               return (
                 <div key={k.id} className="cs-card" style={{
                   ...carte,
                   border: estChoisi ? '2px solid #5f7052' : '2px solid transparent',
                 }}>
-                  {/* En-tête candidat */}
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 16, marginBottom: 16 }}>
+                  {/* ===== En-tête candidat ===== */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 16 }}>
                     <div>
                       <h3 style={{ fontSize: 20, fontWeight: 800 }}>{nom}</h3>
-                      {p?.city && <p style={{ fontSize: 13.5, color: '#6b7268' }}>📍 {p.city}</p>}
+                      <p style={{ fontSize: 14, color: '#6b7268', marginTop: 4 }}>
+                        {age && <>🎂 {age} {t('years_old')} &nbsp;·&nbsp; </>}
+                        {p?.city && <>📍 {p.city} &nbsp;·&nbsp; </>}
+                        {p?.yearsExperience != null && <>💪 {p.yearsExperience} {t('experience_years')}</>}
+                      </p>
                       {/* Note */}
                       <p style={{ fontSize: 15, marginTop: 6 }}>
                         {p && p.reviewCount > 0 ? (
@@ -203,17 +236,22 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
                           <span style={{ color: '#9aa39b', fontSize: 13.5 }}>{t('no_reviews')}</span>
                         )}
                       </p>
-                      {p?.yearsExperience != null && (
-                        <p style={{ fontSize: 13.5, color: '#6b7268', marginTop: 4 }}>
-                          💪 {p.yearsExperience} {t('experience_years')}
-                        </p>
+                      {/* Certifications */}
+                      {(p?.haccpCertified || p?.svhCertified) && (
+                        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 10 }}>
+                          {p.haccpCertified && <span style={{ ...badgeSauge, background: '#dcfce7', color: '#15803d' }}>✓ HACCP</span>}
+                          {p.svhCertified && <span style={{ ...badgeSauge, background: '#dcfce7', color: '#15803d' }}>✓ SVH{p.svhLevel ? ` ${p.svhLevel}` : ''}</span>}
+                        </div>
                       )}
                     </div>
                     <div style={{ textAlign: 'right' }}>
-                      {k.proposedRate && (
-                        <p style={{ fontSize: 14, color: '#6b7268', marginBottom: 8 }}>
-                          {t('proposed_rate')}: <strong>€{k.proposedRate}/u</strong>
+                      {k.proposedRate ? (
+                        <p style={{ fontSize: 14, color: '#6b7268', marginBottom: 4 }}>
+                          {t('proposed_rate')}
                         </p>
+                      ) : null}
+                      {k.proposedRate && (
+                        <p style={{ fontSize: 22, fontWeight: 800, color: '#5f7052', marginBottom: 8 }}>€{k.proposedRate}/u</p>
                       )}
                       {estChoisi ? (
                         <span style={{ background: '#5f7052', color: '#fff', padding: '11px 24px', borderRadius: 999, fontWeight: 700, fontSize: 14 }}>
@@ -239,46 +277,69 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
                     </div>
                   </div>
 
-                  {/* Message du candidat */}
+                  {/* ===== Postes / parties ===== */}
+                  {p && p.functions.length > 0 && (
+                    <div>
+                      <h4 style={titreSection}>🔪 {t('functions_title')}</h4>
+                      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                        {p.functions.map((f) => (
+                          <span key={f} style={badgePoste}>{f}</span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* ===== Spécialités ===== */}
+                  {p && p.specialties.length > 0 && (
+                    <div>
+                      <h4 style={titreSection}>⭐ {t('specialties_title')}</h4>
+                      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                        {p.specialties.map((s) => (
+                          <span key={s} style={badgeSauge}>{s}</span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* ===== Tarif souhaité ===== */}
+                  {p && (p.hourlyRateMin || p.hourlyRateMax) && (
+                    <p style={{ fontSize: 13.5, color: '#6b7268', marginTop: 14 }}>
+                      💶 {t('rate_range')} : €{p.hourlyRateMin || '?'} – €{p.hourlyRateMax || '?'}/u
+                    </p>
+                  )}
+
+                  {/* ===== Message du candidat ===== */}
                   {k.message && (
-                    <p style={{ background: '#f7f5f0', borderRadius: 10, padding: '12px 16px', fontSize: 14, color: '#2e342b', fontStyle: 'italic', marginBottom: 16 }}>
+                    <p style={{ background: '#f7f5f0', borderRadius: 10, padding: '12px 16px', fontSize: 14, color: '#2e342b', fontStyle: 'italic', marginTop: 14 }}>
                       “{k.message}”
                     </p>
                   )}
 
-                  {/* Spécialités */}
-                  {p && p.specialties.length > 0 && (
-                    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 16 }}>
-                      {p.specialties.map((s) => (
-                        <span key={s} style={{ background: '#e4e9dd', color: '#5f7052', fontSize: 12.5, fontWeight: 700, padding: '5px 12px', borderRadius: 999 }}>
-                          {s}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-
-                  {/* Description */}
+                  {/* ===== Description ===== */}
                   {p?.description && (
-                    <p style={{ fontSize: 14.5, color: '#6b7268', marginBottom: 16 }}>{p.description}</p>
+                    <p style={{ fontSize: 14.5, color: '#6b7268', marginTop: 14 }}>{p.description}</p>
                   )}
 
-                  {/* Historique */}
+                  {/* ===== Historique ===== */}
                   {p && p.workExperience.length > 0 && (
                     <div>
-                      <h4 style={{ fontSize: 13, fontWeight: 800, textTransform: 'uppercase', letterSpacing: 1.5, color: '#5f7052', marginBottom: 10 }}>
-                        {t('work_history')}
-                      </h4>
-                      <div style={{ display: 'grid', gap: 8 }}>
+                      <h4 style={titreSection}>📋 {t('work_history')}</h4>
+                      <div style={{ display: 'grid', gap: 10 }}>
                         {p.workExperience.map((w) => (
-                          <div key={w.id} style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8, fontSize: 14, borderLeft: '3px solid #e4e9dd', paddingLeft: 12 }}>
-                            <span>
-                              <strong>{w.function}</strong>
-                              {w.companyName && <span style={{ color: '#6b7268' }}> · {w.companyName}</span>}
-                              {w.location && <span style={{ color: '#9aa39b' }}> · {w.location}</span>}
-                            </span>
-                            <span style={{ color: '#9aa39b', fontSize: 13 }}>
-                              {new Date(w.fromDate).getFullYear()} – {w.isCurrent ? t('current') : w.toDate ? new Date(w.toDate).getFullYear() : ''}
-                            </span>
+                          <div key={w.id} style={{ borderLeft: '3px solid #e4e9dd', paddingLeft: 12 }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8, fontSize: 14 }}>
+                              <span>
+                                <strong>{w.function}</strong>
+                                {w.companyName && <span style={{ color: '#6b7268' }}> · {w.companyName}</span>}
+                                {w.location && <span style={{ color: '#9aa39b' }}> · {w.location}</span>}
+                              </span>
+                              <span style={{ color: '#9aa39b', fontSize: 13 }}>
+                                {new Date(w.fromDate).getFullYear()} – {w.isCurrent ? t('current') : w.toDate ? new Date(w.toDate).getFullYear() : ''}
+                              </span>
+                            </div>
+                            {w.description && (
+                              <p style={{ fontSize: 13, color: '#6b7268', marginTop: 4 }}>{w.description}</p>
+                            )}
                           </div>
                         ))}
                       </div>
