@@ -107,12 +107,12 @@ export default function NewShiftPage() {
           <div style={{ marginBottom: 16 }}>
             <label style={etiquette}>{t('field_shift_title')}</label>
             <input value={title} onChange={(e) => setTitle(e.target.value)} required
-              placeholder="Bijv. Zelfstandig werkend kok avonddienst" style={champ} />
+              placeholder={t('shift_title_ph')} style={champ} />
           </div>
           <div style={{ marginBottom: 16 }}>
             <label style={etiquette}>{t('field_function')}</label>
             <input value={func} onChange={(e) => setFunc(e.target.value)}
-              placeholder="Bijv. Garde-manger, saucier..." style={champ} />
+              placeholder={t('shift_function_ph')} style={champ} />
           </div>
           <div style={{ marginBottom: 16 }}>
             <label style={etiquette}>{t('field_date')}</label>
