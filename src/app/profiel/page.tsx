@@ -287,7 +287,7 @@ export default function ProfielPage() {
             <input type="number" min="10" step="0.5" value={hourlyRateMin} onChange={(e) => setHourlyRateMin(e.target.value)} placeholder={t('min')} style={{ ...champ, width: 110 }} />
             <span style={{ color: '#6b7268' }}>–</span>
             <input type="number" min="10" step="0.5" value={hourlyRateMax} onChange={(e) => setHourlyRateMax(e.target.value)} placeholder={t('max')} style={{ ...champ, width: 110 }} />
-            <span style={{ color: '#6b7268', fontSize: 14 }}>€/u</span>
+            <span style={{ color: '#6b7268', fontSize: 14 }}>{lang === 'en' ? '€/hr' : '€/u'}</span>
           </div>
         </div>
 
