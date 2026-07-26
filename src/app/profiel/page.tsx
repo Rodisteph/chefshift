@@ -180,7 +180,7 @@ export default function ProfielPage() {
   return (
     <main style={{ fontFamily: FONT, background: '#f6f7f2', color: '#23281f', minHeight: '100vh' }}>
       <AnimStyles />
-      <nav style={{
+      <nav className="cs-nav" style={{
         background: 'rgba(255,255,255,0.88)', backdropFilter: 'blur(12px)',
         borderBottom: '1px solid #e8ebe0',
         padding: '13px 28px', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
@@ -197,7 +197,7 @@ export default function ProfielPage() {
         </div>
       </nav>
 
-      <form onSubmit={sauvegarder} style={{ maxWidth: 760, margin: '0 auto', padding: '48px 24px' }}>
+      <form onSubmit={sauvegarder} className="cs-wrap" style={{ maxWidth: 760, margin: '0 auto', padding: '48px 24px' }}>
         <h1 className="cs-fade" style={{ fontSize: 'clamp(26px, 4vw, 36px)', fontWeight: 800, letterSpacing: -1.2 }}>{t('profile_title')}</h1>
         <p className="cs-fade cs-d1" style={{ color: '#6b7268', marginTop: 6, marginBottom: 32, fontSize: 15 }}>{t('profile_sub')}</p>
 
