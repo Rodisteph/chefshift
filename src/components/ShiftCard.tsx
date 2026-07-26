@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useT } from '@/lib/i18n'
+import { Ico } from '@/components/Icons'
 
 export type ShiftData = {
   id: string
@@ -18,6 +19,8 @@ export type ShiftData = {
   horeca?: { horecaProfile?: { companyName?: string } | null } | null
   _count?: { applications: number }
 }
+
+const FONT = '"Sora","Inter","Helvetica Neue",Arial,sans-serif'
 
 export default function ShiftCard({
   shift,
@@ -62,63 +65,75 @@ export default function ShiftCard({
   }
 
   const titre = detailHref ? (
-    <a href={detailHref} style={{ color: '#2e342b', textDecoration: 'none' }}>
-      {shift.title} <span style={{ color: '#5f7052', fontSize: 14 }}>→</span>
+    <a href={detailHref} style={{ color: '#23281f', textDecoration: 'none' }}>
+      {shift.title} <Ico n="arrow" s={15} c="#5f7052" />
     </a>
   ) : (
     shift.title
   )
 
+  const meta: React.CSSProperties = {
+    display: 'inline-flex', alignItems: 'center', gap: 5,
+    fontSize: 13.5, color: '#6b7268', fontWeight: 500,
+  }
+
   return (
     <div className="cs-card" style={{
-      background: '#fff', borderRadius: 18, boxShadow: '0 4px 14px rgba(46,52,43,0.06)',
+      background: '#fff', borderRadius: 20, border: '1px solid #eceee3',
+      boxShadow: '0 3px 12px rgba(46,52,43,0.05)',
       padding: 24, display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-      flexWrap: 'wrap', gap: 16,
+      flexWrap: 'wrap', gap: 18, fontFamily: FONT,
     }}>
       <div style={{ flex: 1, minWidth: 240 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginBottom: 4 }}>
-          <h3 style={{ fontSize: 18, fontWeight: 800 }}>{titre}</h3>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginBottom: 6 }}>
+          <h3 style={{ fontSize: 17.5, fontWeight: 800, letterSpacing: -0.3 }}>{titre}</h3>
           {shift.isUrgent && (
             <span style={{
-              background: '#fef2f2', color: '#b91c1c', fontSize: 11, fontWeight: 800,
-              padding: '4px 10px', borderRadius: 999, textTransform: 'uppercase', letterSpacing: 1,
+              display: 'inline-flex', alignItems: 'center', gap: 5,
+              background: '#fef2f2', color: '#b91c1c', fontSize: 10.5, fontWeight: 800,
+              padding: '4px 11px', borderRadius: 999, textTransform: 'uppercase', letterSpacing: 1,
             }}>
-              🔥 {t('urgent')}
+              <Ico n="flame" s={12} /> {t('urgent')}
             </span>
           )}
           {shift.status === 'CONFIRMED' && (
             <span style={{
-              background: '#eef2e7', color: '#5f7052', fontSize: 11, fontWeight: 800,
-              padding: '4px 10px', borderRadius: 999, textTransform: 'uppercase', letterSpacing: 1,
+              display: 'inline-flex', alignItems: 'center', gap: 5,
+              background: '#eef2e7', color: '#4c5e42', fontSize: 10.5, fontWeight: 800,
+              padding: '4px 11px', borderRadius: 999, textTransform: 'uppercase', letterSpacing: 1,
             }}>
-              ✓ {t('status_confirmed')}
+              <Ico n="check" s={12} /> {t('status_confirmed')}
             </span>
           )}
         </div>
         {restaurant && (
-          <p style={{ fontSize: 14.5, fontWeight: 700, color: '#5f7052', marginBottom: 6 }}>
-            🍽️ {restaurant}
+          <p style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 14, fontWeight: 700, color: '#4c5e42', marginBottom: 7 }}>
+            <Ico n="chef" s={15} /> {restaurant}
           </p>
         )}
-        <p style={{ fontSize: 14, color: '#6b7268' }}>
-          📅 {dateStr} &nbsp;·&nbsp; 🕐 {start} – {end}
-          {shift.locationCity && <>&nbsp;·&nbsp; 📍 {shift.locationCity}</>}
+        <p style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
+          <span style={meta}><Ico n="cal" s={14} c="#8a9a7b" /> {dateStr}</span>
+          <span style={meta}><Ico n="clock" s={14} c="#8a9a7b" /> {start} – {end}</span>
+          {shift.locationCity && <span style={meta}><Ico n="pin" s={14} c="#8a9a7b" /> {shift.locationCity}</span>}
         </p>
         {shift._count && (
-          <p style={{ fontSize: 12.5, color: '#9aa39b', marginTop: 6 }}>
-            {shift._count.applications} {t('applications')}
+          <p style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 12.5, color: '#9aa39b', marginTop: 7, fontWeight: 500 }}>
+            <Ico n="users" s={13} /> {shift._count.applications} {t('applications')}
           </p>
         )}
         {etat === 'erreur' && (
-          <p style={{ fontSize: 13, color: '#b91c1c', marginTop: 6, fontWeight: 600 }}>{msgErreur}</p>
+          <p style={{ fontSize: 13, color: '#b91c1c', marginTop: 7, fontWeight: 600 }}>{msgErreur}</p>
         )}
       </div>
       <div style={{ textAlign: 'right' }}>
-        <div style={{ fontSize: 24, fontWeight: 800, color: '#5f7052' }}>
-          €{shift.hourlyRate}<span style={{ fontSize: 14, fontWeight: 600, color: '#6b7268' }}>/u</span>
+        <div style={{
+          display: 'inline-block', background: '#f0f4ea', borderRadius: 14, padding: '10px 16px', marginBottom: 10,
+        }}>
+          <span style={{ fontSize: 23, fontWeight: 800, color: '#4c5e42', letterSpacing: -0.5 }}>€{shift.hourlyRate}</span>
+          <span style={{ fontSize: 13, fontWeight: 600, color: '#7d8877' }}>/u</span>
         </div>
         {shift.totalAmount != null && (
-          <div style={{ fontSize: 13, color: '#6b7268', marginBottom: 8 }}>
+          <div style={{ fontSize: 12.5, color: '#6b7268', marginBottom: 8, fontWeight: 500 }}>
             {t('total')} €{Math.round(shift.totalAmount)}
           </div>
         )}
@@ -128,14 +143,15 @@ export default function ShiftCard({
             disabled={etat === 'envoi' || etat === 'ok'}
             className="cs-btn"
             style={{
-              marginTop: 6,
-              background: etat === 'ok' ? '#8a9a7b' : '#5f7052',
-              color: '#fff', border: 'none', borderRadius: 999,
-              padding: '10px 22px', fontWeight: 700, fontSize: 13.5,
+              display: 'flex', width: '100%',
+              background: etat === 'ok' ? '#8a9a7b' : 'linear-gradient(135deg,#647a55,#46553c)',
+              color: '#fff', border: 'none', borderRadius: 12,
+              padding: '11px 22px', fontWeight: 700, fontSize: 13.5, fontFamily: FONT,
               cursor: etat === 'envoi' || etat === 'ok' ? 'default' : 'pointer',
               opacity: etat === 'envoi' ? 0.7 : 1,
             }}
           >
+            {etat === 'ok' && <Ico n="check" s={14} />}
             {etat === 'envoi' ? t('apply_sending') : etat === 'ok' ? t('applied') : t('apply_btn')}
           </button>
         )}

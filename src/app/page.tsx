@@ -3,12 +3,15 @@
 import { useEffect, useState } from 'react'
 import { useT, LangToggle } from '@/lib/i18n'
 import AnimStyles from '@/components/AnimStyles'
+import { Ico, IcoTile } from '@/components/Icons'
+
+const FONT = '"Sora","Inter","Helvetica Neue",Arial,sans-serif'
+const hero = 'https://kimi-web-img.moonshot.cn/img/plus.unsplash.com/035b02474f33aabd5af6cf4d2ff2a0971fc1b816'
 
 export default function HomePage() {
   const { t } = useT()
   const [user, setUser] = useState<any>(null)
   const [charge, setCharge] = useState(false)
-  const hero = 'https://kimi-web-img.moonshot.cn/img/plus.unsplash.com/035b02474f33aabd5af6cf4d2ff2a0971fc1b816'
 
   useEffect(() => {
     fetch('/api/auth/session')
@@ -18,8 +21,14 @@ export default function HomePage() {
       .finally(() => setCharge(true))
   }, [])
 
+  const btnPrimaire: React.CSSProperties = {
+    background: 'linear-gradient(135deg,#647a55,#46553c)', color: '#fff',
+    padding: '15px 32px', borderRadius: 999, fontWeight: 700, fontSize: 15,
+    textDecoration: 'none', boxShadow: '0 10px 24px -8px rgba(70,85,60,.55)',
+  }
+
   return (
-    <main style={{ fontFamily: '"Helvetica Neue", Arial, sans-serif', background: '#f7f5f0', color: '#2e342b', minHeight: '100vh' }}>
+    <main style={{ fontFamily: FONT, background: '#f6f7f2', color: '#23281f', minHeight: '100vh' }}>
       <AnimStyles />
 
       {/* ===== Navigation flottante ===== */}
@@ -27,25 +36,23 @@ export default function HomePage() {
         position: 'fixed', top: 18, left: '50%', transform: 'translateX(-50%)',
         width: 'min(1160px, calc(100% - 32px))', zIndex: 100,
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        padding: '14px 26px', borderRadius: 999,
-        background: 'rgba(255,255,255,0.14)', backdropFilter: 'blur(14px)',
-        border: '1px solid rgba(255,255,255,0.25)',
+        padding: '13px 26px', borderRadius: 999,
+        background: 'rgba(255,255,255,0.13)', backdropFilter: 'blur(16px)',
+        border: '1px solid rgba(255,255,255,0.28)',
+        boxShadow: '0 8px 30px rgba(20,26,17,.18)',
       }}>
-        <a href="/" style={{ fontWeight: 800, fontSize: 20, color: '#fff', textDecoration: 'none' }}>
-          Chef<span style={{ color: '#e4e9dd' }}>Shift</span>
+        <a href="/" style={{ fontWeight: 800, fontSize: 20, color: '#fff', textDecoration: 'none', letterSpacing: -0.5 }}>
+          Chef<span style={{ color: '#cfdcba' }}>Shift</span>
         </a>
-        <div style={{ display: 'flex', gap: 24, alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: 22, alignItems: 'center' }}>
           <LangToggle clair />
           {charge && user ? (
             <>
               <span style={{ color: 'rgba(255,255,255,0.85)', fontSize: 13.5, fontWeight: 600 }}>
                 {user.email}
               </span>
-              <a href="/dashboard" className="cs-btn" style={{
-                background: '#5f7052', color: '#fff', padding: '10px 20px',
-                borderRadius: 999, fontWeight: 700, fontSize: 14, textDecoration: 'none',
-              }}>
-                {t('nav_dashboard')} →
+              <a href="/dashboard" className="cs-btn" style={{ ...btnPrimaire, padding: '10px 22px', fontSize: 14 }}>
+                {t('nav_dashboard')} <Ico n="arrow" s={15} />
               </a>
             </>
           ) : (
@@ -53,10 +60,7 @@ export default function HomePage() {
               <a href="/login" className="cs-nav-link" style={{ color: 'rgba(255,255,255,0.92)', fontWeight: 600, fontSize: 14, textDecoration: 'none' }}>
                 {t('nav_login')}
               </a>
-              <a href="/register" className="cs-btn" style={{
-                background: '#5f7052', color: '#fff', padding: '10px 20px',
-                borderRadius: 999, fontWeight: 700, fontSize: 14, textDecoration: 'none',
-              }}>
+              <a href="/register" className="cs-btn" style={{ ...btnPrimaire, padding: '10px 22px', fontSize: 14 }}>
                 {t('nav_register')}
               </a>
             </>
@@ -64,34 +68,35 @@ export default function HomePage() {
         </div>
       </nav>
 
-      {/* ===== Heros ===== */}
-      <header style={{ position: 'relative', height: '100vh', minHeight: 620, display: 'flex', alignItems: 'flex-end', overflow: 'hidden' }}>
-        <img src={hero} alt="Chef aan het werk in een professionele keuken"
+      {/* ===== Hero ===== */}
+      <header style={{ position: 'relative', height: '100vh', minHeight: 640, display: 'flex', alignItems: 'flex-end', overflow: 'hidden' }}>
+        <img src={hero} alt="Chef aan het werk in een professionele keuken" className="cs-heroimg"
           style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
-        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(30,38,27,0.6), rgba(30,38,27,0.05) 55%)' }} />
-        <div style={{ position: 'relative', zIndex: 2, width: '100%', maxWidth: 1200, margin: '0 auto', padding: '0 24px 90px', color: '#fff' }}>
+        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(24,30,21,0.72), rgba(24,30,21,0.10) 55%)' }} />
+        <div style={{ position: 'relative', zIndex: 2, width: '100%', maxWidth: 1200, margin: '0 auto', padding: '0 24px 92px', color: '#fff' }}>
           <span className="cs-fade" style={{
-            display: 'inline-block', background: 'rgba(255,255,255,0.16)', backdropFilter: 'blur(8px)',
+            display: 'inline-flex', alignItems: 'center', gap: 8,
+            background: 'rgba(255,255,255,0.14)', backdropFilter: 'blur(8px)',
             border: '1px solid rgba(255,255,255,0.3)', padding: '8px 18px', borderRadius: 999,
-            fontSize: 13, fontWeight: 700, letterSpacing: 2, textTransform: 'uppercase', marginBottom: 22,
+            fontSize: 12.5, fontWeight: 700, letterSpacing: 2, textTransform: 'uppercase', marginBottom: 22,
           }}>
-            {t('hero_badge')}
+            <Ico n="chef" s={14} /> {t('hero_badge')}
           </span>
-          <h1 className="cs-fade cs-d1" style={{ fontSize: 'clamp(42px, 7vw, 84px)', fontWeight: 800, lineHeight: 1.02, letterSpacing: -1.5, maxWidth: '13ch', marginBottom: 22 }}>
-            {t('hero_title_a')} <span style={{ color: '#e4e9dd' }}>{t('hero_title_b')}</span>
+          <h1 className="cs-fade cs-d1" style={{ fontSize: 'clamp(44px, 7vw, 86px)', fontWeight: 800, lineHeight: 1.01, letterSpacing: -2, maxWidth: '13ch', marginBottom: 22 }}>
+            {t('hero_title_a')} <span style={{ color: '#cfdcba' }}>{t('hero_title_b')}</span>
           </h1>
-          <p className="cs-fade cs-d2" style={{ fontSize: 18, maxWidth: '46ch', opacity: 0.92, marginBottom: 34 }}>{t('hero_sub')}</p>
+          <p className="cs-fade cs-d2" style={{ fontSize: 17.5, maxWidth: '46ch', opacity: 0.92, marginBottom: 34, lineHeight: 1.65 }}>{t('hero_sub')}</p>
           <div className="cs-fade cs-d3" style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
             {charge && user ? (
-              <a href="/dashboard" className="cs-btn" style={{ background: '#5f7052', color: '#fff', padding: '15px 32px', borderRadius: 999, fontWeight: 700, fontSize: 15, textDecoration: 'none' }}>
-                {t('nav_dashboard')} →
+              <a href="/dashboard" className="cs-btn" style={btnPrimaire}>
+                {t('nav_dashboard')} <Ico n="arrow" s={16} />
               </a>
             ) : (
               <>
-                <a href="/register" className="cs-btn" style={{ background: '#5f7052', color: '#fff', padding: '15px 32px', borderRadius: 999, fontWeight: 700, fontSize: 15, textDecoration: 'none' }}>
-                  {t('hero_cta1')}
+                <a href="/register" className="cs-btn" style={btnPrimaire}>
+                  {t('hero_cta1')} <Ico n="arrow" s={16} />
                 </a>
-                <a href="/login" className="cs-btn" style={{ background: 'rgba(255,255,255,0.16)', color: '#fff', border: '1px solid rgba(255,255,255,0.4)', backdropFilter: 'blur(6px)', padding: '15px 32px', borderRadius: 999, fontWeight: 700, fontSize: 15, textDecoration: 'none' }}>
+                <a href="/login" className="cs-btn" style={{ background: 'rgba(255,255,255,0.14)', color: '#fff', border: '1px solid rgba(255,255,255,0.42)', backdropFilter: 'blur(6px)', padding: '15px 32px', borderRadius: 999, fontWeight: 700, fontSize: 15, textDecoration: 'none' }}>
                   {t('hero_cta2')}
                 </a>
               </>
@@ -100,12 +105,12 @@ export default function HomePage() {
         </div>
       </header>
 
-      {/* ===== Etapes ===== */}
-      <section style={{ padding: '90px 24px', maxWidth: 1200, margin: '0 auto' }}>
-        <div style={{ textAlign: 'center', maxWidth: 640, margin: '0 auto 56px' }}>
-          <span style={{ color: '#5f7052', fontWeight: 800, fontSize: 13, letterSpacing: 2.5, textTransform: 'uppercase' }}>{t('steps_over')}</span>
-          <h2 style={{ fontSize: 'clamp(30px, 4vw, 46px)', fontWeight: 800, letterSpacing: -1, margin: '10px 0 14px' }}>{t('steps_title')}</h2>
-          <p style={{ color: '#6b7268', fontSize: 17 }}>{t('steps_sub')}</p>
+      {/* ===== Étapes ===== */}
+      <section style={{ padding: '96px 24px', maxWidth: 1200, margin: '0 auto' }}>
+        <div style={{ textAlign: 'center', maxWidth: 640, margin: '0 auto 58px' }}>
+          <span style={{ color: '#5f7052', fontWeight: 800, fontSize: 12.5, letterSpacing: 2.5, textTransform: 'uppercase' }}>{t('steps_over')}</span>
+          <h2 style={{ fontSize: 'clamp(30px, 4vw, 46px)', fontWeight: 800, letterSpacing: -1.4, margin: '12px 0 14px' }}>{t('steps_title')}</h2>
+          <p style={{ color: '#6b7268', fontSize: 16.5, lineHeight: 1.6 }}>{t('steps_sub')}</p>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 24 }}>
           {[
@@ -113,56 +118,56 @@ export default function HomePage() {
             { n: '2', t: t('step2_t'), d: t('step2_d') },
             { n: '3', t: t('step3_t'), d: t('step3_d') },
           ].map((e) => (
-            <div key={e.n} className="cs-card" style={{ background: '#fff', borderRadius: 18, padding: '34px 28px', boxShadow: '0 4px 14px rgba(46,52,43,0.05)' }}>
-              <div style={{ width: 46, height: 46, background: '#e4e9dd', color: '#5f7052', fontWeight: 800, fontSize: 19, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 18 }}>{e.n}</div>
-              <h3 style={{ fontSize: 18, fontWeight: 800, marginBottom: 8 }}>{e.t}</h3>
-              <p style={{ color: '#6b7268', fontSize: 14.5 }}>{e.d}</p>
+            <div key={e.n} className="cs-card" style={{ background: '#fff', borderRadius: 20, border: '1px solid #eceee3', padding: '36px 28px', boxShadow: '0 3px 12px rgba(46,52,43,0.05)' }}>
+              <div className="cs-tile" style={{ width: 48, height: 48, background: 'linear-gradient(135deg,#647a55,#46553c)', color: '#fff', fontWeight: 800, fontSize: 19, borderRadius: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 20, boxShadow: '0 8px 18px -6px rgba(70,85,60,.5)' }}>{e.n}</div>
+              <h3 style={{ fontSize: 18, fontWeight: 800, marginBottom: 9, letterSpacing: -0.3 }}>{e.t}</h3>
+              <p style={{ color: '#6b7268', fontSize: 14.5, lineHeight: 1.6 }}>{e.d}</p>
             </div>
           ))}
         </div>
       </section>
 
       {/* ===== Avantages ===== */}
-      <section style={{ padding: '0 24px 90px', maxWidth: 1200, margin: '0 auto' }}>
-        <div style={{ textAlign: 'center', maxWidth: 640, margin: '0 auto 56px' }}>
-          <span style={{ color: '#5f7052', fontWeight: 800, fontSize: 13, letterSpacing: 2.5, textTransform: 'uppercase' }}>{t('why_over')}</span>
-          <h2 style={{ fontSize: 'clamp(30px, 4vw, 46px)', fontWeight: 800, letterSpacing: -1, margin: '10px 0 14px' }}>{t('why_title')}</h2>
+      <section style={{ padding: '0 24px 96px', maxWidth: 1200, margin: '0 auto' }}>
+        <div style={{ textAlign: 'center', maxWidth: 640, margin: '0 auto 58px' }}>
+          <span style={{ color: '#5f7052', fontWeight: 800, fontSize: 12.5, letterSpacing: 2.5, textTransform: 'uppercase' }}>{t('why_over')}</span>
+          <h2 style={{ fontSize: 'clamp(30px, 4vw, 46px)', fontWeight: 800, letterSpacing: -1.4, margin: '12px 0 14px' }}>{t('why_title')}</h2>
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 28 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 26 }}>
           {[
-            { icon: '⚡', t: t('feat1_t'), d: t('feat1_d') },
-            { icon: '✅', t: t('feat2_t'), d: t('feat2_d') },
-            { icon: '🔒', t: t('feat3_t'), d: t('feat3_d') },
+            { icon: 'bolt', t: t('feat1_t'), d: t('feat1_d') },
+            { icon: 'shield', t: t('feat2_t'), d: t('feat2_d') },
+            { icon: 'card', t: t('feat3_t'), d: t('feat3_d') },
           ].map((c) => (
-            <div key={c.t} className="cs-card" style={{ background: '#fff', borderRadius: 18, boxShadow: '0 4px 14px rgba(46,52,43,0.06)', padding: '30px 26px' }}>
-              <div style={{ fontSize: 34, marginBottom: 14 }}>{c.icon}</div>
-              <h3 style={{ fontSize: 19, fontWeight: 800, marginBottom: 8 }}>{c.t}</h3>
-              <p style={{ color: '#6b7268', fontSize: 14.5 }}>{c.d}</p>
+            <div key={c.t} className="cs-card" style={{ background: '#fff', borderRadius: 20, border: '1px solid #eceee3', boxShadow: '0 3px 12px rgba(46,52,43,0.05)', padding: '32px 28px' }}>
+              <div style={{ marginBottom: 18 }}><IcoTile n={c.icon} s={21} /></div>
+              <h3 style={{ fontSize: 18.5, fontWeight: 800, marginBottom: 9, letterSpacing: -0.3 }}>{c.t}</h3>
+              <p style={{ color: '#6b7268', fontSize: 14.5, lineHeight: 1.6 }}>{c.d}</p>
             </div>
           ))}
         </div>
       </section>
 
-      {/* ===== Banniere CTA ===== */}
-      <section style={{ padding: '0 24px 90px', maxWidth: 1200, margin: '0 auto' }}>
-        <div style={{ position: 'relative', borderRadius: 26, overflow: 'hidden', padding: '80px 40px', textAlign: 'center', color: '#fff' }}>
+      {/* ===== Bannière CTA ===== */}
+      <section style={{ padding: '0 24px 96px', maxWidth: 1200, margin: '0 auto' }}>
+        <div className="cs-card" style={{ position: 'relative', borderRadius: 28, overflow: 'hidden', padding: '84px 40px', textAlign: 'center', color: '#fff', border: '1px solid #eceee3' }}>
           <img src={hero} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
-          <div style={{ position: 'absolute', inset: 0, background: 'rgba(46,52,43,0.6)' }} />
+          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(135deg, rgba(36,44,31,0.82), rgba(70,85,60,0.72))' }} />
           <div style={{ position: 'relative', zIndex: 2 }}>
-            <h2 style={{ fontSize: 'clamp(28px, 4vw, 44px)', fontWeight: 800, letterSpacing: -1, marginBottom: 14 }}>{t('banner_title')}</h2>
-            <p style={{ opacity: 0.9, marginBottom: 30, fontSize: 17 }}>{t('banner_sub')}</p>
-            <a href={charge && user ? '/dashboard' : '/register'} className="cs-btn" style={{ background: '#5f7052', color: '#fff', padding: '15px 32px', borderRadius: 999, fontWeight: 700, fontSize: 15, textDecoration: 'none' }}>
-              {charge && user ? t('nav_dashboard') : t('banner_cta')}
+            <h2 style={{ fontSize: 'clamp(28px, 4vw, 44px)', fontWeight: 800, letterSpacing: -1.2, marginBottom: 14 }}>{t('banner_title')}</h2>
+            <p style={{ opacity: 0.9, marginBottom: 30, fontSize: 16.5 }}>{t('banner_sub')}</p>
+            <a href={charge && user ? '/dashboard' : '/register'} className="cs-btn" style={{ background: '#fff', color: '#3f4d36', padding: '15px 34px', borderRadius: 999, fontWeight: 800, fontSize: 15, textDecoration: 'none' }}>
+              {charge && user ? t('nav_dashboard') : t('banner_cta')} <Ico n="arrow" s={16} />
             </a>
           </div>
         </div>
       </section>
 
       {/* ===== Pied de page ===== */}
-      <footer style={{ background: '#2e342b', color: 'rgba(255,255,255,0.75)', padding: '60px 24px 30px' }}>
+      <footer style={{ background: '#23281f', color: 'rgba(255,255,255,0.72)', padding: '64px 24px 30px' }}>
         <div style={{ maxWidth: 1200, margin: '0 auto' }}>
-          <div style={{ color: '#fff', fontWeight: 800, fontSize: 22, marginBottom: 12 }}>Chef<span style={{ color: '#8a9a7b' }}>Shift</span></div>
-          <p style={{ maxWidth: 360, marginBottom: 40 }}>{t('footer_tag')}</p>
+          <div style={{ color: '#fff', fontWeight: 800, fontSize: 22, marginBottom: 12, letterSpacing: -0.5 }}>Chef<span style={{ color: '#8a9a7b' }}>Shift</span></div>
+          <p style={{ maxWidth: 360, marginBottom: 40, lineHeight: 1.6 }}>{t('footer_tag')}</p>
           <div style={{ borderTop: '1px solid rgba(255,255,255,0.12)', paddingTop: 24, fontSize: 13.5, textAlign: 'center' }}>
             {t('footer_rights')}
           </div>
