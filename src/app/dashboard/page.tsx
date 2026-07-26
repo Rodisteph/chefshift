@@ -149,11 +149,9 @@ export default function DashboardPage() {
           <h2 style={{ fontSize: 22, fontWeight: 800 }}>
             {estKok ? t('list_kok') : t('list_other')}
           </h2>
-          {shifts.length > 3 && (
-            <a href="/shifts" style={{ color: '#5f7052', fontWeight: 700, fontSize: 14, textDecoration: 'none' }}>
-              {estKok ? t('list_kok') : t('list_other')} →
-            </a>
-          )}
+          <a href="/shifts" style={{ color: '#5f7052', fontWeight: 700, fontSize: 14, textDecoration: 'none' }}>
+            {estKok ? t('list_kok') : t('list_other')} →
+          </a>
         </div>
         {shifts.length === 0 ? (
           <div className="cs-card" style={{ ...carte, textAlign: 'center', padding: 48 }}>
@@ -163,7 +161,12 @@ export default function DashboardPage() {
         ) : (
           <div style={{ display: 'grid', gap: 16 }}>
             {shifts.slice(0, 3).map((shift) => (
-              <ShiftCard key={shift.id} shift={shift} showApply={estKok} />
+              <ShiftCard
+                key={shift.id}
+                shift={shift}
+                showApply={estKok}
+                detailHref={!estKok ? `/shifts/${shift.id}` : undefined}
+              />
             ))}
           </div>
         )}
