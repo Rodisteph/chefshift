@@ -1,13 +1,12 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useT, LangToggle } from '@/lib/i18n'
+import { useT, LangToggle, afficherPoste, afficherSpecialite } from '@/lib/i18n'
 import AnimStyles from '@/components/AnimStyles'
 
 const POSTES = [
   'Garde-manger', 'Rôtisseur', 'Poissonnier', 'Saucier',
-  'Pâtissier', 'Garnituur', 'Entremetier', 'Chef de partie',
-  'Sous-chef', 'Cuisinier', 'Keukenhulp', 'Banqueting',
+  'Pâtisserie', 'Garnituur', 'Entremetier', 'Banqueting',
 ]
 
 const CUISINES = [
@@ -26,7 +25,7 @@ type Exp = {
 }
 
 export default function ProfielPage() {
-  const { t } = useT()
+  const { t, lang } = useT()
   const [chargement, setChargement] = useState(true)
   const [sauvegarde, setSauvegarde] = useState<'idle' | 'envoi' | 'ok' | 'erreur'>('idle')
 
@@ -202,7 +201,7 @@ export default function ProfielPage() {
           <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
             {POSTES.map((p) => (
               <button key={p} type="button" onClick={() => basculer(functions, p, setFunctions)} style={caseACocher(functions.includes(p))}>
-                {p}
+                {afficherPoste(p, lang)}
               </button>
             ))}
           </div>
@@ -214,7 +213,7 @@ export default function ProfielPage() {
           <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
             {CUISINES.map((c) => (
               <button key={c} type="button" onClick={() => basculer(specialties, c, setSpecialties)} style={caseACocher(specialties.includes(c))}>
-                {c}
+                {afficherSpecialite(c, lang)}
               </button>
             ))}
           </div>
