@@ -1,6 +1,6 @@
 'use client'
 
-import { use, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useT, LangToggle, afficherPoste, afficherSpecialite } from '@/lib/i18n'
 import AnimStyles from '@/components/AnimStyles'
 import { Ico, IcoStar } from '@/components/Icons'
@@ -85,8 +85,8 @@ function Etoiles({ n, taille = 13 }: { n: number; taille?: number }) {
   )
 }
 
-export default function ShiftDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = use(params)
+export default function ShiftDetailPage({ params }: { params: { id: string } }) {
+  const id = params.id
   const { t, lang } = useT()
   const [shift, setShift] = useState<ShiftDetail | null>(null)
   const [chargement, setChargement] = useState(true)
@@ -107,6 +107,7 @@ export default function ShiftDetailPage({ params }: { params: Promise<{ id: stri
   const [eCity, setECity] = useState('')
   const [eUrgent, setEUrgent] = useState(false)
   const locale = lang === 'en' ? 'en-GB' : 'nl-NL'
+  const parHeure = lang === 'en' ? '/hr' : '/u'
 
   async function charger() {
     const res = await fetch(`/api/shifts/${id}`)
@@ -374,7 +375,7 @@ export default function ShiftDetailPage({ params }: { params: Promise<{ id: stri
                 )}
               </div>
               <div style={{ textAlign: 'right' }}>
-                <div style={{ fontSize: 27, fontWeight: 800, color: '#4c5e42', letterSpacing: -1 }}>€{shift.hourlyRate}/u</div>
+                <div style={{ fontSize: 27, fontWeight: 800, color: '#4c5e42', letterSpacing: -1 }}>€{shift.hourlyRate}{parHeure}</div>
                 {(shift.status === 'CONFIRMED' || shift.status === 'COMPLETED') && (
                   <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, ...badgeSauge }}>
                     <Ico n="check" s={13} /> {t('shift_confirmed')}
@@ -550,7 +551,7 @@ export default function ShiftDetailPage({ params }: { params: Promise<{ id: stri
                   {/* Tarif proposé */}
                   {app.proposedRate != null && (
                     <div style={{ marginTop: 12, fontSize: 14 }}>
-                      {t('proposed_rate')} : <strong style={{ color: '#4c5e42' }}>€{app.proposedRate}/u</strong>
+                      {t('proposed_rate')} : <strong style={{ color: '#4c5e42' }}>€{app.proposedRate}{parHeure}</strong>
                     </div>
                   )}
 
@@ -586,7 +587,7 @@ export default function ShiftDetailPage({ params }: { params: Promise<{ id: stri
                   {/* Tarif souhaité */}
                   {p?.hourlyRateMin != null && (
                     <div style={{ marginTop: 12, fontSize: 13.5, color: '#6b7268' }}>
-                      {t('rate_range')} : €{p.hourlyRateMin} – €{p.hourlyRateMax}/u
+                      {t('rate_range')} : €{p.hourlyRateMin} – €{p.hourlyRateMax}{parHeure}
                     </div>
                   )}
 

@@ -33,6 +33,7 @@ export default function ShiftCard({
 }) {
   const { t, lang } = useT()
   const locale = lang === 'en' ? 'en-GB' : 'nl-NL'
+  const parHeure = lang === 'en' ? '/hr' : '/u'
   const [etat, setEtat] = useState<'idle' | 'envoi' | 'ok' | 'erreur'>('idle')
   const [message, setMessage] = useState('')
 
@@ -113,7 +114,7 @@ export default function ShiftCard({
         </p>
       </div>
       <div style={{ textAlign: 'right' }}>
-        <div style={{ fontSize: 20, fontWeight: 800, color: '#4c5e42', letterSpacing: -0.5 }}>€{shift.hourlyRate}/u</div>
+        <div style={{ fontSize: 20, fontWeight: 800, color: '#4c5e42', letterSpacing: -0.5 }}>€{shift.hourlyRate}{parHeure}</div>
         {shift.totalAmount != null && (
           <div style={{ fontSize: 12.5, color: '#6b7268', fontWeight: 600 }}>
             {t('total')} : €{Math.round(shift.totalAmount)}
