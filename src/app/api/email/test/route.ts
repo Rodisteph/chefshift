@@ -27,15 +27,15 @@ export async function GET(req: NextRequest) {
   // Série complète de démonstration
   if (req.nextUrl.searchParams.get('mode') === 'mix') {
     const resultats: Record<string, boolean> = {}
-    const r1 = await emailNouvelleCandidature(to, 'demo', 'Chef de partie — avonddienst', 'Mark de Vries')
+    const r1 = await emailNouvelleCandidature(to, 'demo', 'Chef de partie avonddienst', 'Mark de Vries')
     resultats.candidature = r1.ok
-    const r2 = await emailShiftBevestigd(to, 'demo', 'Chef de partie — avonddienst', 'maandag 27 juli')
+    const r2 = await emailShiftBevestigd(to, 'demo', 'Chef de partie avonddienst', 'maandag 27 juli')
     resultats.shift_confirme = r2.ok
-    const r3 = await emailRappelShift(to, 'demo', 'Chef de partie — avonddienst', '24 uur', 'morgen om 18:00')
+    const r3 = await emailRappelShift(to, 'demo', 'Chef de partie avonddienst', '24 uur', 'morgen om 18:00')
     resultats.rappel_24h = r3.ok
-    const r4 = await emailRappelShift(to, 'demo', 'Chef de partie — avonddienst', '2 uur', 'vandaag om 18:00')
+    const r4 = await emailRappelShift(to, 'demo', 'Chef de partie avonddienst', '2 uur', 'vandaag om 18:00')
     resultats.rappel_2h = r4.ok
-    const r5 = await emailBetalingOntvangen(to, 'Chef de partie — avonddienst', 312.5)
+    const r5 = await emailBetalingOntvangen(to, 'Chef de partie avonddienst', 312.5)
     resultats.paiement = r5.ok
     return NextResponse.json({ ok: true, envoyes: Object.values(resultats).filter(Boolean).length, resultats })
   }
