@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { emailRappelShift } from '@/lib/email'
 import webpush from 'web-push'
 
 // Tables auto-créées : abonnements push + journal des rappels envoyés
@@ -39,21 +40,22 @@ export async function GET(req: NextRequest) {
     // trim + retrait du padding "=" éventuel (copier-coller)
     const pub = (process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || '').trim().replace(/=+$/, '')
     const priv = (process.env.VAPID_PRIVATE_KEY || '').trim().replace(/=+$/, '')
-    if (!pub || !priv) {
-      return NextResponse.json({ ok: false, reason: 'VAPID keys not configured' })
+    const vapidOk = !!(pub && priv)
+    if (vapidOk) {
+      webpush.setVapidDetails('mailto:info@chefshift.nl', pub, priv)
     }
-    webpush.setVapidDetails('mailto:info@chefshift.nl', pub, priv)
 
     await ensureTables()
 
     const maintenant = Date.now()
     const heure = 3600 * 1000
     const fenetres = [
-      { kind: 'H24', min: maintenant + 23.75 * heure, max: maintenant + 24.25 * heure, delai: '24 uur' },
-      { kind: 'H2', min: maintenant + 1.75 * heure, max: maintenant + 2.25 * heure, delai: '2 uur' },
+      { kind: 'H24', min: maintenant + 23.75 * heure, max: maintenant + 24.25 * heure, delai: '24 uur' as const },
+      { kind: 'H2', min: maintenant + 1.75 * heure, max: maintenant + 2.25 * heure, delai: '2 uur' as const },
     ]
 
     let envoyes = 0
+    let emails = 0
     let shiftsTrouves = 0
     const erreurs: string[] = []
 
@@ -73,28 +75,40 @@ export async function GET(req: NextRequest) {
         `
         if (deja.length > 0) continue
 
-        const subs: Sub[] = await prisma.$queryRaw`
-          SELECT endpoint, p256dh, auth FROM kok_push WHERE user_id = ${shift.chosenKokId}
-        `
+        const debut = new Date(shift.startTime).toLocaleString('nl-NL', {
+          weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit',
+        })
 
-        for (const s of subs) {
-          try {
-            await webpush.sendNotification(
-              { endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } },
-              JSON.stringify({
-                title: 'ChefShift',
-                body: `Herinnering: je shift "${shift.title}" begint over ${f.delai}.`,
-                url: '/dashboard',
-              })
-            )
-            envoyes++
-          } catch (e: any) {
-            erreurs.push(e?.message || 'push error')
-            // Abonnement mort : on le supprime
-            if (e?.statusCode === 404 || e?.statusCode === 410) {
-              await prisma.$executeRaw`DELETE FROM kok_push WHERE endpoint = ${s.endpoint}`
+        // 1. Notifications push
+        if (vapidOk) {
+          const subs: Sub[] = await prisma.$queryRaw`
+            SELECT endpoint, p256dh, auth FROM kok_push WHERE user_id = ${shift.chosenKokId}
+          `
+          for (const s of subs) {
+            try {
+              await webpush.sendNotification(
+                { endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } },
+                JSON.stringify({
+                  title: 'ChefShift',
+                  body: `Herinnering: je shift "${shift.title}" begint over ${f.delai}.`,
+                  url: '/dashboard',
+                })
+              )
+              envoyes++
+            } catch (e: any) {
+              erreurs.push(e?.message || 'push error')
+              if (e?.statusCode === 404 || e?.statusCode === 410) {
+                await prisma.$executeRaw`DELETE FROM kok_push WHERE endpoint = ${s.endpoint}`
+              }
             }
           }
+        }
+
+        // 2. Email de rappel au chef
+        const kok = await prisma.user.findUnique({ where: { id: shift.chosenKokId as string } })
+        if (kok?.email) {
+          const r = await emailRappelShift(kok.email, shift.id, shift.title, f.delai, debut)
+          if (r.ok) emails++
         }
 
         await prisma.$executeRaw`
@@ -109,7 +123,7 @@ export async function GET(req: NextRequest) {
     const compte: { n: bigint }[] = await prisma.$queryRaw`SELECT COUNT(*)::int AS n FROM kok_push`
     const abonnements = Number(compte[0]?.n || 0)
 
-    return NextResponse.json({ ok: true, envoyes, shiftsTrouves, abonnements, erreurs: erreurs.slice(0, 5) })
+    return NextResponse.json({ ok: true, envoyes, emails, shiftsTrouves, abonnements, erreurs: erreurs.slice(0, 5) })
   } catch (error: any) {
     return NextResponse.json(
       { ok: false, error: error?.message || 'Internal server error' },
