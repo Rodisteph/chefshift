@@ -83,7 +83,11 @@ export default function PushSetup() {
     try {
       const res = await fetch('/api/push/test', { method: 'POST' })
       const data = await res.json()
-      setTestMsg(data.ok ? t('push_test_sent') : t('push_test_none'))
+      if (data.ok) {
+        setTestMsg(t('push_test_sent'))
+      } else {
+        setTestMsg(data.erreur || data.error || t('push_test_none'))
+      }
     } catch {
       setTestMsg(t('push_test_none'))
     }
