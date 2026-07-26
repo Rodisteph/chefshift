@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react'
 import { useT, LangToggle } from '@/lib/i18n'
 import ShiftCard, { ShiftData } from '@/components/ShiftCard'
 import AnimStyles from '@/components/AnimStyles'
+import BarChart from '@/components/BarChart'
 import { Ico, IcoTile } from '@/components/Icons'
 
 const FONT = '"Sora","Inter","Helvetica Neue",Arial,sans-serif'
@@ -15,11 +16,23 @@ type SessionUser = {
   role?: string
 }
 
+type Stats = {
+  role: string
+  nbShifts?: number
+  nbCandidatures?: number
+  nbEmbauches?: number
+  nbAcceptees?: number
+  totalDepense?: number
+  totalGagne?: number
+  serie: { key: string; value: number }[]
+}
+
 export default function DashboardPage() {
-  const { t } = useT()
+  const { t, lang } = useT()
   const [user, setUser] = useState<SessionUser | null>(null)
   const [chargement, setChargement] = useState(true)
   const [shifts, setShifts] = useState<ShiftData[]>([])
+  const [stats, setStats] = useState<Stats | null>(null)
 
   useEffect(() => {
     async function charger() {
@@ -30,10 +43,16 @@ export default function DashboardPage() {
       }
       setUser(s.user)
       try {
-        const res = await fetch('/api/shifts')
-        if (res.ok) {
-          const data = await res.json()
+        const [resShifts, resStats] = await Promise.all([
+          fetch('/api/shifts'),
+          fetch('/api/stats'),
+        ])
+        if (resShifts.ok) {
+          const data = await resShifts.json()
           setShifts(data.shifts || [])
+        }
+        if (resStats.ok) {
+          setStats(await resStats.json())
         }
       } catch {}
       setChargement(false)
@@ -55,19 +74,28 @@ export default function DashboardPage() {
   }
 
   const estKok = user?.role === 'KOK'
-  const totalCandidatures = shifts.reduce((acc, s) => acc + (s._count?.applications || 0), 0)
+  const locale = lang === 'en' ? 'en-GB' : 'nl-NL'
 
-  const stats = estKok
+  // ===== Cartes de stats selon le rôle =====
+  const statsCartes = estKok
     ? [
         { c: String(shifts.length), l: t('stat_kok_1'), icone: 'brief' },
-        { c: '0', l: t('stat_kok_2'), icone: 'check' },
-        { c: '€0', l: t('stat_kok_3'), icone: 'bank' },
+        { c: String(stats?.nbCandidatures ?? 0), l: t('stat_kok_apps'), icone: 'users' },
+        { c: String(stats?.nbAcceptees ?? 0), l: t('stat_kok_accepted'), icone: 'check' },
+        { c: `€${Math.round(stats?.totalGagne ?? 0)}`, l: t('stat_earn_total'), icone: 'bank' },
       ]
     : [
-        { c: String(shifts.length), l: t('stat_hor_1'), icone: 'brief' },
-        { c: String(totalCandidatures), l: t('stat_hor_2'), icone: 'users' },
-        { c: '0', l: t('stat_hor_3'), icone: 'chef' },
+        { c: String(stats?.nbShifts ?? shifts.length), l: t('stat_hor_1'), icone: 'brief' },
+        { c: String(stats?.nbCandidatures ?? 0), l: t('stat_hor_2'), icone: 'users' },
+        { c: String(stats?.nbEmbauches ?? 0), l: t('stat_hor_3'), icone: 'chef' },
+        { c: `€${Math.round(stats?.totalDepense ?? 0)}`, l: t('stat_spend_total'), icone: 'bank' },
       ]
+
+  // ===== Série du graphique (labels localisés) =====
+  const serieGraph = (stats?.serie || []).map((m) => ({
+    label: new Date(m.key + '-02').toLocaleDateString(locale, { month: 'short' }),
+    value: m.value,
+  }))
 
   return (
     <main style={{ fontFamily: FONT, background: '#f6f7f2', color: '#23281f', minHeight: '100vh' }}>
@@ -125,16 +153,31 @@ export default function DashboardPage() {
         </p>
 
         {/* ===== Statistiques ===== */}
-        <div className="cs-fade cs-d2" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 20, marginBottom: 40 }}>
-          {stats.map((s) => (
-            <div key={s.l} className="cs-card" style={{ ...carte, display: 'flex', alignItems: 'center', gap: 16 }}>
-              <IcoTile n={s.icone} s={20} />
+        <div className="cs-fade cs-d2" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 18, marginBottom: 24 }}>
+          {statsCartes.map((s) => (
+            <div key={s.l} className="cs-card" style={{ ...carte, display: 'flex', alignItems: 'center', gap: 14, padding: 20 }}>
+              <IcoTile n={s.icone} s={19} taille={42} />
               <div>
-                <div style={{ fontSize: 27, fontWeight: 800, color: '#23281f', letterSpacing: -0.8 }}>{s.c}</div>
-                <div style={{ fontSize: 13, color: '#6b7268', fontWeight: 600 }}>{s.l}</div>
+                <div style={{ fontSize: 25, fontWeight: 800, color: '#23281f', letterSpacing: -0.8 }}>{s.c}</div>
+                <div style={{ fontSize: 12.5, color: '#6b7268', fontWeight: 600 }}>{s.l}</div>
               </div>
             </div>
           ))}
+        </div>
+
+        {/* ===== Graphique budget / revenus ===== */}
+        <div className="cs-fade cs-d3 cs-card" style={{ ...carte, marginBottom: 40 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
+            <IcoTile n="bank" s={18} taille={40} />
+            <h2 style={{ fontSize: 17, fontWeight: 800, letterSpacing: -0.4 }}>
+              {estKok ? t('chart_earn') : t('chart_spend')}
+            </h2>
+          </div>
+          {serieGraph.every((m) => m.value === 0) ? (
+            <p style={{ color: '#9aa39b', fontSize: 14, textAlign: 'center', padding: '30px 0' }}>{t('chart_empty')}</p>
+          ) : (
+            <BarChart data={serieGraph} />
+          )}
         </div>
 
         {/* ===== Action principale ===== */}
