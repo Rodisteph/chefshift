@@ -13,7 +13,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
 
     const key = process.env.STRIPE_SECRET_KEY
     if (!key) {
-      return NextResponse.json({ error: 'Stripe not configured (STRIPE_SECRET_KEY manquante)' }, { status: 500 })
+      return NextResponse.json({ error: 'Stripe not configured' }, { status: 500 })
     }
     const stripe = new Stripe(key.trim())
 
@@ -24,11 +24,17 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     if (!shift || shift.horecaId !== session.user.id) {
       return NextResponse.json({ error: 'Not found' }, { status: 404 })
     }
-    if (shift.status !== 'CONFIRMED') {
+    if (shift.status !== 'CONFIRMED' && shift.status !== 'COMPLETED') {
       return NextResponse.json({ error: 'Shift not confirmed' }, { status: 400 })
     }
     if (shift.invoice?.status === 'PAID') {
       return NextResponse.json({ error: 'Already paid' }, { status: 400 })
+    }
+
+    // ===== Le shift doit être terminé avant le paiement =====
+    const aujourdhui = new Date(new Date().toDateString())
+    if (new Date(shift.date) >= aujourdhui) {
+      return NextResponse.json({ error: 'Shift not finished yet' }, { status: 400 })
     }
 
     // ===== Calcul du montant =====
@@ -97,7 +103,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
       return NextResponse.json({ url: checkout.url })
     } catch (stripeError: any) {
       return NextResponse.json(
-        { error: `Stripe: ${stripeError?.message || 'erreur inconnue'}` },
+        { error: `Stripe: ${stripeError?.message || 'unknown error'}` },
         { status: 500 }
       )
     }

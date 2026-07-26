@@ -3,6 +3,17 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 
+// Table banque auto-créée (pas de migration nécessaire)
+async function ensureBankTable() {
+  await prisma.$executeRaw`
+    CREATE TABLE IF NOT EXISTS kok_bank (
+      kok_id TEXT PRIMARY KEY,
+      iban TEXT,
+      updated_at TIMESTAMP DEFAULT now()
+    )
+  `
+}
+
 export async function GET() {
   try {
     const session = await getServerSession(authOptions)
@@ -13,7 +24,16 @@ export async function GET() {
       include: { workExperience: { orderBy: { fromDate: 'desc' } } },
     })
 
-    return NextResponse.json({ profile })
+    let iban = ''
+    if (profile) {
+      await ensureBankTable()
+      const rows: { iban: string }[] = await prisma.$queryRaw`
+        SELECT iban FROM kok_bank WHERE kok_id = ${profile.id}
+      `
+      iban = rows[0]?.iban || ''
+    }
+
+    return NextResponse.json({ profile, iban })
   } catch (error) {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
@@ -30,7 +50,7 @@ export async function PUT(req: NextRequest) {
       functions, specialties, description,
       haccpCertified, svhCertified, svhLevel,
       hourlyRateMin, hourlyRateMax,
-      workExperience,
+      workExperience, iban,
     } = body
 
     const data = {
@@ -79,12 +99,21 @@ export async function PUT(req: NextRequest) {
       })
     }
 
+    // ===== IBAN (table auto-créée) =====
+    await ensureBankTable()
+    const ibanPropre = (iban || '').replace(/\s+/g, ' ').trim()
+    await prisma.$executeRaw`
+      INSERT INTO kok_bank (kok_id, iban, updated_at)
+      VALUES (${profile.id}, ${ibanPropre}, now())
+      ON CONFLICT (kok_id) DO UPDATE SET iban = ${ibanPropre}, updated_at = now()
+    `
+
     const updated = await prisma.kokProfile.findUnique({
       where: { userId: session.user.id },
       include: { workExperience: { orderBy: { fromDate: 'desc' } } },
     })
 
-    return NextResponse.json({ profile: updated })
+    return NextResponse.json({ profile: updated, iban: ibanPropre })
   } catch (error) {
     console.error(error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
