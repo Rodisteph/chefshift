@@ -1,3 +1,8 @@
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
+}
+
 export const metadata = {
   title: 'ChefShift NL - ZZP-koks & Horeca',
   description: 'Platform voor ZZP-koks en horeca in Nederland',

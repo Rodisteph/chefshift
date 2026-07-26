@@ -41,7 +41,7 @@ export default function LoginPage() {
       </nav>
 
       <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
-        <div className="cs-pop" style={{
+        <div className="cs-pop cs-auth" style={{
           background: '#fff', width: '100%', maxWidth: 440, padding: 42,
           borderRadius: 22, border: '1px solid #eceee3',
           boxShadow: '0 18px 44px -16px rgba(46,52,43,0.18)',

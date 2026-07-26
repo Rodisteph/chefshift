@@ -56,6 +56,19 @@ export default function AnimStyles() {
       }
       input[type="checkbox"] { accent-color: #5f7052; }
 
+      /* ===== Mobile (téléphone) ===== */
+      @media (max-width: 640px) {
+        input, textarea, select { font-size: 16px !important; }
+        .cs-hide-mob { display: none !important; }
+        .cs-end { text-align: left !important; width: 100%; }
+        .cs-nav { padding: 11px 16px !important; }
+        .cs-wrap { padding: 32px 16px !important; }
+        .cs-sec { padding: 60px 18px !important; }
+        .cs-sec2 { padding: 0 18px 60px !important; }
+        .cs-hero-pad { padding: 0 18px 76px !important; }
+        .cs-auth { padding: 30px 22px !important; }
+      }
+
       @media (prefers-reduced-motion: reduce) {
         .cs-fade, .cs-pop, .cs-heroimg { animation: none !important; opacity: 1 !important; }
       }
