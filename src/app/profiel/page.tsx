@@ -45,6 +45,7 @@ export default function ProfielPage() {
   const [hourlyRateMin, setHourlyRateMin] = useState('')
   const [hourlyRateMax, setHourlyRateMax] = useState('')
   const [description, setDescription] = useState('')
+  const [iban, setIban] = useState('')
   const [exps, setExps] = useState<Exp[]>([])
 
   useEffect(() => {
@@ -57,6 +58,7 @@ export default function ProfielPage() {
       const res = await fetch('/api/profile')
       if (res.ok) {
         const data = await res.json()
+        setIban(data.iban || '')
         const p = data.profile
         if (p) {
           setFirstName(p.firstName || '')
@@ -107,7 +109,7 @@ export default function ProfielPage() {
           firstName, lastName, dateOfBirth, city, yearsExperience,
           functions, specialties, description,
           haccpCertified, svhCertified, svhLevel,
-          hourlyRateMin, hourlyRateMax,
+          hourlyRateMin, hourlyRateMax, iban,
           workExperience: exps.map((w) => ({
             ...w,
             fromDate: w.fromDate ? w.fromDate + '-01' : '',
@@ -260,6 +262,19 @@ export default function ProfielPage() {
             <input type="number" min="10" step="0.5" value={hourlyRateMax} onChange={(e) => setHourlyRateMax(e.target.value)} placeholder={t('max')} style={{ ...champ, width: 110 }} />
             <span style={{ color: '#6b7268', fontSize: 14 }}>€/u</span>
           </div>
+        </div>
+
+        {/* ===== Coordonnées bancaires ===== */}
+        <div className="cs-card" style={section}>
+          <div style={enteteSection}>
+            <IcoTile n="bank" s={18} taille={40} />
+            <h2 style={titreSection}>{t('bank_title')}</h2>
+          </div>
+          <label style={etiquette}>{t('field_iban')}</label>
+          <input
+            value={iban} onChange={(e) => setIban(e.target.value)}
+            placeholder="NL91 ABNA 0417 1643 00" style={{ ...champ, maxWidth: 380 }}
+          />
         </div>
 
         {/* ===== Description ===== */}

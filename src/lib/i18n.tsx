@@ -206,6 +206,9 @@ const dict = {
     pay_to_pay: 'Te betalen',
     pay_incl_vat: 'incl. 9% btw',
     pay_paid_badge: 'Betaald',
+    pay_after: 'Betalen kan zodra de shift is afgerond.',
+    bank_title: 'Bankgegevens',
+    field_iban: 'IBAN (voor uitbetaling van je shifts)',
   },
   en: {
     nav_login: 'Log in',
@@ -366,6 +369,9 @@ const dict = {
     pay_to_pay: 'Amount due',
     pay_incl_vat: 'incl. 9% VAT',
     pay_paid_badge: 'Paid',
+    pay_after: 'Payment becomes available once the shift is completed.',
+    bank_title: 'Bank details',
+    field_iban: 'IBAN (for your shift payouts)',
   },
 } as const
 
