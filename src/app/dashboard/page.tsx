@@ -102,7 +102,7 @@ export default function DashboardPage() {
     <main style={{ fontFamily: FONT, background: '#f6f7f2', color: '#23281f', minHeight: '100vh' }}>
       <AnimStyles />
       {/* ===== Barre de navigation ===== */}
-      <nav style={{
+      <nav className="cs-nav" style={{
         background: 'rgba(255,255,255,0.88)', backdropFilter: 'blur(12px)',
         borderBottom: '1px solid #e8ebe0',
         padding: '13px 28px', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
@@ -118,7 +118,7 @@ export default function DashboardPage() {
               <Ico n="user" s={15} /> {t('nav_profile')}
             </a>
           )}
-          <span style={{ fontSize: 13.5, color: '#6b7268', fontWeight: 500 }}>{user?.email}</span>
+          <span className="cs-hide-mob" style={{ fontSize: 13.5, color: '#6b7268', fontWeight: 500 }}>{user?.email}</span>
           <span style={{
             background: '#eef2e6', color: '#4c5e42', fontSize: 11, fontWeight: 800,
             padding: '5px 12px', borderRadius: 999, textTransform: 'uppercase', letterSpacing: 1,
@@ -139,7 +139,7 @@ export default function DashboardPage() {
         </div>
       </nav>
 
-      <div style={{ maxWidth: 1100, margin: '0 auto', padding: '48px 24px' }}>
+      <div className="cs-wrap" style={{ maxWidth: 1100, margin: '0 auto', padding: '48px 24px' }}>
         <h1 className="cs-fade" style={{ fontSize: 'clamp(28px, 4vw, 40px)', fontWeight: 800, letterSpacing: -1.4, marginBottom: 8 }}>
           {t('dash_welcome')}, {user?.name || 'chef'}
         </h1>
@@ -246,7 +246,7 @@ export default function DashboardPage() {
                 key={shift.id}
                 shift={shift}
                 showApply={estKok}
-                detailHref={!estKok ? `/shifts/${shift.id}` : undefined}
+                detailHref={`/shifts/${shift.id}`}
               />
             ))}
           </div>
