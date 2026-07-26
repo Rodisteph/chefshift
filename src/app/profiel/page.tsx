@@ -348,7 +348,7 @@ export default function ProfielPage() {
           </div>
           <textarea
             value={description} onChange={(e) => setDescription(e.target.value)}
-            rows={4} placeholder="Vertel kort wie je bent, je stijl, je passie..."
+            rows={4} placeholder={t('desc_placeholder')}
             style={{ ...champ, resize: 'vertical' }}
           />
         </div>
@@ -376,11 +376,11 @@ export default function ProfielPage() {
                 <div style={{ display: 'flex', gap: 12, marginBottom: 12, flexWrap: 'wrap' }}>
                   <div style={{ flex: 1, minWidth: 160 }}>
                     <label style={etiquette}>{t('work_function')}</label>
-                    <input value={w.function} onChange={(e) => majExp(i, 'function', e.target.value)} required placeholder="Bijv. Garde-manger" style={champ} />
+                    <input value={w.function} onChange={(e) => majExp(i, 'function', e.target.value)} required placeholder={t('work_function_ph')} style={champ} />
                   </div>
                   <div style={{ flex: 1, minWidth: 160 }}>
                     <label style={etiquette}>{t('work_company')}</label>
-                    <input value={w.companyName} onChange={(e) => majExp(i, 'companyName', e.target.value)} placeholder="Restaurant ..." style={champ} />
+                    <input value={w.companyName} onChange={(e) => majExp(i, 'companyName', e.target.value)} placeholder={t('work_company_ph')} style={champ} />
                   </div>
                 </div>
                 <div style={{ display: 'flex', gap: 12, marginBottom: 12, flexWrap: 'wrap' }}>
