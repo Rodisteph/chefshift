@@ -91,6 +91,8 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
   const [shift, setShift] = useState<ShiftDetail | null>(null)
   const [chargement, setChargement] = useState(true)
   const [role, setRole] = useState('')
+  const [dejaPostule, setDejaPostule] = useState(false)
+  const [postulation, setPostulation] = useState(false)
   const [choix, setChoix] = useState('')
   const [msgPay, setMsgPay] = useState('')
   const [paiement, setPaiement] = useState(false)
@@ -126,9 +128,30 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
       }
       setRole(s.user.role || '')
       charger()
+      if (s.user.role === 'KOK') {
+        fetch('/api/applications/mine')
+          .then((r) => r.json())
+          .then((d) => {
+            if (d?.shiftIds && d.shiftIds.indexOf(id) >= 0) setDejaPostule(true)
+          })
+          .catch(() => {})
+      }
     })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id])
+
+  async function postuler() {
+    setPostulation(true)
+    try {
+      const res = await fetch(`/api/shifts/${id}/apply`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({}),
+      })
+      if (res.status === 201 || res.status === 400) setDejaPostule(true)
+    } catch {}
+    setPostulation(false)
+  }
 
   async function choisir(appId: string, kokId: string) {
     setChoix(appId)
@@ -386,6 +409,30 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
                     <Ico n="card" s={13} /> {t('pay_paid_badge')}
                   </span>
                 )}
+                {role === 'KOK' && shift.status === 'OPEN' && (
+                  <div style={{ marginTop: 10 }}>
+                    {dejaPostule ? (
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: '#4c5e42', fontWeight: 700, fontSize: 13.5 }}>
+                        <Ico n="check" s={15} /> {t('applied')}
+                      </span>
+                    ) : (
+                      <button
+                        onClick={postuler}
+                        disabled={postulation}
+                        className="cs-btn"
+                        style={{
+                          background: 'linear-gradient(135deg,#647a55,#46553c)', color: '#fff', border: 'none',
+                          borderRadius: 999, padding: '11px 26px', fontWeight: 700, fontSize: 14,
+                          cursor: postulation ? 'wait' : 'pointer', fontFamily: FONT,
+                          opacity: postulation ? 0.7 : 1,
+                          boxShadow: '0 8px 18px -8px rgba(70,85,60,.5)',
+                        }}
+                      >
+                        {postulation ? t('apply_sending') : t('apply_btn')}
+                      </button>
+                    )}
+                  </div>
+                )}
                 {peutModifier && (
                   <div style={{ marginTop: 10 }}>
                     <button
@@ -465,7 +512,8 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
           </p>
         )}
 
-        {/* ===== Candidatures ===== */}
+        {/* ===== Candidatures (horeca uniquement) ===== */}
+        {role === 'HORECA' && (<>
         <h2 className="cs-fade cs-d2" style={{ fontSize: 22, fontWeight: 800, marginBottom: 18, letterSpacing: -0.6 }}>
           {t('applicants')} ({shift.applications.length})
         </h2>
@@ -625,6 +673,7 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
             })}
           </div>
         )}
+        </>)}
       </div>
     </main>
   )
