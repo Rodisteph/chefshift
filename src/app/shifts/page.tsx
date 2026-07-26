@@ -82,7 +82,12 @@ export default function ShiftsPage() {
         ) : (
           <div style={{ display: 'grid', gap: 16 }}>
             {shifts.map((shift) => (
-              <ShiftCard key={shift.id} shift={shift} showApply={estKok} />
+              <ShiftCard
+                key={shift.id}
+                shift={shift}
+                showApply={estKok}
+                detailHref={!estKok ? `/shifts/${shift.id}` : undefined}
+              />
             ))}
           </div>
         )}

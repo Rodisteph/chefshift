@@ -14,7 +14,17 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
         horeca: { include: { horecaProfile: true } },
         chosenKok: { include: { kokProfile: true } },
         applications: {
-          include: { kok: { include: { kokProfile: true } } },
+          include: {
+            kok: {
+              include: {
+                kokProfile: {
+                  include: {
+                    workExperience: { orderBy: { fromDate: 'desc' } },
+                  },
+                },
+              },
+            },
+          },
           orderBy: { submittedAt: 'desc' },
         },
       },

@@ -19,7 +19,15 @@ export type ShiftData = {
   _count?: { applications: number }
 }
 
-export default function ShiftCard({ shift, showApply }: { shift: ShiftData; showApply?: boolean }) {
+export default function ShiftCard({
+  shift,
+  showApply,
+  detailHref,
+}: {
+  shift: ShiftData
+  showApply?: boolean
+  detailHref?: string
+}) {
   const { t, lang } = useT()
   const [etat, setEtat] = useState<'idle' | 'envoi' | 'ok' | 'erreur'>('idle')
   const [msgErreur, setMsgErreur] = useState('')
@@ -53,6 +61,14 @@ export default function ShiftCard({ shift, showApply }: { shift: ShiftData; show
     }
   }
 
+  const titre = detailHref ? (
+    <a href={detailHref} style={{ color: '#2e342b', textDecoration: 'none' }}>
+      {shift.title} <span style={{ color: '#5f7052', fontSize: 14 }}>→</span>
+    </a>
+  ) : (
+    shift.title
+  )
+
   return (
     <div className="cs-card" style={{
       background: '#fff', borderRadius: 18, boxShadow: '0 4px 14px rgba(46,52,43,0.06)',
@@ -61,13 +77,21 @@ export default function ShiftCard({ shift, showApply }: { shift: ShiftData; show
     }}>
       <div style={{ flex: 1, minWidth: 240 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginBottom: 4 }}>
-          <h3 style={{ fontSize: 18, fontWeight: 800, color: '#2e342b' }}>{shift.title}</h3>
+          <h3 style={{ fontSize: 18, fontWeight: 800 }}>{titre}</h3>
           {shift.isUrgent && (
             <span style={{
               background: '#fef2f2', color: '#b91c1c', fontSize: 11, fontWeight: 800,
               padding: '4px 10px', borderRadius: 999, textTransform: 'uppercase', letterSpacing: 1,
             }}>
               🔥 {t('urgent')}
+            </span>
+          )}
+          {shift.status === 'CONFIRMED' && (
+            <span style={{
+              background: '#eef2e7', color: '#5f7052', fontSize: 11, fontWeight: 800,
+              padding: '4px 10px', borderRadius: 999, textTransform: 'uppercase', letterSpacing: 1,
+            }}>
+              ✓ {t('status_confirmed')}
             </span>
           )}
         </div>
@@ -98,7 +122,7 @@ export default function ShiftCard({ shift, showApply }: { shift: ShiftData; show
             {t('total')} €{Math.round(shift.totalAmount)}
           </div>
         )}
-        {showApply && (
+        {showApply && shift.status !== 'CONFIRMED' && (
           <button
             onClick={postuler}
             disabled={etat === 'envoi' || etat === 'ok'}
