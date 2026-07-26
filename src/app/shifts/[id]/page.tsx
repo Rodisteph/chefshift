@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useT, LangToggle } from '@/lib/i18n'
+import { useT, LangToggle, afficherPoste, afficherSpecialite } from '@/lib/i18n'
 import AnimStyles from '@/components/AnimStyles'
 
 type Kandidaat = {
@@ -283,7 +283,7 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
                       <h4 style={titreSection}>🔪 {t('functions_title')}</h4>
                       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                         {p.functions.map((f) => (
-                          <span key={f} style={badgePoste}>{f}</span>
+                          <span key={f} style={badgePoste}>{afficherPoste(f, lang)}</span>
                         ))}
                       </div>
                     </div>
@@ -295,7 +295,7 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
                       <h4 style={titreSection}>⭐ {t('specialties_title')}</h4>
                       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                         {p.specialties.map((s) => (
-                          <span key={s} style={badgeSauge}>{s}</span>
+                          <span key={s} style={badgeSauge}>{afficherSpecialite(s, lang)}</span>
                         ))}
                       </div>
                     </div>
@@ -329,7 +329,7 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
                           <div key={w.id} style={{ borderLeft: '3px solid #e4e9dd', paddingLeft: 12 }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8, fontSize: 14 }}>
                               <span>
-                                <strong>{w.function}</strong>
+                                <strong>{afficherPoste(w.function, lang)}</strong>
                                 {w.companyName && <span style={{ color: '#6b7268' }}> · {w.companyName}</span>}
                                 {w.location && <span style={{ color: '#9aa39b' }}> · {w.location}</span>}
                               </span>

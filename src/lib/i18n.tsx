@@ -12,6 +12,40 @@ function readLang(): Lang {
   return l === 'en' ? 'en' : 'nl'
 }
 
+// Traductions anglaises des spécialités (stockées en néerlandais en base)
+const SPEC_EN: Record<string, string> = {
+  'Frans': 'French',
+  'Italiaans': 'Italian',
+  'Aziatisch': 'Asian',
+  'Fusion': 'Fusion',
+  'Vegetarisch / Vegan': 'Vegetarian / Vegan',
+  'Vis & schaaldieren': 'Fish & seafood',
+  'Grill / BBQ': 'Grill / BBQ',
+  'Fine dining': 'Fine dining',
+  'Brasserie': 'Brasserie',
+  'Banket': 'Banquet',
+}
+
+// Traductions anglaises des postes / parties
+const POSTE_EN: Record<string, string> = {
+  'Garde-manger': 'Garde-manger',
+  'Rôtisseur': 'Roast chef',
+  'Poissonnier': 'Fish chef',
+  'Saucier': 'Sauce chef',
+  'Pâtisserie': 'Pastry',
+  'Garnituur': 'Garnish',
+  'Entremetier': 'Entremetier',
+  'Banqueting': 'Banqueting',
+}
+
+export function afficherSpecialite(valeur: string, lang: Lang): string {
+  return lang === 'en' ? (SPEC_EN[valeur] || valeur) : valeur
+}
+
+export function afficherPoste(valeur: string, lang: Lang): string {
+  return lang === 'en' ? (POSTE_EN[valeur] || valeur) : valeur
+}
+
 const dict = {
   nl: {
     nav_login: 'Inloggen',
@@ -134,7 +168,6 @@ const dict = {
     functions_title: 'Functies & parties',
     specialties_title: 'Specialiteiten',
     rate_range: 'Gewenst tarief',
-    // Profielpagina
     profile_title: 'Mijn profiel',
     profile_sub: 'Houd je profiel up-to-date — zo zien horecazaken jouw skills.',
     pers_title: 'Persoonlijke gegevens',
