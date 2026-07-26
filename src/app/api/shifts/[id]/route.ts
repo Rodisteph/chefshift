@@ -13,6 +13,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
       include: {
         horeca: { include: { horecaProfile: true } },
         chosenKok: { include: { kokProfile: true } },
+        invoice: true,
         applications: {
           include: {
             kok: {
