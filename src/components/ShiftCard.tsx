@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import { useT } from '@/lib/i18n'
 
 export type ShiftData = {
@@ -20,6 +21,8 @@ export type ShiftData = {
 
 export default function ShiftCard({ shift, showApply }: { shift: ShiftData; showApply?: boolean }) {
   const { t, lang } = useT()
+  const [etat, setEtat] = useState<'idle' | 'envoi' | 'ok' | 'erreur'>('idle')
+  const [msgErreur, setMsgErreur] = useState('')
   const locale = lang === 'en' ? 'en-GB' : 'nl-NL'
 
   const dateObj = new Date(shift.date)
@@ -28,11 +31,33 @@ export default function ShiftCard({ shift, showApply }: { shift: ShiftData; show
   const end = new Date(shift.endTime).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })
   const restaurant = shift.horeca?.horecaProfile?.companyName
 
+  async function postuler() {
+    setEtat('envoi')
+    setMsgErreur('')
+    try {
+      const res = await fetch(`/api/shifts/${shift.id}/apply`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({}),
+      })
+      if (res.ok) {
+        setEtat('ok')
+      } else {
+        const data = await res.json().catch(() => ({}))
+        setMsgErreur(data?.error === 'Already applied' ? t('apply_already') : t('apply_fail'))
+        setEtat('erreur')
+      }
+    } catch {
+      setMsgErreur(t('apply_fail'))
+      setEtat('erreur')
+    }
+  }
+
   return (
-    <div style={{
+    <div className="cs-card" style={{
       background: '#fff', borderRadius: 18, boxShadow: '0 4px 14px rgba(46,52,43,0.06)',
       padding: 24, display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-      flexWrap: 'wrap', gap: 16, transition: 'box-shadow 0.2s, transform 0.2s',
+      flexWrap: 'wrap', gap: 16,
     }}>
       <div style={{ flex: 1, minWidth: 240 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginBottom: 4 }}>
@@ -60,6 +85,9 @@ export default function ShiftCard({ shift, showApply }: { shift: ShiftData; show
             {shift._count.applications} {t('applications')}
           </p>
         )}
+        {etat === 'erreur' && (
+          <p style={{ fontSize: 13, color: '#b91c1c', marginTop: 6, fontWeight: 600 }}>{msgErreur}</p>
+        )}
       </div>
       <div style={{ textAlign: 'right' }}>
         <div style={{ fontSize: 24, fontWeight: 800, color: '#5f7052' }}>
@@ -71,11 +99,20 @@ export default function ShiftCard({ shift, showApply }: { shift: ShiftData; show
           </div>
         )}
         {showApply && (
-          <button style={{
-            marginTop: 6, background: '#5f7052', color: '#fff', border: 'none',
-            borderRadius: 999, padding: '10px 22px', fontWeight: 700, fontSize: 13.5, cursor: 'pointer',
-          }}>
-            {t('apply_btn')}
+          <button
+            onClick={postuler}
+            disabled={etat === 'envoi' || etat === 'ok'}
+            className="cs-btn"
+            style={{
+              marginTop: 6,
+              background: etat === 'ok' ? '#8a9a7b' : '#5f7052',
+              color: '#fff', border: 'none', borderRadius: 999,
+              padding: '10px 22px', fontWeight: 700, fontSize: 13.5,
+              cursor: etat === 'envoi' || etat === 'ok' ? 'default' : 'pointer',
+              opacity: etat === 'envoi' ? 0.7 : 1,
+            }}
+          >
+            {etat === 'envoi' ? t('apply_sending') : etat === 'ok' ? t('applied') : t('apply_btn')}
           </button>
         )}
       </div>

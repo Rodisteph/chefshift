@@ -1,13 +1,26 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import { useT, LangToggle } from '@/lib/i18n'
+import AnimStyles from '@/components/AnimStyles'
 
 export default function HomePage() {
   const { t } = useT()
+  const [user, setUser] = useState<any>(null)
+  const [charge, setCharge] = useState(false)
   const hero = 'https://kimi-web-img.moonshot.cn/img/plus.unsplash.com/035b02474f33aabd5af6cf4d2ff2a0971fc1b816'
+
+  useEffect(() => {
+    fetch('/api/auth/session')
+      .then((r) => r.json())
+      .then((s) => setUser(s?.user || null))
+      .catch(() => {})
+      .finally(() => setCharge(true))
+  }, [])
 
   return (
     <main style={{ fontFamily: '"Helvetica Neue", Arial, sans-serif', background: '#f7f5f0', color: '#2e342b', minHeight: '100vh' }}>
+      <AnimStyles />
 
       {/* ===== Navigation flottante ===== */}
       <nav style={{
@@ -23,11 +36,31 @@ export default function HomePage() {
         </a>
         <div style={{ display: 'flex', gap: 24, alignItems: 'center' }}>
           <LangToggle clair />
-          <a href="/login" style={{ color: 'rgba(255,255,255,0.92)', fontWeight: 600, fontSize: 14, textDecoration: 'none' }}>{t('nav_login')}</a>
-          <a href="/register" style={{
-            background: '#5f7052', color: '#fff', padding: '10px 20px',
-            borderRadius: 999, fontWeight: 700, fontSize: 14, textDecoration: 'none',
-          }}>{t('nav_register')}</a>
+          {charge && user ? (
+            <>
+              <span style={{ color: 'rgba(255,255,255,0.85)', fontSize: 13.5, fontWeight: 600 }}>
+                {user.email}
+              </span>
+              <a href="/dashboard" className="cs-btn" style={{
+                background: '#5f7052', color: '#fff', padding: '10px 20px',
+                borderRadius: 999, fontWeight: 700, fontSize: 14, textDecoration: 'none',
+              }}>
+                {t('nav_dashboard')} →
+              </a>
+            </>
+          ) : (
+            <>
+              <a href="/login" className="cs-nav-link" style={{ color: 'rgba(255,255,255,0.92)', fontWeight: 600, fontSize: 14, textDecoration: 'none' }}>
+                {t('nav_login')}
+              </a>
+              <a href="/register" className="cs-btn" style={{
+                background: '#5f7052', color: '#fff', padding: '10px 20px',
+                borderRadius: 999, fontWeight: 700, fontSize: 14, textDecoration: 'none',
+              }}>
+                {t('nav_register')}
+              </a>
+            </>
+          )}
         </div>
       </nav>
 
@@ -37,24 +70,32 @@ export default function HomePage() {
           style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(30,38,27,0.6), rgba(30,38,27,0.05) 55%)' }} />
         <div style={{ position: 'relative', zIndex: 2, width: '100%', maxWidth: 1200, margin: '0 auto', padding: '0 24px 90px', color: '#fff' }}>
-          <span style={{
+          <span className="cs-fade" style={{
             display: 'inline-block', background: 'rgba(255,255,255,0.16)', backdropFilter: 'blur(8px)',
             border: '1px solid rgba(255,255,255,0.3)', padding: '8px 18px', borderRadius: 999,
             fontSize: 13, fontWeight: 700, letterSpacing: 2, textTransform: 'uppercase', marginBottom: 22,
           }}>
             {t('hero_badge')}
           </span>
-          <h1 style={{ fontSize: 'clamp(42px, 7vw, 84px)', fontWeight: 800, lineHeight: 1.02, letterSpacing: -1.5, maxWidth: '13ch', marginBottom: 22 }}>
+          <h1 className="cs-fade cs-d1" style={{ fontSize: 'clamp(42px, 7vw, 84px)', fontWeight: 800, lineHeight: 1.02, letterSpacing: -1.5, maxWidth: '13ch', marginBottom: 22 }}>
             {t('hero_title_a')} <span style={{ color: '#e4e9dd' }}>{t('hero_title_b')}</span>
           </h1>
-          <p style={{ fontSize: 18, maxWidth: '46ch', opacity: 0.92, marginBottom: 34 }}>{t('hero_sub')}</p>
-          <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
-            <a href="/register" style={{ background: '#5f7052', color: '#fff', padding: '15px 32px', borderRadius: 999, fontWeight: 700, fontSize: 15, textDecoration: 'none' }}>
-              {t('hero_cta1')}
-            </a>
-            <a href="/login" style={{ background: 'rgba(255,255,255,0.16)', color: '#fff', border: '1px solid rgba(255,255,255,0.4)', backdropFilter: 'blur(6px)', padding: '15px 32px', borderRadius: 999, fontWeight: 700, fontSize: 15, textDecoration: 'none' }}>
-              {t('hero_cta2')}
-            </a>
+          <p className="cs-fade cs-d2" style={{ fontSize: 18, maxWidth: '46ch', opacity: 0.92, marginBottom: 34 }}>{t('hero_sub')}</p>
+          <div className="cs-fade cs-d3" style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
+            {charge && user ? (
+              <a href="/dashboard" className="cs-btn" style={{ background: '#5f7052', color: '#fff', padding: '15px 32px', borderRadius: 999, fontWeight: 700, fontSize: 15, textDecoration: 'none' }}>
+                {t('nav_dashboard')} →
+              </a>
+            ) : (
+              <>
+                <a href="/register" className="cs-btn" style={{ background: '#5f7052', color: '#fff', padding: '15px 32px', borderRadius: 999, fontWeight: 700, fontSize: 15, textDecoration: 'none' }}>
+                  {t('hero_cta1')}
+                </a>
+                <a href="/login" className="cs-btn" style={{ background: 'rgba(255,255,255,0.16)', color: '#fff', border: '1px solid rgba(255,255,255,0.4)', backdropFilter: 'blur(6px)', padding: '15px 32px', borderRadius: 999, fontWeight: 700, fontSize: 15, textDecoration: 'none' }}>
+                  {t('hero_cta2')}
+                </a>
+              </>
+            )}
           </div>
         </div>
       </header>
@@ -72,7 +113,7 @@ export default function HomePage() {
             { n: '2', t: t('step2_t'), d: t('step2_d') },
             { n: '3', t: t('step3_t'), d: t('step3_d') },
           ].map((e) => (
-            <div key={e.n} style={{ background: '#fff', borderRadius: 18, padding: '34px 28px', boxShadow: '0 4px 14px rgba(46,52,43,0.05)' }}>
+            <div key={e.n} className="cs-card" style={{ background: '#fff', borderRadius: 18, padding: '34px 28px', boxShadow: '0 4px 14px rgba(46,52,43,0.05)' }}>
               <div style={{ width: 46, height: 46, background: '#e4e9dd', color: '#5f7052', fontWeight: 800, fontSize: 19, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 18 }}>{e.n}</div>
               <h3 style={{ fontSize: 18, fontWeight: 800, marginBottom: 8 }}>{e.t}</h3>
               <p style={{ color: '#6b7268', fontSize: 14.5 }}>{e.d}</p>
@@ -93,7 +134,7 @@ export default function HomePage() {
             { icon: '✅', t: t('feat2_t'), d: t('feat2_d') },
             { icon: '🔒', t: t('feat3_t'), d: t('feat3_d') },
           ].map((c) => (
-            <div key={c.t} style={{ background: '#fff', borderRadius: 18, boxShadow: '0 4px 14px rgba(46,52,43,0.06)', padding: '30px 26px' }}>
+            <div key={c.t} className="cs-card" style={{ background: '#fff', borderRadius: 18, boxShadow: '0 4px 14px rgba(46,52,43,0.06)', padding: '30px 26px' }}>
               <div style={{ fontSize: 34, marginBottom: 14 }}>{c.icon}</div>
               <h3 style={{ fontSize: 19, fontWeight: 800, marginBottom: 8 }}>{c.t}</h3>
               <p style={{ color: '#6b7268', fontSize: 14.5 }}>{c.d}</p>
@@ -110,8 +151,8 @@ export default function HomePage() {
           <div style={{ position: 'relative', zIndex: 2 }}>
             <h2 style={{ fontSize: 'clamp(28px, 4vw, 44px)', fontWeight: 800, letterSpacing: -1, marginBottom: 14 }}>{t('banner_title')}</h2>
             <p style={{ opacity: 0.9, marginBottom: 30, fontSize: 17 }}>{t('banner_sub')}</p>
-            <a href="/register" style={{ display: 'inline-block', background: '#5f7052', color: '#fff', padding: '15px 32px', borderRadius: 999, fontWeight: 700, fontSize: 15, textDecoration: 'none' }}>
-              {t('banner_cta')}
+            <a href={charge && user ? '/dashboard' : '/register'} className="cs-btn" style={{ background: '#5f7052', color: '#fff', padding: '15px 32px', borderRadius: 999, fontWeight: 700, fontSize: 15, textDecoration: 'none' }}>
+              {charge && user ? t('nav_dashboard') : t('banner_cta')}
             </a>
           </div>
         </div>

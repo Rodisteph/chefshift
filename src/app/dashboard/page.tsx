@@ -4,6 +4,7 @@ import { signOut } from 'next-auth/react'
 import { useEffect, useState } from 'react'
 import { useT, LangToggle } from '@/lib/i18n'
 import ShiftCard, { ShiftData } from '@/components/ShiftCard'
+import AnimStyles from '@/components/AnimStyles'
 
 type SessionUser = {
   name?: string | null
@@ -54,6 +55,7 @@ export default function DashboardPage() {
 
   return (
     <main style={{ fontFamily: '"Helvetica Neue", Arial, sans-serif', background: '#f7f5f0', color: '#2e342b', minHeight: '100vh' }}>
+      <AnimStyles />
       {/* ===== Barre de navigation ===== */}
       <nav style={{
         background: '#fff', borderBottom: '1px solid #e4e9dd',
@@ -74,6 +76,7 @@ export default function DashboardPage() {
           </span>
           <button
             onClick={() => signOut({ callbackUrl: '/' })}
+            className="cs-btn"
             style={{
               background: 'none', border: '1.5px solid #e4e9dd', borderRadius: 999,
               padding: '8px 18px', fontWeight: 700, fontSize: 13.5, cursor: 'pointer', color: '#2e342b',
@@ -85,10 +88,10 @@ export default function DashboardPage() {
       </nav>
 
       <div style={{ maxWidth: 1100, margin: '0 auto', padding: '48px 24px' }}>
-        <h1 style={{ fontSize: 'clamp(28px, 4vw, 40px)', fontWeight: 800, letterSpacing: -1, marginBottom: 8 }}>
+        <h1 className="cs-fade" style={{ fontSize: 'clamp(28px, 4vw, 40px)', fontWeight: 800, letterSpacing: -1, marginBottom: 8 }}>
           {t('dash_welcome')}, {user?.name || 'chef'} 👋
         </h1>
-        <p style={{ color: '#6b7268', marginBottom: 40 }}>
+        <p className="cs-fade cs-d1" style={{ color: '#6b7268', marginBottom: 40 }}>
           {estKok
             ? t('dash_kok_sub')
             : user?.role === 'HORECA'
@@ -99,7 +102,7 @@ export default function DashboardPage() {
         </p>
 
         {/* ===== Statistiques ===== */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 20, marginBottom: 40 }}>
+        <div className="cs-fade cs-d2" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 20, marginBottom: 40 }}>
           {(estKok
             ? [
                 { c: String(shifts.length), l: t('stat_kok_1') },
@@ -112,7 +115,7 @@ export default function DashboardPage() {
                 { c: '0', l: t('stat_hor_3') },
               ]
           ).map((s) => (
-            <div key={s.l} style={carte}>
+            <div key={s.l} className="cs-card" style={carte}>
               <div style={{ fontSize: 32, fontWeight: 800, color: '#5f7052' }}>{s.c}</div>
               <div style={{ fontSize: 13.5, color: '#6b7268', fontWeight: 600 }}>{s.l}</div>
             </div>
@@ -120,7 +123,7 @@ export default function DashboardPage() {
         </div>
 
         {/* ===== Action principale ===== */}
-        <div style={{ ...carte, marginBottom: 40, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16 }}>
+        <div className="cs-fade cs-d3 cs-card" style={{ ...carte, marginBottom: 40, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16 }}>
           <div>
             <h2 style={{ fontSize: 20, fontWeight: 800, marginBottom: 6 }}>
               {estKok ? t('action_kok_t') : t('action_hor_t')}
@@ -131,6 +134,7 @@ export default function DashboardPage() {
           </div>
           <a
             href={estKok ? '/shifts' : '/shifts/new'}
+            className="cs-btn"
             style={{
               background: '#5f7052', color: '#fff', borderRadius: 999,
               padding: '13px 28px', fontWeight: 700, fontSize: 14.5, textDecoration: 'none',
@@ -152,7 +156,7 @@ export default function DashboardPage() {
           )}
         </div>
         {shifts.length === 0 ? (
-          <div style={{ ...carte, textAlign: 'center', padding: 48 }}>
+          <div className="cs-card" style={{ ...carte, textAlign: 'center', padding: 48 }}>
             <div style={{ fontSize: 40, marginBottom: 12 }}>🍳</div>
             <p style={{ color: '#6b7268', fontWeight: 600 }}>{t('empty_none')}</p>
           </div>
