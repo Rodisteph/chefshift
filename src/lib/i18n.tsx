@@ -199,6 +199,13 @@ const dict = {
     profile_save: 'Profiel opslaan',
     profile_saved: 'Profiel opgeslagen ✓',
     profile_fail: 'Opslaan mislukt. Probeer het opnieuw.',
+    pay_now: 'Betalen met iDEAL',
+    pay_starting: 'Doorsturen...',
+    pay_success: 'Betaling ontvangen! Deze shift is betaald.',
+    pay_error: 'Betaling kon niet worden gestart. Probeer het opnieuw.',
+    pay_to_pay: 'Te betalen',
+    pay_incl_vat: 'incl. 9% btw',
+    pay_paid_badge: 'Betaald',
   },
   en: {
     nav_login: 'Log in',
@@ -352,6 +359,13 @@ const dict = {
     profile_save: 'Save profile',
     profile_saved: 'Profile saved ✓',
     profile_fail: 'Save failed. Please try again.',
+    pay_now: 'Pay with iDEAL',
+    pay_starting: 'Redirecting...',
+    pay_success: 'Payment received! This shift is paid.',
+    pay_error: 'Payment could not be started. Please try again.',
+    pay_to_pay: 'Amount due',
+    pay_incl_vat: 'incl. 9% VAT',
+    pay_paid_badge: 'Paid',
   },
 } as const
 

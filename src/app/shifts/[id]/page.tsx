@@ -56,6 +56,7 @@ type ShiftDetail = {
   locationCity?: string | null
   status: string
   chosenKokId?: string | null
+  invoice?: { status: string; amountInclVat: number } | null
   applications: Kandidaat[]
 }
 
@@ -74,6 +75,9 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
   const [chargement, setChargement] = useState(true)
   const [erreur, setErreur] = useState('')
   const [choixEnCours, setChoixEnCours] = useState('')
+  const [role, setRole] = useState('')
+  const [betaald, setBetaald] = useState(false)
+  const [paiement, setPaiement] = useState<'idle' | 'envoi' | 'erreur'>('idle')
   const locale = lang === 'en' ? 'en-GB' : 'nl-NL'
 
   async function charger() {
@@ -81,6 +85,10 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
     if (!s?.user) {
       window.location.href = '/login'
       return
+    }
+    setRole(s.user.role)
+    if (typeof window !== 'undefined' && window.location.search.includes('betaald=1')) {
+      setBetaald(true)
     }
     const res = await fetch(`/api/shifts/${params.id}`)
     if (res.ok) {
@@ -110,6 +118,19 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
       }
     } catch {}
     setChoixEnCours('')
+  }
+
+  async function payer() {
+    setPaiement('envoi')
+    try {
+      const res = await fetch(`/api/shifts/${params.id}/pay`, { method: 'POST' })
+      const data = await res.json().catch(() => ({}))
+      if (res.ok && data.url) {
+        window.location.href = data.url
+        return
+      }
+    } catch {}
+    setPaiement('erreur')
   }
 
   const carte: React.CSSProperties = {
@@ -160,6 +181,8 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
   const start = new Date(shift.startTime).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })
   const end = new Date(shift.endTime).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })
   const confirme = shift.status === 'CONFIRMED'
+  const estPaye = shift.invoice?.status === 'PAID'
+  const montantDu = shift.invoice?.amountInclVat
 
   return (
     <main style={{ fontFamily: FONT, background: '#f6f7f2', color: '#23281f', minHeight: '100vh' }}>
@@ -182,6 +205,17 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
       </nav>
 
       <div style={{ maxWidth: 900, margin: '0 auto', padding: '48px 24px' }}>
+        {/* ===== Bandeau paiement réussi ===== */}
+        {betaald && (
+          <div className="cs-pop" style={{
+            ...carte, marginBottom: 24, background: '#f0f9f0', border: '1px solid #bfe3bf',
+            display: 'flex', alignItems: 'center', gap: 12,
+          }}>
+            <IcoTile n="check" s={18} taille={40} />
+            <p style={{ fontWeight: 700, color: '#2f6b2f', fontSize: 15 }}>{t('pay_success')}</p>
+          </div>
+        )}
+
         {/* ===== Résumé du shift ===== */}
         <div className="cs-fade" style={{ ...carte, marginBottom: 40 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16 }}>
@@ -191,6 +225,11 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
                 {confirme && (
                   <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, background: '#eef2e6', color: '#4c5e42', fontSize: 11.5, fontWeight: 800, padding: '5px 12px', borderRadius: 999 }}>
                     <Ico n="check" s={13} /> {t('shift_confirmed')}
+                  </span>
+                )}
+                {estPaye && (
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, background: '#dcfce7', color: '#15803d', fontSize: 11.5, fontWeight: 800, padding: '5px 12px', borderRadius: 999 }}>
+                    <Ico n="card" s={13} /> {t('pay_paid_badge')}
                   </span>
                 )}
               </div>
@@ -205,6 +244,40 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
               <span style={{ fontSize: 14, fontWeight: 600, color: '#7d8877' }}>/u</span>
             </div>
           </div>
+
+          {/* ===== Bloc paiement (horeca, shift confirmé, pas encore payé) ===== */}
+          {confirme && !estPaye && role === 'HORECA' && (
+            <div style={{
+              marginTop: 20, paddingTop: 20, borderTop: '1px dashed #dfe4d4',
+              display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 14,
+            }}>
+              <div>
+                {montantDu != null && (
+                  <p style={{ fontSize: 14, color: '#6b7268', fontWeight: 600, marginBottom: 3 }}>
+                    {t('pay_to_pay')} : <span style={{ fontSize: 20, fontWeight: 800, color: '#23281f' }}>€{montantDu.toFixed(2)}</span>
+                    <span style={{ fontSize: 12.5, color: '#9aa39b', fontWeight: 500 }}> {t('pay_incl_vat')}</span>
+                  </p>
+                )}
+                {paiement === 'erreur' && (
+                  <p style={{ fontSize: 13, color: '#b91c1c', fontWeight: 600 }}>{t('pay_error')}</p>
+                )}
+              </div>
+              <button
+                onClick={payer}
+                disabled={paiement === 'envoi'}
+                className="cs-btn"
+                style={{
+                  background: 'linear-gradient(135deg,#647a55,#46553c)', color: '#fff', border: 'none',
+                  borderRadius: 12, padding: '13px 26px', fontWeight: 700, fontSize: 14.5, fontFamily: FONT,
+                  cursor: paiement === 'envoi' ? 'wait' : 'pointer', opacity: paiement === 'envoi' ? 0.7 : 1,
+                  boxShadow: '0 10px 22px -8px rgba(70,85,60,.5)',
+                }}
+              >
+                <Ico n="card" s={16} />
+                {paiement === 'envoi' ? t('pay_starting') : t('pay_now')}
+              </button>
+            </div>
+          )}
         </div>
 
         {/* ===== Candidats ===== */}
