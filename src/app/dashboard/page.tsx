@@ -67,6 +67,11 @@ export default function DashboardPage() {
         </a>
         <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
           <LangToggle />
+          {estKok && (
+            <a href="/profiel" className="cs-nav-link" style={{ color: '#5f7052', fontWeight: 700, fontSize: 14, textDecoration: 'none' }}>
+              👤 {t('nav_profile')}
+            </a>
+          )}
           <span style={{ fontSize: 14, color: '#6b7268' }}>{user?.email}</span>
           <span style={{
             background: '#e4e9dd', color: '#5f7052', fontSize: 12, fontWeight: 800,
