@@ -185,9 +185,11 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
   const dateStr = new Date(shift.date).toLocaleDateString(locale, { weekday: 'long', day: 'numeric', month: 'long' })
   const start = new Date(shift.startTime).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })
   const end = new Date(shift.endTime).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })
-  const confirme = shift.status === 'CONFIRMED'
+  const confirme = shift.status === 'CONFIRMED' || shift.status === 'COMPLETED'
   const estPaye = shift.invoice?.status === 'PAID'
   const montantDu = shift.invoice?.amountInclVat
+  // Le shift est terminé quand sa date est passée
+  const fini = new Date(shift.date) < new Date(new Date().toDateString())
 
   return (
     <main style={{ fontFamily: FONT, background: '#f6f7f2', color: '#23281f', minHeight: '100vh' }}>
@@ -254,33 +256,40 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
           {confirme && !estPaye && role === 'HORECA' && (
             <div style={{
               marginTop: 20, paddingTop: 20, borderTop: '1px dashed #dfe4d4',
-              display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 14,
             }}>
-              <div>
-                {montantDu != null && (
-                  <p style={{ fontSize: 14, color: '#6b7268', fontWeight: 600, marginBottom: 3 }}>
-                    {t('pay_to_pay')} : <span style={{ fontSize: 20, fontWeight: 800, color: '#23281f' }}>€{montantDu.toFixed(2)}</span>
-                    <span style={{ fontSize: 12.5, color: '#9aa39b', fontWeight: 500 }}> {t('pay_incl_vat')}</span>
-                  </p>
-                )}
-                {paiement === 'erreur' && (
-                  <p style={{ fontSize: 13, color: '#b91c1c', fontWeight: 600, maxWidth: 420 }}>{msgPay}</p>
-                )}
-              </div>
-              <button
-                onClick={payer}
-                disabled={paiement === 'envoi'}
-                className="cs-btn"
-                style={{
-                  background: 'linear-gradient(135deg,#647a55,#46553c)', color: '#fff', border: 'none',
-                  borderRadius: 12, padding: '13px 26px', fontWeight: 700, fontSize: 14.5, fontFamily: FONT,
-                  cursor: paiement === 'envoi' ? 'wait' : 'pointer', opacity: paiement === 'envoi' ? 0.7 : 1,
-                  boxShadow: '0 10px 22px -8px rgba(70,85,60,.5)',
-                }}
-              >
-                <Ico n="card" s={16} />
-                {paiement === 'envoi' ? t('pay_starting') : t('pay_now')}
-              </button>
+              {fini ? (
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 14 }}>
+                  <div>
+                    {montantDu != null && (
+                      <p style={{ fontSize: 14, color: '#6b7268', fontWeight: 600, marginBottom: 3 }}>
+                        {t('pay_to_pay')} : <span style={{ fontSize: 20, fontWeight: 800, color: '#23281f' }}>€{montantDu.toFixed(2)}</span>
+                        <span style={{ fontSize: 12.5, color: '#9aa39b', fontWeight: 500 }}> {t('pay_incl_vat')}</span>
+                      </p>
+                    )}
+                    {paiement === 'erreur' && (
+                      <p style={{ fontSize: 13, color: '#b91c1c', fontWeight: 600, maxWidth: 420 }}>{msgPay}</p>
+                    )}
+                  </div>
+                  <button
+                    onClick={payer}
+                    disabled={paiement === 'envoi'}
+                    className="cs-btn"
+                    style={{
+                      background: 'linear-gradient(135deg,#647a55,#46553c)', color: '#fff', border: 'none',
+                      borderRadius: 12, padding: '13px 26px', fontWeight: 700, fontSize: 14.5, fontFamily: FONT,
+                      cursor: paiement === 'envoi' ? 'wait' : 'pointer', opacity: paiement === 'envoi' ? 0.7 : 1,
+                      boxShadow: '0 10px 22px -8px rgba(70,85,60,.5)',
+                    }}
+                  >
+                    <Ico n="card" s={16} />
+                    {paiement === 'envoi' ? t('pay_starting') : t('pay_now')}
+                  </button>
+                </div>
+              ) : (
+                <p style={{ ...meta, fontSize: 14 }}>
+                  <Ico n="clock" s={15} c="#8a9a7b" /> {t('pay_after')}
+                </p>
+              )}
             </div>
           )}
         </div>
