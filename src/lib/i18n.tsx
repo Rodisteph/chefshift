@@ -4,13 +4,19 @@ import { useEffect, useState } from 'react'
 
 export type Lang = 'nl' | 'en'
 
+const LANG_EVENT = 'chefshift-lang-change'
+
+function readLang(): Lang {
+  if (typeof window === 'undefined') return 'nl'
+  const l = localStorage.getItem('chefshift-lang')
+  return l === 'en' ? 'en' : 'nl'
+}
+
 const dict = {
   nl: {
-    // Navigation
     nav_login: 'Inloggen',
     nav_register: 'Account aanmaken',
     nav_logout: 'Uitloggen',
-    // Accueil
     hero_badge: 'Platform voor ZZP-koks en horeca',
     hero_title_a: 'De juiste chef,',
     hero_title_b: 'op het juiste moment.',
@@ -39,14 +45,12 @@ const dict = {
     banner_cta: 'Account aanmaken',
     footer_tag: 'Het platform voor zzp-koks en horecazaken in Nederland.',
     footer_rights: '© 2026 ChefShift — Gemaakt voor de horeca.',
-    // Login
     login_title: 'Inloggen',
     login_sub: 'Welkom terug in de keuken.',
     login_noaccount: 'Nog geen account? Registreren',
     login_error: 'E-mailadres of wachtwoord onjuist',
     field_email: 'E-mailadres',
     field_password: 'Wachtwoord',
-    // Register
     register_title: 'Account aanmaken',
     register_sub: 'Gratis aanmelden in 1 minuut.',
     register_have: 'Al een account? Inloggen',
@@ -64,7 +68,6 @@ const dict = {
     register_error: 'Er ging iets mis. Probeer het later opnieuw.',
     form_submit: 'Account aanmaken',
     form_loading: 'Bezig...',
-    // Dashboard
     dash_loading: 'Laden...',
     dash_welcome: 'Welkom terug',
     dash_kok_sub: 'Dit is jouw kok-omgeving: vind shifts en beheer je opdrachten.',
@@ -87,6 +90,28 @@ const dict = {
     list_other: 'Mijn shifts',
     empty_api: 'Shifts zijn nog niet beschikbaar — dit onderdeel wordt binnenkort gebouwd.',
     empty_none: 'Nog geen shifts. Kom later terug!',
+    // Shifts
+    shifts_title: 'Beschikbare shifts',
+    shifts_sub: 'Reageer direct op een shift die bij jou past.',
+    shifts_my: 'Mijn shifts',
+    shifts_new: 'Nieuwe shift plaatsen',
+    shifts_new_sub: 'Vul de gegevens in — de shift is direct zichtbaar voor koks.',
+    field_shift_title: 'Titel',
+    field_function: 'Functie',
+    field_date: 'Datum',
+    field_start: 'Starttijd',
+    field_end: 'Eindtijd',
+    field_rate: 'Uurtarief (€)',
+    field_city: 'Plaats',
+    field_urgent: 'Dit is een spoedshift',
+    shift_submit: 'Shift plaatsen',
+    shift_fail: 'Shift plaatsen is mislukt. Probeer het opnieuw.',
+    back_dashboard: '← Terug naar dashboard',
+    urgent: 'Spoed',
+    applications: 'sollicitaties',
+    apply_btn: 'Reageren',
+    empty_shifts: 'Nog geen shifts beschikbaar. Kom later terug!',
+    total: 'Totaal',
   },
   en: {
     nav_login: 'Log in',
@@ -165,6 +190,27 @@ const dict = {
     list_other: 'My shifts',
     empty_api: 'Shifts are not available yet — this part is being built.',
     empty_none: 'No shifts yet. Check back later!',
+    shifts_title: 'Available shifts',
+    shifts_sub: 'Apply directly to a shift that suits you.',
+    shifts_my: 'My shifts',
+    shifts_new: 'Post a new shift',
+    shifts_new_sub: 'Fill in the details — the shift is instantly visible to chefs.',
+    field_shift_title: 'Title',
+    field_function: 'Function',
+    field_date: 'Date',
+    field_start: 'Start time',
+    field_end: 'End time',
+    field_rate: 'Hourly rate (€)',
+    field_city: 'City',
+    field_urgent: 'This is an urgent shift',
+    shift_submit: 'Post shift',
+    shift_fail: 'Failed to post shift. Please try again.',
+    back_dashboard: '← Back to dashboard',
+    urgent: 'Urgent',
+    applications: 'applications',
+    apply_btn: 'Apply',
+    empty_shifts: 'No shifts available yet. Check back later!',
+    total: 'Total',
   },
 } as const
 
@@ -172,17 +218,23 @@ export type Key = keyof typeof dict.nl
 
 export function useT() {
   const [lang, setLangState] = useState<Lang>('nl')
+
   useEffect(() => {
-    const l = localStorage.getItem('chefshift-lang')
-    if (l === 'en' || l === 'nl') setLangState(l)
+    setLangState(readLang())
+    const handler = () => setLangState(readLang())
+    window.addEventListener(LANG_EVENT, handler)
+    return () => window.removeEventListener(LANG_EVENT, handler)
   }, [])
+
   function setLang(l: Lang) {
     localStorage.setItem('chefshift-lang', l)
-    setLangState(l)
+    window.dispatchEvent(new Event(LANG_EVENT))
   }
+
   function t(key: Key): string {
     return dict[lang][key]
   }
+
   return { lang, setLang, t }
 }
 
@@ -196,9 +248,9 @@ export function LangToggle({ clair }: { clair?: boolean }) {
   const inactif = clair ? 'rgba(255,255,255,0.55)' : '#9aa39b'
   return (
     <span style={{ display: 'inline-flex', alignItems: 'center', gap: 2 }}>
-      <button style={{ ...base, color: lang === 'nl' ? actif : inactif }} onClick={() => setLang('nl')}>NL</button>
+      <button type="button" style={{ ...base, color: lang === 'nl' ? actif : inactif }} onClick={() => setLang('nl')}>NL</button>
       <span style={{ color: inactif }}>·</span>
-      <button style={{ ...base, color: lang === 'en' ? actif : inactif }} onClick={() => setLang('en')}>EN</button>
+      <button type="button" style={{ ...base, color: lang === 'en' ? actif : inactif }} onClick={() => setLang('en')}>EN</button>
     </span>
   )
 }

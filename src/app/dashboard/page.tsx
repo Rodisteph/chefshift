@@ -3,6 +3,7 @@
 import { signOut } from 'next-auth/react'
 import { useEffect, useState } from 'react'
 import { useT, LangToggle } from '@/lib/i18n'
+import ShiftCard, { ShiftData } from '@/components/ShiftCard'
 
 type SessionUser = {
   name?: string | null
@@ -14,8 +15,7 @@ export default function DashboardPage() {
   const { t } = useT()
   const [user, setUser] = useState<SessionUser | null>(null)
   const [chargement, setChargement] = useState(true)
-  const [shifts, setShifts] = useState<any[]>([])
-  const [shiftsErreur, setShiftsErreur] = useState(false)
+  const [shifts, setShifts] = useState<ShiftData[]>([])
 
   useEffect(() => {
     async function charger() {
@@ -29,13 +29,9 @@ export default function DashboardPage() {
         const res = await fetch('/api/shifts')
         if (res.ok) {
           const data = await res.json()
-          setShifts(Array.isArray(data) ? data : data.shifts || [])
-        } else {
-          setShiftsErreur(true)
+          setShifts(data.shifts || [])
         }
-      } catch {
-        setShiftsErreur(true)
-      }
+      } catch {}
       setChargement(false)
     }
     charger()
@@ -54,6 +50,7 @@ export default function DashboardPage() {
   }
 
   const estKok = user?.role === 'KOK'
+  const totalCandidatures = shifts.reduce((acc, s) => acc + (s._count?.applications || 0), 0)
 
   return (
     <main style={{ fontFamily: '"Helvetica Neue", Arial, sans-serif', background: '#f7f5f0', color: '#2e342b', minHeight: '100vh' }}>
@@ -105,13 +102,13 @@ export default function DashboardPage() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 20, marginBottom: 40 }}>
           {(estKok
             ? [
-                { c: '0', l: t('stat_kok_1') },
+                { c: String(shifts.length), l: t('stat_kok_1') },
                 { c: '0', l: t('stat_kok_2') },
                 { c: '€0', l: t('stat_kok_3') },
               ]
             : [
                 { c: String(shifts.length), l: t('stat_hor_1') },
-                { c: '0', l: t('stat_hor_2') },
+                { c: String(totalCandidatures), l: t('stat_hor_2') },
                 { c: '0', l: t('stat_hor_3') },
               ]
           ).map((s) => (
@@ -132,39 +129,37 @@ export default function DashboardPage() {
               {estKok ? t('action_kok_d') : t('action_hor_d')}
             </p>
           </div>
-          <button style={{
-            background: '#5f7052', color: '#fff', border: 'none', borderRadius: 999,
-            padding: '13px 28px', fontWeight: 700, fontSize: 14.5, cursor: 'pointer',
-          }}>
+          <a
+            href={estKok ? '/shifts' : '/shifts/new'}
+            style={{
+              background: '#5f7052', color: '#fff', borderRadius: 999,
+              padding: '13px 28px', fontWeight: 700, fontSize: 14.5, textDecoration: 'none',
+            }}
+          >
             {estKok ? t('action_kok_btn') : t('action_hor_btn')}
-          </button>
+          </a>
         </div>
 
         {/* ===== Liste des shifts ===== */}
-        <h2 style={{ fontSize: 22, fontWeight: 800, marginBottom: 18 }}>
-          {estKok ? t('list_kok') : t('list_other')}
-        </h2>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}>
+          <h2 style={{ fontSize: 22, fontWeight: 800 }}>
+            {estKok ? t('list_kok') : t('list_other')}
+          </h2>
+          {shifts.length > 3 && (
+            <a href="/shifts" style={{ color: '#5f7052', fontWeight: 700, fontSize: 14, textDecoration: 'none' }}>
+              {estKok ? t('list_kok') : t('list_other')} →
+            </a>
+          )}
+        </div>
         {shifts.length === 0 ? (
           <div style={{ ...carte, textAlign: 'center', padding: 48 }}>
             <div style={{ fontSize: 40, marginBottom: 12 }}>🍳</div>
-            <p style={{ color: '#6b7268', fontWeight: 600 }}>
-              {shiftsErreur ? t('empty_api') : t('empty_none')}
-            </p>
+            <p style={{ color: '#6b7268', fontWeight: 600 }}>{t('empty_none')}</p>
           </div>
         ) : (
           <div style={{ display: 'grid', gap: 16 }}>
-            {shifts.map((shift: any, i: number) => (
-              <div key={shift.id || i} style={{ ...carte, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
-                <div>
-                  <h3 style={{ fontSize: 17, fontWeight: 800 }}>{shift.title || shift.titre || 'Shift'}</h3>
-                  <p style={{ color: '#6b7268', fontSize: 14 }}>
-                    {shift.date || ''} {shift.location ? '· ' + shift.location : ''}
-                  </p>
-                </div>
-                {shift.rate && (
-                  <span style={{ fontSize: 20, fontWeight: 800, color: '#5f7052' }}>€{shift.rate}/u</span>
-                )}
-              </div>
+            {shifts.slice(0, 3).map((shift) => (
+              <ShiftCard key={shift.id} shift={shift} showApply={estKok} />
             ))}
           </div>
         )}
