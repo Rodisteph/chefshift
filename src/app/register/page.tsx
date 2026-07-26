@@ -16,6 +16,10 @@ export default function RegisterPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError('')
+    if (!kvkNumber.trim()) {
+      setError('KvK-nummer is verplicht')
+      return
+    }
     setLoading(true)
     try {
       const res = await fetch('/api/auth/register', {
@@ -27,12 +31,17 @@ export default function RegisterPage() {
           password,
           role,
           firstName: name,
-          ...(role === 'HORECA' ? { companyName: companyName || name, kvkNumber } : {}),
+          kvkNumber: kvkNumber.trim(),
+          ...(role === 'HORECA' ? { companyName: companyName || name } : {}),
         }),
       })
       if (!res.ok) {
         const data = await res.json().catch(() => ({}))
-        setError(data?.error || 'Registreren is niet gelukt. Probeer het opnieuw.')
+        setError(
+          data?.error === 'Email already registered'
+            ? 'Dit e-mailadres is al geregistreerd'
+            : 'Registreren is niet gelukt. Probeer het opnieuw.'
+        )
         setLoading(false)
         return
       }
@@ -103,19 +112,18 @@ export default function RegisterPage() {
             </div>
 
             {role === 'HORECA' && (
-              <>
-                <div style={{ marginBottom: 16 }}>
-                  <label style={etiquette}>Bedrijfsnaam</label>
-                  <input value={companyName} onChange={(e) => setCompanyName(e.target.value)} required
-                    placeholder="Naam van je zaak" style={champ} />
-                </div>
-                <div style={{ marginBottom: 16 }}>
-                  <label style={etiquette}>KvK-nummer</label>
-                  <input value={kvkNumber} onChange={(e) => setKvkNumber(e.target.value)}
-                    placeholder="8 cijfers" style={champ} />
-                </div>
-              </>
+              <div style={{ marginBottom: 16 }}>
+                <label style={etiquette}>Bedrijfsnaam</label>
+                <input value={companyName} onChange={(e) => setCompanyName(e.target.value)} required
+                  placeholder="Naam van je zaak" style={champ} />
+              </div>
             )}
+
+            <div style={{ marginBottom: 16 }}>
+              <label style={etiquette}>KvK-nummer</label>
+              <input value={kvkNumber} onChange={(e) => setKvkNumber(e.target.value)} required
+                placeholder="8 cijfers" style={champ} />
+            </div>
 
             <div style={{ marginBottom: 16 }}>
               <label style={etiquette}>E-mailadres</label>
