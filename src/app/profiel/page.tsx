@@ -46,6 +46,8 @@ export default function ProfielPage() {
   const [hourlyRateMax, setHourlyRateMax] = useState('')
   const [description, setDescription] = useState('')
   const [iban, setIban] = useState('')
+  const [connectStatus, setConnectStatus] = useState<'none' | 'pending' | 'ok'>('none')
+  const [connectEnvoi, setConnectEnvoi] = useState(false)
   const [exps, setExps] = useState<Exp[]>([])
 
   useEffect(() => {
@@ -55,7 +57,14 @@ export default function ProfielPage() {
         window.location.href = '/login'
         return
       }
-      const res = await fetch('/api/profile')
+      const [res, resConnect] = await Promise.all([
+        fetch('/api/profile'),
+        fetch('/api/connect'),
+      ])
+      if (resConnect.ok) {
+        const c = await resConnect.json()
+        setConnectStatus(c.onboarded ? 'ok' : c.hasAccount ? 'pending' : 'none')
+      }
       if (res.ok) {
         const data = await res.json()
         setIban(data.iban || '')
@@ -89,6 +98,19 @@ export default function ProfielPage() {
     }
     charger()
   }, [])
+
+  async function connecter() {
+    setConnectEnvoi(true)
+    try {
+      const res = await fetch('/api/connect', { method: 'POST' })
+      const data = await res.json().catch(() => ({}))
+      if (res.ok && data.url) {
+        window.location.href = data.url
+        return
+      }
+    } catch {}
+    setConnectEnvoi(false)
+  }
 
   function basculer(liste: string[], valeur: string, setter: (l: string[]) => void) {
     setter(liste.includes(valeur) ? liste.filter((v) => v !== valeur) : [...liste, valeur])
@@ -264,7 +286,7 @@ export default function ProfielPage() {
           </div>
         </div>
 
-        {/* ===== Coordonnées bancaires ===== */}
+        {/* ===== Coordonnées bancaires + Stripe Connect ===== */}
         <div className="cs-card" style={section}>
           <div style={enteteSection}>
             <IcoTile n="bank" s={18} taille={40} />
@@ -273,8 +295,39 @@ export default function ProfielPage() {
           <label style={etiquette}>{t('field_iban')}</label>
           <input
             value={iban} onChange={(e) => setIban(e.target.value)}
-            placeholder="NL91 ABNA 0417 1643 00" style={{ ...champ, maxWidth: 380 }}
+            placeholder="NL91 ABNA 0417 1643 00" style={{ ...champ, maxWidth: 380, marginBottom: 20 }}
           />
+
+          {/* Stripe Connect */}
+          <div style={{ borderTop: '1px dashed #dfe4d4', paddingTop: 18 }}>
+            <h3 style={{ fontSize: 15, fontWeight: 800, marginBottom: 6 }}>{t('connect_title')}</h3>
+            {connectStatus === 'ok' ? (
+              <p style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 14, color: '#15803d', fontWeight: 700 }}>
+                <Ico n="check" s={15} /> {t('connect_ok')}
+              </p>
+            ) : (
+              <>
+                <p style={{ fontSize: 13.5, color: '#6b7268', marginBottom: 12, lineHeight: 1.6 }}>
+                  {connectStatus === 'pending' ? t('connect_pending') : t('connect_desc')}
+                </p>
+                <button
+                  type="button"
+                  onClick={connecter}
+                  disabled={connectEnvoi}
+                  className="cs-btn"
+                  style={{
+                    background: 'linear-gradient(135deg,#647a55,#46553c)', color: '#fff', border: 'none',
+                    borderRadius: 12, padding: '11px 22px', fontWeight: 700, fontSize: 14, fontFamily: FONT,
+                    cursor: connectEnvoi ? 'wait' : 'pointer', opacity: connectEnvoi ? 0.7 : 1,
+                    boxShadow: '0 10px 22px -8px rgba(70,85,60,.5)',
+                  }}
+                >
+                  <Ico n="card" s={15} />
+                  {connectEnvoi ? t('form_loading') : t('connect_btn')}
+                </button>
+              </>
+            )}
+          </div>
         </div>
 
         {/* ===== Description ===== */}

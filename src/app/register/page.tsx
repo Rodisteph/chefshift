@@ -16,6 +16,7 @@ export default function RegisterPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [role, setRole] = useState<'HORECA' | 'KOK'>('KOK')
+  const [akkoord, setAkkoord] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
@@ -24,6 +25,10 @@ export default function RegisterPage() {
     setError('')
     if (!kvkNumber.trim()) {
       setError(t('register_kvk_required'))
+      return
+    }
+    if (!akkoord) {
+      setError(t('terms_required'))
       return
     }
     setLoading(true)
@@ -140,11 +145,22 @@ export default function RegisterPage() {
               <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required
                 placeholder="naam@bedrijf.nl" style={champ} />
             </div>
-            <div style={{ marginBottom: 20 }}>
+            <div style={{ marginBottom: 16 }}>
               <label style={etiquette}>{t('field_password')}</label>
               <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required
                 minLength={8} placeholder="Minimaal 8 tekens" style={champ} />
             </div>
+
+            {/* Acceptation des CGV */}
+            <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 18, cursor: 'pointer', fontSize: 13.5, color: '#4a5048', lineHeight: 1.5 }}>
+              <input type="checkbox" checked={akkoord} onChange={(e) => setAkkoord(e.target.checked)} style={{ width: 17, height: 17, marginTop: 2 }} />
+              <span>
+                {t('terms_agree')}{' '}
+                <a href="/voorwaarden" target="_blank" style={{ color: '#5f7052', fontWeight: 700 }}>{t('terms_of')}</a>
+                {' & '}
+                <a href="/privacy" target="_blank" style={{ color: '#5f7052', fontWeight: 700 }}>{t('privacy_of')}</a>
+              </span>
+            </label>
 
             {error && (
               <p style={{ color: '#b91c1c', fontSize: 13.5, marginBottom: 16, background: '#fef2f2', padding: '10px 14px', borderRadius: 10, fontWeight: 600 }}>
