@@ -32,7 +32,7 @@ export default function HomePage() {
       <AnimStyles />
 
       {/* ===== Navigation flottante ===== */}
-      <nav style={{
+      <nav className="cs-nav" style={{
         position: 'fixed', top: 18, left: '50%', transform: 'translateX(-50%)',
         width: 'min(1160px, calc(100% - 32px))', zIndex: 100,
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -48,7 +48,7 @@ export default function HomePage() {
           <LangToggle clair />
           {charge && user ? (
             <>
-              <span style={{ color: 'rgba(255,255,255,0.85)', fontSize: 13.5, fontWeight: 600 }}>
+              <span className="cs-hide-mob" style={{ color: 'rgba(255,255,255,0.85)', fontSize: 13.5, fontWeight: 600 }}>
                 {user.email}
               </span>
               <a href="/dashboard" className="cs-btn" style={{ ...btnPrimaire, padding: '10px 22px', fontSize: 14 }}>
@@ -73,7 +73,7 @@ export default function HomePage() {
         <img src={hero} alt="Chef aan het werk in een professionele keuken" className="cs-heroimg"
           style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(24,30,21,0.72), rgba(24,30,21,0.10) 55%)' }} />
-        <div style={{ position: 'relative', zIndex: 2, width: '100%', maxWidth: 1200, margin: '0 auto', padding: '0 24px 92px', color: '#fff' }}>
+        <div className="cs-hero-pad" style={{ position: 'relative', zIndex: 2, width: '100%', maxWidth: 1200, margin: '0 auto', padding: '0 24px 92px', color: '#fff' }}>
           <span className="cs-fade" style={{
             display: 'inline-flex', alignItems: 'center', gap: 8,
             background: 'rgba(255,255,255,0.14)', backdropFilter: 'blur(8px)',
@@ -106,7 +106,7 @@ export default function HomePage() {
       </header>
 
       {/* ===== Étapes ===== */}
-      <section style={{ padding: '96px 24px', maxWidth: 1200, margin: '0 auto' }}>
+      <section className="cs-sec" style={{ padding: '96px 24px', maxWidth: 1200, margin: '0 auto' }}>
         <div style={{ textAlign: 'center', maxWidth: 640, margin: '0 auto 58px' }}>
           <span style={{ color: '#5f7052', fontWeight: 800, fontSize: 12.5, letterSpacing: 2.5, textTransform: 'uppercase' }}>{t('steps_over')}</span>
           <h2 style={{ fontSize: 'clamp(30px, 4vw, 46px)', fontWeight: 800, letterSpacing: -1.4, margin: '12px 0 14px' }}>{t('steps_title')}</h2>
@@ -128,7 +128,7 @@ export default function HomePage() {
       </section>
 
       {/* ===== Avantages ===== */}
-      <section style={{ padding: '0 24px 96px', maxWidth: 1200, margin: '0 auto' }}>
+      <section className="cs-sec2" style={{ padding: '0 24px 96px', maxWidth: 1200, margin: '0 auto' }}>
         <div style={{ textAlign: 'center', maxWidth: 640, margin: '0 auto 58px' }}>
           <span style={{ color: '#5f7052', fontWeight: 800, fontSize: 12.5, letterSpacing: 2.5, textTransform: 'uppercase' }}>{t('why_over')}</span>
           <h2 style={{ fontSize: 'clamp(30px, 4vw, 46px)', fontWeight: 800, letterSpacing: -1.4, margin: '12px 0 14px' }}>{t('why_title')}</h2>
@@ -149,7 +149,7 @@ export default function HomePage() {
       </section>
 
       {/* ===== Bannière CTA ===== */}
-      <section style={{ padding: '0 24px 96px', maxWidth: 1200, margin: '0 auto' }}>
+      <section className="cs-sec2" style={{ padding: '0 24px 96px', maxWidth: 1200, margin: '0 auto' }}>
         <div className="cs-card" style={{ position: 'relative', borderRadius: 28, overflow: 'hidden', padding: '84px 40px', textAlign: 'center', color: '#fff', border: '1px solid #eceee3' }}>
           <img src={hero} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
           <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(135deg, rgba(36,44,31,0.82), rgba(70,85,60,0.72))' }} />

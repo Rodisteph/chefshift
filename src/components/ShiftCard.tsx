@@ -116,7 +116,7 @@ export default function ShiftCard({
           )}
         </p>
       </div>
-      <div style={{ textAlign: 'right' }}>
+      <div className="cs-end" style={{ textAlign: 'right' }}>
         <div style={{ fontSize: 20, fontWeight: 800, color: '#4c5e42', letterSpacing: -0.5 }}>€{shift.hourlyRate}{parHeure}</div>
         {shift.totalAmount != null && (
           <div style={{ fontSize: 12.5, color: '#6b7268', fontWeight: 600 }}>
