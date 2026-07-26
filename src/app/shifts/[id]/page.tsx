@@ -121,6 +121,17 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
     setChoixEnCours('')
   }
 
+  async function deselect() {
+    setChoixEnCours('desel')
+    try {
+      const res = await fetch(`/api/shifts/${params.id}/unconfirm`, { method: 'POST' })
+      if (res.ok) {
+        await charger()
+      }
+    } catch {}
+    setChoixEnCours('')
+  }
+
   async function payer() {
     setPaiement('envoi')
     setMsgPay('')
@@ -188,7 +199,6 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
   const confirme = shift.status === 'CONFIRMED' || shift.status === 'COMPLETED'
   const estPaye = shift.invoice?.status === 'PAID'
   const montantDu = shift.invoice?.amountInclVat
-  // Le shift est terminé quand sa date est passée
   const fini = new Date(shift.date) < new Date(new Date().toDateString())
 
   return (
@@ -368,9 +378,25 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
                         <p style={{ fontSize: 22, fontWeight: 800, color: '#4c5e42', marginBottom: 9, letterSpacing: -0.5 }}>€{k.proposedRate}/u</p>
                       )}
                       {estChoisi ? (
-                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'linear-gradient(135deg,#647a55,#46553c)', color: '#fff', padding: '11px 24px', borderRadius: 999, fontWeight: 700, fontSize: 14 }}>
-                          <Ico n="check" s={15} /> {t('chosen')}
-                        </span>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'flex-end' }}>
+                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'linear-gradient(135deg,#647a55,#46553c)', color: '#fff', padding: '11px 24px', borderRadius: 999, fontWeight: 700, fontSize: 14 }}>
+                            <Ico n="check" s={15} /> {t('chosen')}
+                          </span>
+                          {!estPaye && role === 'HORECA' && (
+                            <button
+                              onClick={deselect}
+                              disabled={choixEnCours !== ''}
+                              style={{
+                                background: 'none', border: '1.5px solid #dfe4d4', borderRadius: 999,
+                                padding: '7px 16px', fontWeight: 700, fontSize: 12.5, fontFamily: FONT,
+                                cursor: choixEnCours ? 'wait' : 'pointer', color: '#6b7268',
+                                opacity: choixEnCours ? 0.7 : 1,
+                              }}
+                            >
+                              {choixEnCours === 'desel' ? t('form_loading') : t('unchoose')}
+                            </button>
+                          )}
+                        </div>
                       ) : (
                         !confirme && (
                           <button
