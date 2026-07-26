@@ -6,6 +6,7 @@ import { useT, LangToggle } from '@/lib/i18n'
 import ShiftCard, { ShiftData } from '@/components/ShiftCard'
 import AnimStyles from '@/components/AnimStyles'
 import BarChart from '@/components/BarChart'
+import PushSetup from '@/components/PushSetup'
 import { Ico, IcoTile } from '@/components/Icons'
 
 const FONT = '"Sora","Inter","Helvetica Neue",Arial,sans-serif'
@@ -76,19 +77,19 @@ export default function DashboardPage() {
   const estKok = user?.role === 'KOK'
   const locale = lang === 'en' ? 'en-GB' : 'nl-NL'
 
-  // ===== Cartes de stats selon le rôle =====
+  // ===== Cartes de stats selon le rôle (cliquables vers la liste) =====
   const statsCartes = estKok
     ? [
-        { c: String(shifts.length), l: t('stat_kok_1'), icone: 'brief' },
-        { c: String(stats?.nbCandidatures ?? 0), l: t('stat_kok_apps'), icone: 'users' },
-        { c: String(stats?.nbAcceptees ?? 0), l: t('stat_kok_accepted'), icone: 'check' },
-        { c: `€${Math.round(stats?.totalGagne ?? 0)}`, l: t('stat_earn_total'), icone: 'bank' },
+        { c: String(shifts.length), l: t('stat_kok_1'), icone: 'brief', lien: '/shifts' },
+        { c: String(stats?.nbCandidatures ?? 0), l: t('stat_kok_apps'), icone: 'users', lien: '/shifts' },
+        { c: String(stats?.nbAcceptees ?? 0), l: t('stat_kok_accepted'), icone: 'check', lien: '/shifts' },
+        { c: `€${Math.round(stats?.totalGagne ?? 0)}`, l: t('stat_earn_total'), icone: 'bank', lien: '' },
       ]
     : [
-        { c: String(stats?.nbShifts ?? shifts.length), l: t('stat_hor_1'), icone: 'brief' },
-        { c: String(stats?.nbCandidatures ?? 0), l: t('stat_hor_2'), icone: 'users' },
-        { c: String(stats?.nbEmbauches ?? 0), l: t('stat_hor_3'), icone: 'chef' },
-        { c: `€${Math.round(stats?.totalDepense ?? 0)}`, l: t('stat_spend_total'), icone: 'bank' },
+        { c: String(stats?.nbShifts ?? shifts.length), l: t('stat_hor_1'), icone: 'brief', lien: '/shifts' },
+        { c: String(stats?.nbCandidatures ?? 0), l: t('stat_hor_2'), icone: 'users', lien: '/shifts' },
+        { c: String(stats?.nbEmbauches ?? 0), l: t('stat_hor_3'), icone: 'chef', lien: '/shifts' },
+        { c: `€${Math.round(stats?.totalDepense ?? 0)}`, l: t('stat_spend_total'), icone: 'bank', lien: '' },
       ]
 
   // ===== Série du graphique (labels localisés) =====
@@ -142,7 +143,7 @@ export default function DashboardPage() {
         <h1 className="cs-fade" style={{ fontSize: 'clamp(28px, 4vw, 40px)', fontWeight: 800, letterSpacing: -1.4, marginBottom: 8 }}>
           {t('dash_welcome')}, {user?.name || 'chef'}
         </h1>
-        <p className="cs-fade cs-d1" style={{ color: '#6b7268', marginBottom: 40, fontSize: 15.5 }}>
+        <p className="cs-fade cs-d1" style={{ color: '#6b7268', marginBottom: 32, fontSize: 15.5 }}>
           {estKok
             ? t('dash_kok_sub')
             : user?.role === 'HORECA'
@@ -152,17 +153,32 @@ export default function DashboardPage() {
             : t('dash_default_sub')}
         </p>
 
+        {/* ===== Activation des notifications push ===== */}
+        <PushSetup />
+
         {/* ===== Statistiques ===== */}
         <div className="cs-fade cs-d2" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 18, marginBottom: 24 }}>
-          {statsCartes.map((s) => (
-            <div key={s.l} className="cs-card" style={{ ...carte, display: 'flex', alignItems: 'center', gap: 14, padding: 20 }}>
-              <IcoTile n={s.icone} s={19} taille={42} />
-              <div>
-                <div style={{ fontSize: 25, fontWeight: 800, color: '#23281f', letterSpacing: -0.8 }}>{s.c}</div>
-                <div style={{ fontSize: 12.5, color: '#6b7268', fontWeight: 600 }}>{s.l}</div>
+          {statsCartes.map((s) => {
+            const contenu = (
+              <>
+                <IcoTile n={s.icone} s={19} taille={42} />
+                <div>
+                  <div style={{ fontSize: 25, fontWeight: 800, color: '#23281f', letterSpacing: -0.8 }}>{s.c}</div>
+                  <div style={{ fontSize: 12.5, color: '#6b7268', fontWeight: 600 }}>{s.l}</div>
+                </div>
+              </>
+            )
+            const styleCarte: React.CSSProperties = { ...carte, display: 'flex', alignItems: 'center', gap: 14, padding: 20 }
+            return s.lien ? (
+              <a key={s.l} href={s.lien} className="cs-card" style={{ ...styleCarte, textDecoration: 'none', cursor: 'pointer' }}>
+                {contenu}
+              </a>
+            ) : (
+              <div key={s.l} className="cs-card" style={styleCarte}>
+                {contenu}
               </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
 
         {/* ===== Graphique budget / revenus ===== */}
