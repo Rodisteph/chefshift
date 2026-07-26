@@ -2,6 +2,10 @@
 
 import { useEffect, useState } from 'react'
 import { useT, LangToggle } from '@/lib/i18n'
+import AnimStyles from '@/components/AnimStyles'
+import { Ico } from '@/components/Icons'
+
+const FONT = '"Sora","Inter","Helvetica Neue",Arial,sans-serif'
 
 export default function NewShiftPage() {
   const { t } = useT()
@@ -61,26 +65,28 @@ export default function NewShiftPage() {
   }
 
   const champ = {
-    width: '100%', padding: 12, border: '1.5px solid #e4e9dd', borderRadius: 10,
-    fontSize: 15, outline: 'none', boxSizing: 'border-box' as const, background: '#fff',
+    width: '100%', padding: 12, border: '1.5px solid #e2e6d7', borderRadius: 12,
+    fontSize: 15, outline: 'none', boxSizing: 'border-box' as const, background: '#fff', fontFamily: FONT,
   }
-  const etiquette = { display: 'block', fontSize: 13, fontWeight: 700, marginBottom: 6 }
+  const etiquette = { display: 'block', fontSize: 13, fontWeight: 700, marginBottom: 6, color: '#3c4436' }
 
   if (!autorise) {
     return (
-      <main style={{ fontFamily: '"Helvetica Neue", Arial, sans-serif', background: '#f7f5f0', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <main style={{ fontFamily: FONT, background: '#f6f7f2', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <p style={{ color: '#6b7268', fontWeight: 600 }}>{t('dash_loading')}</p>
       </main>
     )
   }
 
   return (
-    <main style={{ fontFamily: '"Helvetica Neue", Arial, sans-serif', background: '#f7f5f0', color: '#2e342b', minHeight: '100vh' }}>
+    <main style={{ fontFamily: FONT, background: '#f6f7f2', color: '#23281f', minHeight: '100vh' }}>
+      <AnimStyles />
       <nav style={{
-        background: '#fff', borderBottom: '1px solid #e4e9dd',
-        padding: '14px 28px', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+        background: 'rgba(255,255,255,0.88)', backdropFilter: 'blur(12px)',
+        borderBottom: '1px solid #e8ebe0',
+        padding: '13px 28px', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
       }}>
-        <a href="/dashboard" style={{ fontWeight: 800, fontSize: 20, color: '#2e342b', textDecoration: 'none' }}>
+        <a href="/dashboard" style={{ fontWeight: 800, fontSize: 20, color: '#23281f', textDecoration: 'none', letterSpacing: -0.5 }}>
           Chef<span style={{ color: '#5f7052' }}>Shift</span>
         </a>
         <div style={{ display: 'flex', gap: 18, alignItems: 'center' }}>
@@ -92,12 +98,12 @@ export default function NewShiftPage() {
       </nav>
 
       <div style={{ maxWidth: 560, margin: '0 auto', padding: '48px 24px' }}>
-        <h1 style={{ fontSize: 'clamp(26px, 4vw, 34px)', fontWeight: 800, letterSpacing: -0.8, marginBottom: 8 }}>
+        <h1 className="cs-fade" style={{ fontSize: 'clamp(26px, 4vw, 34px)', fontWeight: 800, letterSpacing: -1.2, marginBottom: 8 }}>
           {t('shifts_new')}
         </h1>
-        <p style={{ color: '#6b7268', marginBottom: 32 }}>{t('shifts_new_sub')}</p>
+        <p className="cs-fade cs-d1" style={{ color: '#6b7268', marginBottom: 32 }}>{t('shifts_new_sub')}</p>
 
-        <form onSubmit={handleSubmit} style={{ background: '#fff', borderRadius: 18, boxShadow: '0 10px 30px rgba(46,52,43,0.10)', padding: 32 }}>
+        <form onSubmit={handleSubmit} className="cs-pop" style={{ background: '#fff', borderRadius: 20, border: '1px solid #eceee3', boxShadow: '0 12px 34px -12px rgba(46,52,43,0.14)', padding: 32 }}>
           <div style={{ marginBottom: 16 }}>
             <label style={etiquette}>{t('field_shift_title')}</label>
             <input value={title} onChange={(e) => setTitle(e.target.value)} required
@@ -106,7 +112,7 @@ export default function NewShiftPage() {
           <div style={{ marginBottom: 16 }}>
             <label style={etiquette}>{t('field_function')}</label>
             <input value={func} onChange={(e) => setFunc(e.target.value)}
-              placeholder="Bijv. Kok, sous-chef, keukenhulp" style={champ} />
+              placeholder="Bijv. Garde-manger, saucier..." style={champ} />
           </div>
           <div style={{ marginBottom: 16 }}>
             <label style={etiquette}>{t('field_date')}</label>
@@ -136,19 +142,20 @@ export default function NewShiftPage() {
           </div>
           <label style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20, cursor: 'pointer', fontSize: 14.5, fontWeight: 600 }}>
             <input type="checkbox" checked={isUrgent} onChange={(e) => setIsUrgent(e.target.checked)} style={{ width: 18, height: 18 }} />
-            🔥 {t('field_urgent')}
+            <Ico n="flame" s={15} c="#b91c1c" /> {t('field_urgent')}
           </label>
 
           {error && (
-            <p style={{ color: '#b91c1c', fontSize: 13.5, marginBottom: 16, background: '#fef2f2', padding: '10px 14px', borderRadius: 8 }}>
+            <p style={{ color: '#b91c1c', fontSize: 13.5, marginBottom: 16, background: '#fef2f2', padding: '10px 14px', borderRadius: 10, fontWeight: 600 }}>
               {error}
             </p>
           )}
 
-          <button type="submit" disabled={loading} style={{
-            width: '100%', padding: 14, background: '#5f7052', color: '#fff',
-            border: 'none', borderRadius: 10, fontWeight: 700, fontSize: 15,
+          <button type="submit" disabled={loading} className="cs-btn" style={{
+            width: '100%', padding: 14, background: 'linear-gradient(135deg,#647a55,#46553c)', color: '#fff',
+            border: 'none', borderRadius: 12, fontWeight: 700, fontSize: 15, fontFamily: FONT,
             cursor: loading ? 'wait' : 'pointer', opacity: loading ? 0.7 : 1,
+            boxShadow: '0 10px 22px -8px rgba(70,85,60,.5)',
           }}>
             {loading ? t('form_loading') : t('shift_submit')}
           </button>
