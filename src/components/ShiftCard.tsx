@@ -42,7 +42,9 @@ export default function ShiftCard({
   const end = new Date(shift.endTime).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })
   const restaurant = shift.horeca?.horecaProfile?.companyName
 
-  async function postuler() {
+  async function postuler(e: React.MouseEvent) {
+    e.preventDefault()
+    e.stopPropagation()
     setEtat('envoi')
     setMsgErreur('')
     try {
@@ -64,29 +66,25 @@ export default function ShiftCard({
     }
   }
 
-  const titre = detailHref ? (
-    <a href={detailHref} style={{ color: '#23281f', textDecoration: 'none' }}>
-      {shift.title} <Ico n="arrow" s={15} c="#5f7052" />
-    </a>
-  ) : (
-    shift.title
-  )
-
   const meta: React.CSSProperties = {
     display: 'inline-flex', alignItems: 'center', gap: 5,
     fontSize: 13.5, color: '#6b7268', fontWeight: 500,
   }
 
-  return (
+  const contenu = (
     <div className="cs-card" style={{
       background: '#fff', borderRadius: 20, border: '1px solid #eceee3',
       boxShadow: '0 3px 12px rgba(46,52,43,0.05)',
       padding: 24, display: 'flex', justifyContent: 'space-between', alignItems: 'center',
       flexWrap: 'wrap', gap: 18, fontFamily: FONT,
+      cursor: detailHref ? 'pointer' : 'default',
     }}>
       <div style={{ flex: 1, minWidth: 240 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginBottom: 6 }}>
-          <h3 style={{ fontSize: 17.5, fontWeight: 800, letterSpacing: -0.3 }}>{titre}</h3>
+          <h3 style={{ fontSize: 17.5, fontWeight: 800, letterSpacing: -0.3, color: '#23281f' }}>
+            {shift.title}
+            {detailHref && <> <Ico n="arrow" s={15} c="#5f7052" /></>}
+          </h3>
           {shift.isUrgent && (
             <span style={{
               display: 'inline-flex', alignItems: 'center', gap: 5,
@@ -111,18 +109,18 @@ export default function ShiftCard({
             <Ico n="chef" s={15} /> {restaurant}
           </p>
         )}
-        <p style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
+        <p style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap', margin: 0 }}>
           <span style={meta}><Ico n="cal" s={14} c="#8a9a7b" /> {dateStr}</span>
           <span style={meta}><Ico n="clock" s={14} c="#8a9a7b" /> {start} – {end}</span>
           {shift.locationCity && <span style={meta}><Ico n="pin" s={14} c="#8a9a7b" /> {shift.locationCity}</span>}
         </p>
         {shift._count && (
-          <p style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 12.5, color: '#9aa39b', marginTop: 7, fontWeight: 500 }}>
+          <p style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 12.5, color: '#9aa39b', marginTop: 7, marginBottom: 0, fontWeight: 500 }}>
             <Ico n="users" s={13} /> {shift._count.applications} {t('applications')}
           </p>
         )}
         {etat === 'erreur' && (
-          <p style={{ fontSize: 13, color: '#b91c1c', marginTop: 7, fontWeight: 600 }}>{msgErreur}</p>
+          <p style={{ fontSize: 13, color: '#b91c1c', marginTop: 7, marginBottom: 0, fontWeight: 600 }}>{msgErreur}</p>
         )}
       </div>
       <div style={{ textAlign: 'right' }}>
@@ -158,4 +156,14 @@ export default function ShiftCard({
       </div>
     </div>
   )
+
+  // Carte entièrement cliquable pour la horeca
+  if (detailHref) {
+    return (
+      <a href={detailHref} style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}>
+        {contenu}
+      </a>
+    )
+  }
+  return contenu
 }
