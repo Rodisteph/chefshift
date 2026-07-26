@@ -2,8 +2,10 @@
 
 import { signIn } from 'next-auth/react'
 import { useState } from 'react'
+import { useT, LangToggle } from '@/lib/i18n'
 
 export default function RegisterPage() {
+  const { t } = useT()
   const [name, setName] = useState('')
   const [companyName, setCompanyName] = useState('')
   const [kvkNumber, setKvkNumber] = useState('')
@@ -17,7 +19,7 @@ export default function RegisterPage() {
     e.preventDefault()
     setError('')
     if (!kvkNumber.trim()) {
-      setError('KvK-nummer is verplicht')
+      setError(t('register_kvk_required'))
       return
     }
     setLoading(true)
@@ -37,11 +39,7 @@ export default function RegisterPage() {
       })
       if (!res.ok) {
         const data = await res.json().catch(() => ({}))
-        setError(
-          data?.error === 'Email already registered'
-            ? 'Dit e-mailadres is al geregistreerd'
-            : 'Registreren is niet gelukt. Probeer het opnieuw.'
-        )
+        setError(data?.error === 'Email already registered' ? t('register_email_used') : t('register_fail'))
         setLoading(false)
         return
       }
@@ -52,7 +50,7 @@ export default function RegisterPage() {
         window.location.href = '/dashboard'
       }
     } catch {
-      setError('Er ging iets mis. Probeer het later opnieuw.')
+      setError(t('register_error'))
       setLoading(false)
     }
   }
@@ -70,9 +68,12 @@ export default function RegisterPage() {
         <a href="/" style={{ fontWeight: 800, fontSize: 20, color: '#2e342b', textDecoration: 'none' }}>
           Chef<span style={{ color: '#5f7052' }}>Shift</span>
         </a>
-        <a href="/login" style={{ color: '#5f7052', fontWeight: 700, fontSize: 14, textDecoration: 'none' }}>
-          Al een account? Inloggen
-        </a>
+        <div style={{ display: 'flex', gap: 18, alignItems: 'center' }}>
+          <LangToggle />
+          <a href="/login" style={{ color: '#5f7052', fontWeight: 700, fontSize: 14, textDecoration: 'none' }}>
+            {t('register_have')}
+          </a>
+        </div>
       </nav>
 
       <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
@@ -80,15 +81,15 @@ export default function RegisterPage() {
           background: '#fff', width: '100%', maxWidth: 440, padding: 40,
           borderRadius: 18, boxShadow: '0 10px 30px rgba(46,52,43,0.10)',
         }}>
-          <h1 style={{ fontSize: 26, fontWeight: 800, letterSpacing: -0.5, marginBottom: 6 }}>Account aanmaken</h1>
-          <p style={{ color: '#6b7268', fontSize: 14.5, marginBottom: 28 }}>Gratis aanmelden in 1 minuut.</p>
+          <h1 style={{ fontSize: 26, fontWeight: 800, letterSpacing: -0.5, marginBottom: 6 }}>{t('register_title')}</h1>
+          <p style={{ color: '#6b7268', fontSize: 14.5, marginBottom: 28 }}>{t('register_sub')}</p>
 
           {/* Choix du role */}
           <div style={{ display: 'flex', gap: 12, marginBottom: 20 }}>
             {([
-              { valeur: 'KOK', titre: 'Ik ben kok', desc: 'Ik zoek shifts' },
-              { valeur: 'HORECA', titre: 'Ik ben horeca', desc: 'Ik zoek koks' },
-            ] as const).map((o) => (
+              { valeur: 'KOK' as const, titre: t('role_kok_t'), desc: t('role_kok_d') },
+              { valeur: 'HORECA' as const, titre: t('role_horeca_t'), desc: t('role_horeca_d') },
+            ]).map((o) => (
               <button
                 key={o.valeur} type="button"
                 onClick={() => setRole(o.valeur)}
@@ -106,32 +107,32 @@ export default function RegisterPage() {
 
           <form onSubmit={handleSubmit}>
             <div style={{ marginBottom: 16 }}>
-              <label style={etiquette}>{role === 'HORECA' ? 'Contactpersoon' : 'Naam'}</label>
+              <label style={etiquette}>{role === 'HORECA' ? t('field_contact') : t('field_name')}</label>
               <input value={name} onChange={(e) => setName(e.target.value)} required
-                placeholder="Je voor- en achternaam" style={champ} />
+                placeholder="Jan de Vries" style={champ} />
             </div>
 
             {role === 'HORECA' && (
               <div style={{ marginBottom: 16 }}>
-                <label style={etiquette}>Bedrijfsnaam</label>
+                <label style={etiquette}>{t('field_company')}</label>
                 <input value={companyName} onChange={(e) => setCompanyName(e.target.value)} required
-                  placeholder="Naam van je zaak" style={champ} />
+                  placeholder="Restaurant De Gouden Lepel" style={champ} />
               </div>
             )}
 
             <div style={{ marginBottom: 16 }}>
-              <label style={etiquette}>KvK-nummer</label>
+              <label style={etiquette}>{t('field_kvk')}</label>
               <input value={kvkNumber} onChange={(e) => setKvkNumber(e.target.value)} required
                 placeholder="8 cijfers" style={champ} />
             </div>
 
             <div style={{ marginBottom: 16 }}>
-              <label style={etiquette}>E-mailadres</label>
+              <label style={etiquette}>{t('field_email')}</label>
               <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required
                 placeholder="naam@bedrijf.nl" style={champ} />
             </div>
             <div style={{ marginBottom: 20 }}>
-              <label style={etiquette}>Wachtwoord</label>
+              <label style={etiquette}>{t('field_password')}</label>
               <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required
                 minLength={8} placeholder="Minimaal 8 tekens" style={champ} />
             </div>
@@ -147,7 +148,7 @@ export default function RegisterPage() {
               border: 'none', borderRadius: 10, fontWeight: 700, fontSize: 15,
               cursor: loading ? 'wait' : 'pointer', opacity: loading ? 0.7 : 1,
             }}>
-              {loading ? 'Bezig...' : 'Account aanmaken'}
+              {loading ? t('form_loading') : t('form_submit')}
             </button>
           </form>
         </div>

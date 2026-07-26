@@ -2,6 +2,7 @@
 
 import { signOut } from 'next-auth/react'
 import { useEffect, useState } from 'react'
+import { useT, LangToggle } from '@/lib/i18n'
 
 type SessionUser = {
   name?: string | null
@@ -10,6 +11,7 @@ type SessionUser = {
 }
 
 export default function DashboardPage() {
+  const { t } = useT()
   const [user, setUser] = useState<SessionUser | null>(null)
   const [chargement, setChargement] = useState(true)
   const [shifts, setShifts] = useState<any[]>([])
@@ -46,14 +48,12 @@ export default function DashboardPage() {
   if (chargement) {
     return (
       <main style={{ fontFamily: '"Helvetica Neue", Arial, sans-serif', background: '#f7f5f0', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <p style={{ color: '#6b7268', fontWeight: 600 }}>Laden...</p>
+        <p style={{ color: '#6b7268', fontWeight: 600 }}>{t('dash_loading')}</p>
       </main>
     )
   }
 
   const estKok = user?.role === 'KOK'
-  const estHoreca = user?.role === 'HORECA'
-  const estAdmin = user?.role === 'ADMIN'
 
   return (
     <main style={{ fontFamily: '"Helvetica Neue", Arial, sans-serif', background: '#f7f5f0', color: '#2e342b', minHeight: '100vh' }}>
@@ -66,7 +66,8 @@ export default function DashboardPage() {
         <a href="/" style={{ fontWeight: 800, fontSize: 20, color: '#2e342b', textDecoration: 'none' }}>
           Chef<span style={{ color: '#5f7052' }}>Shift</span>
         </a>
-        <div style={{ display: 'flex', gap: 18, alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
+          <LangToggle />
           <span style={{ fontSize: 14, color: '#6b7268' }}>{user?.email}</span>
           <span style={{
             background: '#e4e9dd', color: '#5f7052', fontSize: 12, fontWeight: 800,
@@ -81,34 +82,37 @@ export default function DashboardPage() {
               padding: '8px 18px', fontWeight: 700, fontSize: 13.5, cursor: 'pointer', color: '#2e342b',
             }}
           >
-            Uitloggen
+            {t('nav_logout')}
           </button>
         </div>
       </nav>
 
       <div style={{ maxWidth: 1100, margin: '0 auto', padding: '48px 24px' }}>
         <h1 style={{ fontSize: 'clamp(28px, 4vw, 40px)', fontWeight: 800, letterSpacing: -1, marginBottom: 8 }}>
-          Welkom terug, {user?.name || 'chef'} 👋
+          {t('dash_welcome')}, {user?.name || 'chef'} 👋
         </h1>
         <p style={{ color: '#6b7268', marginBottom: 40 }}>
-          {estKok && 'Voici ton espace kok : trouve des shifts et gere tes missions.'}
-          {estHoreca && 'Voici votre espace horeca : publiez des shifts et trouvez des koks.'}
-          {estAdmin && 'Espace administrateur ChefShift.'}
-          {!estKok && !estHoreca && !estAdmin && 'Voici votre espace ChefShift.'}
+          {estKok
+            ? t('dash_kok_sub')
+            : user?.role === 'HORECA'
+            ? t('dash_horeca_sub')
+            : user?.role === 'ADMIN'
+            ? t('dash_admin_sub')
+            : t('dash_default_sub')}
         </p>
 
         {/* ===== Statistiques ===== */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 20, marginBottom: 40 }}>
           {(estKok
             ? [
-                { c: '0', l: 'Shifts à venir' },
-                { c: '0', l: 'Missions terminées' },
-                { c: '€0', l: 'Revenus ce mois' },
+                { c: '0', l: t('stat_kok_1') },
+                { c: '0', l: t('stat_kok_2') },
+                { c: '€0', l: t('stat_kok_3') },
               ]
             : [
-                { c: String(shifts.length), l: 'Shifts publiés' },
-                { c: '0', l: 'Candidatures reçues' },
-                { c: '0', l: 'Koks embauchés' },
+                { c: String(shifts.length), l: t('stat_hor_1') },
+                { c: '0', l: t('stat_hor_2') },
+                { c: '0', l: t('stat_hor_3') },
               ]
           ).map((s) => (
             <div key={s.l} style={carte}>
@@ -122,33 +126,29 @@ export default function DashboardPage() {
         <div style={{ ...carte, marginBottom: 40, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16 }}>
           <div>
             <h2 style={{ fontSize: 20, fontWeight: 800, marginBottom: 6 }}>
-              {estKok ? 'Prêt pour ton prochain shift ?' : 'Besoin d’un kok ?'}
+              {estKok ? t('action_kok_t') : t('action_hor_t')}
             </h2>
             <p style={{ color: '#6b7268', fontSize: 14.5 }}>
-              {estKok
-                ? 'Parcours les shifts disponibles près de chez toi.'
-                : 'Publie un shift et reçois des candidatures de koks vérifiés.'}
+              {estKok ? t('action_kok_d') : t('action_hor_d')}
             </p>
           </div>
           <button style={{
             background: '#5f7052', color: '#fff', border: 'none', borderRadius: 999,
             padding: '13px 28px', fontWeight: 700, fontSize: 14.5, cursor: 'pointer',
           }}>
-            {estKok ? 'Zoek shifts' : 'Nieuwe shift plaatsen'}
+            {estKok ? t('action_kok_btn') : t('action_hor_btn')}
           </button>
         </div>
 
         {/* ===== Liste des shifts ===== */}
         <h2 style={{ fontSize: 22, fontWeight: 800, marginBottom: 18 }}>
-          {estKok ? 'Beschikbare shifts' : 'Mijn shifts'}
+          {estKok ? t('list_kok') : t('list_other')}
         </h2>
         {shifts.length === 0 ? (
           <div style={{ ...carte, textAlign: 'center', padding: 48 }}>
             <div style={{ fontSize: 40, marginBottom: 12 }}>🍳</div>
             <p style={{ color: '#6b7268', fontWeight: 600 }}>
-              {shiftsErreur
-                ? 'Les shifts ne sont pas encore disponibles — la partie API reste à construire.'
-                : 'Nog geen shifts. Kom later terug!'}
+              {shiftsErreur ? t('empty_api') : t('empty_none')}
             </p>
           </div>
         ) : (

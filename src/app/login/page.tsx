@@ -2,8 +2,10 @@
 
 import { signIn } from 'next-auth/react'
 import { useState } from 'react'
+import { useT, LangToggle } from '@/lib/i18n'
 
 export default function LoginPage() {
+  const { t } = useT()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
@@ -13,7 +15,7 @@ export default function LoginPage() {
     setError('')
     const res = await signIn('credentials', { email, password, redirect: false })
     if (res?.error) {
-      setError('E-mailadres of wachtwoord onjuist')
+      setError(t('login_error'))
     } else {
       window.location.href = '/dashboard'
     }
@@ -26,9 +28,12 @@ export default function LoginPage() {
         <a href="/" style={{ fontWeight: 800, fontSize: 20, color: '#2e342b', textDecoration: 'none' }}>
           Chef<span style={{ color: '#5f7052' }}>Shift</span>
         </a>
-        <a href="/register" style={{ color: '#5f7052', fontWeight: 700, fontSize: 14, textDecoration: 'none' }}>
-          Nog geen account? Registreren
-        </a>
+        <div style={{ display: 'flex', gap: 18, alignItems: 'center' }}>
+          <LangToggle />
+          <a href="/register" style={{ color: '#5f7052', fontWeight: 700, fontSize: 14, textDecoration: 'none' }}>
+            {t('login_noaccount')}
+          </a>
+        </div>
       </nav>
 
       <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
@@ -36,12 +41,12 @@ export default function LoginPage() {
           background: '#fff', width: '100%', maxWidth: 440, padding: 40,
           borderRadius: 18, boxShadow: '0 10px 30px rgba(46,52,43,0.10)',
         }}>
-          <h1 style={{ fontSize: 26, fontWeight: 800, letterSpacing: -0.5, marginBottom: 6 }}>Inloggen</h1>
-          <p style={{ color: '#6b7268', fontSize: 14.5, marginBottom: 28 }}>Welkom terug in de keuken.</p>
+          <h1 style={{ fontSize: 26, fontWeight: 800, letterSpacing: -0.5, marginBottom: 6 }}>{t('login_title')}</h1>
+          <p style={{ color: '#6b7268', fontSize: 14.5, marginBottom: 28 }}>{t('login_sub')}</p>
 
           <form onSubmit={handleSubmit}>
             <div style={{ marginBottom: 16 }}>
-              <label style={{ display: 'block', fontSize: 13, fontWeight: 700, marginBottom: 6 }}>E-mailadres</label>
+              <label style={{ display: 'block', fontSize: 13, fontWeight: 700, marginBottom: 6 }}>{t('field_email')}</label>
               <input
                 name="email" type="email" required
                 value={email} onChange={(e) => setEmail(e.target.value)}
@@ -50,7 +55,7 @@ export default function LoginPage() {
               />
             </div>
             <div style={{ marginBottom: 20 }}>
-              <label style={{ display: 'block', fontSize: 13, fontWeight: 700, marginBottom: 6 }}>Wachtwoord</label>
+              <label style={{ display: 'block', fontSize: 13, fontWeight: 700, marginBottom: 6 }}>{t('field_password')}</label>
               <input
                 name="password" type="password" required
                 value={password} onChange={(e) => setPassword(e.target.value)}
@@ -69,12 +74,12 @@ export default function LoginPage() {
               width: '100%', padding: 14, background: '#5f7052', color: '#fff',
               border: 'none', borderRadius: 10, fontWeight: 700, fontSize: 15, cursor: 'pointer',
             }}>
-              Inloggen
+              {t('login_title')}
             </button>
           </form>
 
           <p style={{ textAlign: 'center', marginTop: 20, fontSize: 13.5, color: '#6b7268' }}>
-            <a href="/register" style={{ color: '#5f7052', fontWeight: 700, textDecoration: 'none' }}>Account aanmaken</a>
+            <a href="/register" style={{ color: '#5f7052', fontWeight: 700, textDecoration: 'none' }}>{t('nav_register')}</a>
           </p>
         </div>
       </div>
