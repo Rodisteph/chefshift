@@ -106,3 +106,21 @@ export async function emailBetalingOntvangen(kokEmail: string, shiftTitre: strin
     )
   )
 }
+
+// 4. Chef : rappel avant un shift (24h / 2h)
+export async function emailRappelShift(kokEmail: string, shiftId: string, shiftTitre: string, delai: '24 uur' | '2 uur', debut: string) {
+  const delaiEn = delai === '24 uur' ? '24 hours' : '2 hours'
+  return envoyerEmail(
+    kokEmail,
+    `Herinnering: je shift begint over ${delai} · Shift reminder`,
+    gabarit(
+      `Je shift begint over ${delai}`,
+      `Herinnering: je shift <strong>${shiftTitre}</strong> begint over <strong>${delai}</strong> (${debut}). Zorg dat je op tijd bent!`,
+      'Bekijk shift',
+      `Your shift starts in ${delaiEn}`,
+      `Reminder: your shift <strong>${shiftTitre}</strong> starts in <strong>${delaiEn}</strong> (${debut}). Make sure you're on time!`,
+      'View shift',
+      `${baseUrl()}/shifts/${shiftId}`
+    )
+  )
+}
