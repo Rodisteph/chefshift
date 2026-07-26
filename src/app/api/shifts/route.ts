@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json()
-    const { title, function: func, date, startTime, endTime, hourlyRate, locationCity, isUrgent } = body
+    const { title, function: func, date, startTime, endTime, hourlyRate, locationStreet, locationPostal, locationCity, isUrgent } = body
 
     const start = new Date(`${date}T${startTime}`)
     const end = new Date(`${date}T${endTime}`)
@@ -50,10 +50,12 @@ export async function POST(req: NextRequest) {
       data: {
         horecaId: session.user.id,
         title,
-        function: func,
+        function: func || title,
         date: new Date(date),
         startTime: start,
         endTime: end,
+        locationStreet: locationStreet || null,
+        locationPostal: locationPostal || null,
         locationCity,
         hourlyRate,
         totalAmount,

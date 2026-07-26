@@ -41,3 +41,50 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
+
+// PUT : modifier un shift (uniquement si ouvert et aucun chef choisi)
+export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
+  try {
+    const session = await getServerSession(authOptions)
+    if (!session || session.user.role !== 'HORECA') {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const shift = await prisma.shift.findUnique({ where: { id: params.id } })
+    if (!shift || shift.horecaId !== session.user.id) {
+      return NextResponse.json({ error: 'Not found' }, { status: 404 })
+    }
+    if (shift.status !== 'OPEN' || shift.chosenKokId) {
+      return NextResponse.json({ error: 'Shift can no longer be edited' }, { status: 400 })
+    }
+
+    const body = await req.json()
+    const { title, function: func, date, startTime, endTime, hourlyRate, locationStreet, locationPostal, locationCity, isUrgent } = body
+
+    const start = new Date(`${date}T${startTime}`)
+    const end = new Date(`${date}T${endTime}`)
+    const hours = Math.max(0, (end.getTime() - start.getTime()) / (1000 * 60 * 60) - 0.5)
+    const totalAmount = hours * Number(hourlyRate)
+
+    const updated = await prisma.shift.update({
+      where: { id: params.id },
+      data: {
+        title,
+        function: func || title,
+        date: new Date(date),
+        startTime: start,
+        endTime: end,
+        locationStreet: locationStreet || null,
+        locationPostal: locationPostal || null,
+        locationCity,
+        hourlyRate: Number(hourlyRate),
+        totalAmount,
+        isUrgent: !!isUrgent,
+      },
+    })
+
+    return NextResponse.json({ shift: updated })
+  } catch (error: any) {
+    return NextResponse.json({ error: error?.message || 'Internal server error' }, { status: 500 })
+  }
+}
