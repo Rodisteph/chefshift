@@ -3,6 +3,9 @@
 import { useEffect, useState } from 'react'
 import { useT, LangToggle, afficherPoste, afficherSpecialite } from '@/lib/i18n'
 import AnimStyles from '@/components/AnimStyles'
+import { Ico, IcoTile } from '@/components/Icons'
+
+const FONT = '"Sora","Inter","Helvetica Neue",Arial,sans-serif'
 
 const POSTES = [
   'Garde-manger', 'Rôtisseur', 'Poissonnier', 'Saucier',
@@ -120,38 +123,41 @@ export default function ProfielPage() {
   }
 
   const champ: React.CSSProperties = {
-    width: '100%', padding: 11, border: '1.5px solid #e4e9dd', borderRadius: 10,
-    fontSize: 14.5, outline: 'none', boxSizing: 'border-box', background: '#fff',
+    width: '100%', padding: 11, border: '1.5px solid #e2e6d7', borderRadius: 12,
+    fontSize: 14.5, outline: 'none', boxSizing: 'border-box', background: '#fff', fontFamily: FONT,
   }
-  const etiquette: React.CSSProperties = { display: 'block', fontSize: 13, fontWeight: 700, marginBottom: 6 }
+  const etiquette: React.CSSProperties = { display: 'block', fontSize: 13, fontWeight: 700, marginBottom: 6, color: '#3c4436' }
   const section: React.CSSProperties = {
-    background: '#fff', borderRadius: 18, boxShadow: '0 4px 14px rgba(46,52,43,0.06)',
-    padding: 28, marginBottom: 24,
+    background: '#fff', borderRadius: 20, border: '1px solid #eceee3',
+    boxShadow: '0 3px 12px rgba(46,52,43,0.05)', padding: 28, marginBottom: 24,
   }
-  const titreSection: React.CSSProperties = { fontSize: 17, fontWeight: 800, marginBottom: 18 }
+  const enteteSection: React.CSSProperties = { display: 'flex', alignItems: 'center', gap: 12, marginBottom: 18 }
+  const titreSection: React.CSSProperties = { fontSize: 17, fontWeight: 800, letterSpacing: -0.3 }
   const caseACocher = (actif: boolean): React.CSSProperties => ({
-    padding: '8px 14px', borderRadius: 999, fontSize: 13, fontWeight: 700, cursor: 'pointer',
-    border: actif ? '2px solid #5f7052' : '1.5px solid #e4e9dd',
-    background: actif ? '#eef2e7' : '#fff', color: actif ? '#5f7052' : '#2e342b',
+    padding: '8px 15px', borderRadius: 999, fontSize: 13, fontWeight: 700, cursor: 'pointer',
+    fontFamily: FONT, transition: 'all .2s ease',
+    border: actif ? '2px solid #5f7052' : '1.5px solid #e2e6d7',
+    background: actif ? '#f0f4ea' : '#fff', color: actif ? '#4c5e42' : '#23281f',
   })
 
   if (chargement) {
     return (
-      <main style={{ fontFamily: '"Helvetica Neue", Arial, sans-serif', background: '#f7f5f0', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <main style={{ fontFamily: FONT, background: '#f6f7f2', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <p style={{ color: '#6b7268', fontWeight: 600 }}>{t('dash_loading')}</p>
       </main>
     )
   }
 
   return (
-    <main style={{ fontFamily: '"Helvetica Neue", Arial, sans-serif', background: '#f7f5f0', color: '#2e342b', minHeight: '100vh' }}>
+    <main style={{ fontFamily: FONT, background: '#f6f7f2', color: '#23281f', minHeight: '100vh' }}>
       <AnimStyles />
       <nav style={{
-        background: '#fff', borderBottom: '1px solid #e4e9dd',
-        padding: '14px 28px', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+        background: 'rgba(255,255,255,0.88)', backdropFilter: 'blur(12px)',
+        borderBottom: '1px solid #e8ebe0',
+        padding: '13px 28px', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
         position: 'sticky', top: 0, zIndex: 10,
       }}>
-        <a href="/dashboard" style={{ fontWeight: 800, fontSize: 20, color: '#2e342b', textDecoration: 'none' }}>
+        <a href="/dashboard" style={{ fontWeight: 800, fontSize: 20, color: '#23281f', textDecoration: 'none', letterSpacing: -0.5 }}>
           Chef<span style={{ color: '#5f7052' }}>Shift</span>
         </a>
         <div style={{ display: 'flex', gap: 18, alignItems: 'center' }}>
@@ -163,12 +169,15 @@ export default function ProfielPage() {
       </nav>
 
       <form onSubmit={sauvegarder} style={{ maxWidth: 760, margin: '0 auto', padding: '48px 24px' }}>
-        <h1 className="cs-fade" style={{ fontSize: 'clamp(26px, 4vw, 36px)', fontWeight: 800, letterSpacing: -0.8 }}>{t('profile_title')}</h1>
-        <p className="cs-fade cs-d1" style={{ color: '#6b7268', marginTop: 6, marginBottom: 32 }}>{t('profile_sub')}</p>
+        <h1 className="cs-fade" style={{ fontSize: 'clamp(26px, 4vw, 36px)', fontWeight: 800, letterSpacing: -1.2 }}>{t('profile_title')}</h1>
+        <p className="cs-fade cs-d1" style={{ color: '#6b7268', marginTop: 6, marginBottom: 32, fontSize: 15 }}>{t('profile_sub')}</p>
 
         {/* ===== Persoonlijke gegevens ===== */}
         <div className="cs-card" style={section}>
-          <h2 style={titreSection}>👤 {t('pers_title')}</h2>
+          <div style={enteteSection}>
+            <IcoTile n="user" s={18} taille={40} />
+            <h2 style={titreSection}>{t('pers_title')}</h2>
+          </div>
           <div style={{ display: 'flex', gap: 12, marginBottom: 14 }}>
             <div style={{ flex: 1 }}>
               <label style={etiquette}>{t('field_firstname')}</label>
@@ -179,16 +188,16 @@ export default function ProfielPage() {
               <input value={lastName} onChange={(e) => setLastName(e.target.value)} required style={champ} />
             </div>
           </div>
-          <div style={{ display: 'flex', gap: 12 }}>
-            <div style={{ flex: 1 }}>
+          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+            <div style={{ flex: 1, minWidth: 140 }}>
               <label style={etiquette}>{t('field_birth')}</label>
               <input type="date" value={dateOfBirth} onChange={(e) => setDateOfBirth(e.target.value)} style={champ} />
             </div>
-            <div style={{ flex: 1 }}>
+            <div style={{ flex: 1, minWidth: 120 }}>
               <label style={etiquette}>{t('field_city')}</label>
               <input value={city} onChange={(e) => setCity(e.target.value)} placeholder="Amsterdam" style={champ} />
             </div>
-            <div style={{ flex: 1 }}>
+            <div style={{ flex: 1, minWidth: 110 }}>
               <label style={etiquette}>{t('field_years')}</label>
               <input type="number" min="0" max="60" value={yearsExperience} onChange={(e) => setYearsExperience(e.target.value)} placeholder="8" style={champ} />
             </div>
@@ -197,7 +206,10 @@ export default function ProfielPage() {
 
         {/* ===== Postes / parties ===== */}
         <div className="cs-card" style={section}>
-          <h2 style={titreSection}>🔪 {t('functions_label')}</h2>
+          <div style={enteteSection}>
+            <IcoTile n="utensils" s={18} taille={40} />
+            <h2 style={titreSection}>{t('functions_label')}</h2>
+          </div>
           <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
             {POSTES.map((p) => (
               <button key={p} type="button" onClick={() => basculer(functions, p, setFunctions)} style={caseACocher(functions.includes(p))}>
@@ -209,7 +221,10 @@ export default function ProfielPage() {
 
         {/* ===== Spécialités ===== */}
         <div className="cs-card" style={section}>
-          <h2 style={titreSection}>⭐ {t('spec_label')}</h2>
+          <div style={enteteSection}>
+            <IcoTile n="chef" s={18} taille={40} />
+            <h2 style={titreSection}>{t('spec_label')}</h2>
+          </div>
           <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
             {CUISINES.map((c) => (
               <button key={c} type="button" onClick={() => basculer(specialties, c, setSpecialties)} style={caseACocher(specialties.includes(c))}>
@@ -221,7 +236,10 @@ export default function ProfielPage() {
 
         {/* ===== Certifications & tarif ===== */}
         <div className="cs-card" style={section}>
-          <h2 style={titreSection}>✓ {t('certs_label')}</h2>
+          <div style={enteteSection}>
+            <IcoTile n="award" s={18} taille={40} />
+            <h2 style={titreSection}>{t('certs_label')}</h2>
+          </div>
           <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap', marginBottom: 18 }}>
             <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 14.5, fontWeight: 600 }}>
               <input type="checkbox" checked={haccpCertified} onChange={(e) => setHaccpCertified(e.target.checked)} style={{ width: 18, height: 18 }} />
@@ -246,7 +264,10 @@ export default function ProfielPage() {
 
         {/* ===== Description ===== */}
         <div className="cs-card" style={section}>
-          <h2 style={titreSection}>💬 {t('desc_label')}</h2>
+          <div style={enteteSection}>
+            <IcoTile n="msg" s={18} taille={40} />
+            <h2 style={titreSection}>{t('desc_label')}</h2>
+          </div>
           <textarea
             value={description} onChange={(e) => setDescription(e.target.value)}
             rows={4} placeholder="Vertel kort wie je bent, je stijl, je passie..."
@@ -256,13 +277,16 @@ export default function ProfielPage() {
 
         {/* ===== Werkervaring ===== */}
         <div className="cs-card" style={section}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}>
-            <h2 style={{ ...titreSection, marginBottom: 0 }}>📋 {t('work_title')}</h2>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18, flexWrap: 'wrap', gap: 12 }}>
+            <div style={{ ...enteteSection, marginBottom: 0 }}>
+              <IcoTile n="brief" s={18} taille={40} />
+              <h2 style={titreSection}>{t('work_title')}</h2>
+            </div>
             <button
               type="button"
               onClick={() => setExps([...exps, { function: '', companyName: '', location: '', fromDate: '', toDate: '', isCurrent: false, description: '' }])}
               className="cs-btn"
-              style={{ background: '#e4e9dd', color: '#5f7052', border: 'none', borderRadius: 999, padding: '9px 18px', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}
+              style={{ background: '#eef2e6', color: '#4c5e42', border: 'none', borderRadius: 999, padding: '9px 18px', fontWeight: 700, fontSize: 13, cursor: 'pointer', fontFamily: FONT }}
             >
               {t('work_add')}
             </button>
@@ -270,13 +294,13 @@ export default function ProfielPage() {
           {exps.length === 0 && <p style={{ color: '#9aa39b', fontSize: 14 }}>{t('work_empty')}</p>}
           <div style={{ display: 'grid', gap: 18 }}>
             {exps.map((w, i) => (
-              <div key={i} style={{ border: '1.5px solid #e4e9dd', borderRadius: 12, padding: 18 }}>
-                <div style={{ display: 'flex', gap: 12, marginBottom: 12 }}>
-                  <div style={{ flex: 1 }}>
+              <div key={i} style={{ border: '1.5px solid #e8ebe0', borderRadius: 14, padding: 18 }}>
+                <div style={{ display: 'flex', gap: 12, marginBottom: 12, flexWrap: 'wrap' }}>
+                  <div style={{ flex: 1, minWidth: 160 }}>
                     <label style={etiquette}>{t('work_function')}</label>
                     <input value={w.function} onChange={(e) => majExp(i, 'function', e.target.value)} required placeholder="Bijv. Garde-manger" style={champ} />
                   </div>
-                  <div style={{ flex: 1 }}>
+                  <div style={{ flex: 1, minWidth: 160 }}>
                     <label style={etiquette}>{t('work_company')}</label>
                     <input value={w.companyName} onChange={(e) => majExp(i, 'companyName', e.target.value)} placeholder="Restaurant ..." style={champ} />
                   </div>
@@ -306,9 +330,9 @@ export default function ProfielPage() {
                 <button
                   type="button"
                   onClick={() => setExps(exps.filter((_, j) => j !== i))}
-                  style={{ marginTop: 10, background: 'none', border: 'none', color: '#b91c1c', fontSize: 13, fontWeight: 700, cursor: 'pointer', padding: 0 }}
+                  style={{ marginTop: 10, background: 'none', border: 'none', color: '#b91c1c', fontSize: 13, fontWeight: 700, cursor: 'pointer', padding: 0, display: 'inline-flex', alignItems: 'center', gap: 5, fontFamily: FONT }}
                 >
-                  ✕ {t('work_delete')}
+                  <Ico n="x" s={13} /> {t('work_delete')}
                 </button>
               </div>
             ))}
@@ -317,7 +341,7 @@ export default function ProfielPage() {
 
         {/* ===== Sauvegarder ===== */}
         {sauvegarde === 'erreur' && (
-          <p style={{ color: '#b91c1c', fontSize: 13.5, marginBottom: 14, background: '#fef2f2', padding: '10px 14px', borderRadius: 8 }}>
+          <p style={{ color: '#b91c1c', fontSize: 13.5, marginBottom: 14, background: '#fef2f2', padding: '10px 14px', borderRadius: 10, fontWeight: 600 }}>
             {t('profile_fail')}
           </p>
         )}
@@ -327,11 +351,13 @@ export default function ProfielPage() {
           className="cs-btn"
           style={{
             width: '100%', padding: 15,
-            background: sauvegarde === 'ok' ? '#8a9a7b' : '#5f7052',
-            color: '#fff', border: 'none', borderRadius: 10, fontWeight: 700, fontSize: 15,
+            background: sauvegarde === 'ok' ? '#8a9a7b' : 'linear-gradient(135deg,#647a55,#46553c)',
+            color: '#fff', border: 'none', borderRadius: 12, fontWeight: 700, fontSize: 15, fontFamily: FONT,
             cursor: sauvegarde === 'envoi' ? 'wait' : 'pointer',
+            boxShadow: '0 10px 22px -8px rgba(70,85,60,.5)',
           }}
         >
+          {sauvegarde === 'ok' && <Ico n="check" s={16} />}
           {sauvegarde === 'envoi' ? t('form_loading') : sauvegarde === 'ok' ? t('profile_saved') : t('profile_save')}
         </button>
       </form>
