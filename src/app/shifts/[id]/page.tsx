@@ -78,6 +78,7 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
   const [role, setRole] = useState('')
   const [betaald, setBetaald] = useState(false)
   const [paiement, setPaiement] = useState<'idle' | 'envoi' | 'erreur'>('idle')
+  const [msgPay, setMsgPay] = useState('')
   const locale = lang === 'en' ? 'en-GB' : 'nl-NL'
 
   async function charger() {
@@ -122,6 +123,7 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
 
   async function payer() {
     setPaiement('envoi')
+    setMsgPay('')
     try {
       const res = await fetch(`/api/shifts/${params.id}/pay`, { method: 'POST' })
       const data = await res.json().catch(() => ({}))
@@ -129,7 +131,10 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
         window.location.href = data.url
         return
       }
-    } catch {}
+      setMsgPay(data?.error || t('pay_error'))
+    } catch {
+      setMsgPay(t('pay_error'))
+    }
     setPaiement('erreur')
   }
 
@@ -259,7 +264,7 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
                   </p>
                 )}
                 {paiement === 'erreur' && (
-                  <p style={{ fontSize: 13, color: '#b91c1c', fontWeight: 600 }}>{t('pay_error')}</p>
+                  <p style={{ fontSize: 13, color: '#b91c1c', fontWeight: 600, maxWidth: 420 }}>{msgPay}</p>
                 )}
               </div>
               <button
