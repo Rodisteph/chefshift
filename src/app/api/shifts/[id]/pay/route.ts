@@ -13,9 +13,9 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
 
     const key = process.env.STRIPE_SECRET_KEY
     if (!key) {
-      return NextResponse.json({ error: 'Stripe not configured' }, { status: 500 })
+      return NextResponse.json({ error: 'Stripe not configured (STRIPE_SECRET_KEY manquante)' }, { status: 500 })
     }
-    const stripe = new Stripe(key)
+    const stripe = new Stripe(key.trim())
 
     const shift = await prisma.shift.findUnique({
       where: { id: params.id },
@@ -67,34 +67,44 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
 
     // ===== Session Stripe Checkout (iDEAL + carte) =====
     const origin = req.nextUrl.origin
-    const checkout = await stripe.checkout.sessions.create({
-      mode: 'payment',
-      payment_method_types: ['ideal', 'card'],
-      line_items: [
-        {
-          quantity: 1,
-          price_data: {
-            currency: 'eur',
-            unit_amount: Math.round(incl * 100),
-            product_data: {
-              name: `ChefShift — ${shift.title}`,
-              description: `${heures.toFixed(1)}u × €${shift.hourlyRate.toFixed(2)} + ${shift.vatRate}% btw`,
+    try {
+      const checkout = await stripe.checkout.sessions.create({
+        mode: 'payment',
+        payment_method_types: ['ideal', 'card'],
+        line_items: [
+          {
+            quantity: 1,
+            price_data: {
+              currency: 'eur',
+              unit_amount: Math.round(incl * 100),
+              product_data: {
+                name: `ChefShift — ${shift.title}`,
+                description: `${heures.toFixed(1)}u × €${shift.hourlyRate.toFixed(2)} + ${shift.vatRate}% btw`,
+              },
             },
           },
-        },
-      ],
-      metadata: { shiftId: shift.id, invoiceId: invoice.id },
-      success_url: `${origin}/shifts/${shift.id}?betaald=1`,
-      cancel_url: `${origin}/shifts/${shift.id}`,
-    })
+        ],
+        metadata: { shiftId: shift.id, invoiceId: invoice.id },
+        success_url: `${origin}/shifts/${shift.id}?betaald=1`,
+        cancel_url: `${origin}/shifts/${shift.id}`,
+      })
 
-    await prisma.invoice.update({
-      where: { id: invoice.id },
-      data: { paymentId: checkout.id, paymentUrl: checkout.url || '' },
-    })
+      await prisma.invoice.update({
+        where: { id: invoice.id },
+        data: { paymentId: checkout.id, paymentUrl: checkout.url || '' },
+      })
 
-    return NextResponse.json({ url: checkout.url })
-  } catch (error) {
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+      return NextResponse.json({ url: checkout.url })
+    } catch (stripeError: any) {
+      return NextResponse.json(
+        { error: `Stripe: ${stripeError?.message || 'erreur inconnue'}` },
+        { status: 500 }
+      )
+    }
+  } catch (error: any) {
+    return NextResponse.json(
+      { error: error?.message || 'Internal server error' },
+      { status: 500 }
+    )
   }
 }
