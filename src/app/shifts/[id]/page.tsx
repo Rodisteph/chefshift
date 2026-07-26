@@ -1,47 +1,47 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { use, useEffect, useState } from 'react'
 import { useT, LangToggle, afficherPoste, afficherSpecialite } from '@/lib/i18n'
 import AnimStyles from '@/components/AnimStyles'
-import { Ico, IcoStar, IcoTile } from '@/components/Icons'
+import { Ico, IcoStar } from '@/components/Icons'
 
 const FONT = '"Sora","Inter","Helvetica Neue",Arial,sans-serif'
 
-type Kandidaat = {
+type Review = { id: string; rating: number; comment: string | null; isAnonymous: boolean }
+
+type WorkExp = {
   id: string
-  message?: string | null
-  proposedRate?: number | null
+  function: string
+  companyName: string | null
+  location: string | null
+  fromDate: string
+  toDate: string | null
+  isCurrent: boolean
+}
+
+type Application = {
+  id: string
   status: string
+  message: string | null
+  proposedRate: number | null
   kok: {
-    id: string
-    name?: string | null
-    email: string
-    kokProfile?: {
-      firstName: string
-      lastName: string
-      dateOfBirth?: string | null
-      yearsExperience?: number | null
-      averageScore: number
-      reviewCount: number
+    name: string | null
+    kokProfile: {
+      firstName: string | null
+      lastName: string | null
+      dateOfBirth: string | null
+      city: string | null
+      yearsExperience: number | null
       functions: string[]
       specialties: string[]
-      description?: string | null
-      city?: string | null
       haccpCertified: boolean
       svhCertified: boolean
-      svhLevel?: string | null
-      hourlyRateMin?: number | null
-      hourlyRateMax?: number | null
-      workExperience: {
-        id: string
-        function: string
-        companyName?: string | null
-        location?: string | null
-        fromDate: string
-        toDate?: string | null
-        isCurrent: boolean
-        description?: string | null
-      }[]
+      svhLevel: string | null
+      hourlyRateMin: number | null
+      hourlyRateMax: number | null
+      description: string | null
+      workExperience: WorkExp[]
+      reviewsReceived: Review[]
     } | null
   }
 }
@@ -49,126 +49,169 @@ type Kandidaat = {
 type ShiftDetail = {
   id: string
   title: string
+  function: string | null
   date: string
   startTime: string
   endTime: string
   hourlyRate: number
-  locationCity?: string | null
+  locationStreet: string | null
+  locationPostal: string | null
+  locationCity: string | null
   status: string
-  chosenKokId?: string | null
-  invoice?: { status: string; amountInclVat: number } | null
-  applications: Kandidaat[]
+  isUrgent: boolean
+  chosenKokId: string | null
+  horecaId: string
+  horeca: { horecaProfile: { companyName: string | null; kvkNumber: string | null } | null }
+  invoice: { status: string; amountInclVat: number } | null
+  applications: Application[]
 }
 
-function calculerAge(dateNaissance: string): number {
-  const n = new Date(dateNaissance)
-  const maintenant = new Date()
-  let age = maintenant.getFullYear() - n.getFullYear()
-  const m = maintenant.getMonth() - n.getMonth()
-  if (m < 0 || (m === 0 && maintenant.getDate() < n.getDate())) age--
-  return age
+function age(date: string): number {
+  return Math.floor((Date.now() - new Date(date).getTime()) / (365.25 * 24 * 3600 * 1000))
 }
 
-export default function ShiftDetailPage({ params }: { params: { id: string } }) {
+function moyenne(reviews: Review[]): number {
+  if (reviews.length === 0) return 0
+  return reviews.reduce((s, r) => s + r.rating, 0) / reviews.length
+}
+
+function Etoiles({ n, taille = 13 }: { n: number; taille?: number }) {
+  return (
+    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 2 }}>
+      {[1, 2, 3, 4, 5].map((i) => (
+        <IcoStar key={i} s={taille} plein={i <= Math.round(n)} />
+      ))}
+    </span>
+  )
+}
+
+export default function ShiftDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params)
   const { t, lang } = useT()
   const [shift, setShift] = useState<ShiftDetail | null>(null)
   const [chargement, setChargement] = useState(true)
-  const [erreur, setErreur] = useState('')
-  const [choixEnCours, setChoixEnCours] = useState('')
   const [role, setRole] = useState('')
-  const [betaald, setBetaald] = useState(false)
-  const [paiement, setPaiement] = useState<'idle' | 'envoi' | 'erreur'>('idle')
+  const [choix, setChoix] = useState('')
   const [msgPay, setMsgPay] = useState('')
+  const [paiement, setPaiement] = useState(false)
+  const [modif, setModif] = useState(false)
+  const [envoiModif, setEnvoiModif] = useState(false)
+  const [eTitle, setETitle] = useState('')
+  const [eFunc, setEFunc] = useState('')
+  const [eDate, setEDate] = useState('')
+  const [eStart, setEStart] = useState('')
+  const [eEnd, setEEnd] = useState('')
+  const [eRate, setERate] = useState('')
+  const [eStreet, setEStreet] = useState('')
+  const [ePostal, setEPostal] = useState('')
+  const [eCity, setECity] = useState('')
+  const [eUrgent, setEUrgent] = useState(false)
   const locale = lang === 'en' ? 'en-GB' : 'nl-NL'
 
   async function charger() {
-    const s = await fetch('/api/auth/session').then((r) => r.json())
-    if (!s?.user) {
-      window.location.href = '/login'
-      return
-    }
-    setRole(s.user.role)
-    if (typeof window !== 'undefined' && window.location.search.includes('betaald=1')) {
-      setBetaald(true)
-    }
-    const res = await fetch(`/api/shifts/${params.id}`)
+    const res = await fetch(`/api/shifts/${id}`)
     if (res.ok) {
       const data = await res.json()
       setShift(data.shift)
-    } else {
-      setErreur('notfound')
     }
     setChargement(false)
   }
 
   useEffect(() => {
-    charger()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [params.id])
-
-  async function choisir(kokId: string) {
-    setChoixEnCours(kokId)
-    try {
-      const res = await fetch(`/api/shifts/${params.id}/confirm`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ kokId }),
-      })
-      if (res.ok) {
-        await charger()
+    fetch('/api/auth/session').then((r) => r.json()).then((s) => {
+      if (!s?.user) {
+        window.location.href = '/login'
+        return
       }
-    } catch {}
-    setChoixEnCours('')
+      setRole(s.user.role || '')
+      charger()
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id])
+
+  async function choisir(appId: string, kokId: string) {
+    setChoix(appId)
+    const res = await fetch(`/api/shifts/${id}/confirm`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ applicationId: appId, kokId }),
+    })
+    if (res.ok) await charger()
+    setChoix('')
   }
 
   async function deselect() {
-    setChoixEnCours('desel')
-    try {
-      const res = await fetch(`/api/shifts/${params.id}/unconfirm`, { method: 'POST' })
-      if (res.ok) {
-        await charger()
-      }
-    } catch {}
-    setChoixEnCours('')
+    setChoix('deselect')
+    const res = await fetch(`/api/shifts/${id}/unconfirm`, { method: 'POST' })
+    if (res.ok) await charger()
+    setChoix('')
   }
 
   async function payer() {
-    setPaiement('envoi')
+    setPaiement(true)
     setMsgPay('')
-    try {
-      const res = await fetch(`/api/shifts/${params.id}/pay`, { method: 'POST' })
-      const data = await res.json().catch(() => ({}))
-      if (res.ok && data.url) {
-        window.location.href = data.url
-        return
-      }
-      setMsgPay(data?.error || t('pay_error'))
-    } catch {
-      setMsgPay(t('pay_error'))
+    const res = await fetch(`/api/shifts/${id}/pay`, { method: 'POST' })
+    const data = await res.json()
+    if (data.url) {
+      window.location.href = data.url
+    } else {
+      setMsgPay(data.error || t('pay_error'))
+      setPaiement(false)
     }
-    setPaiement('erreur')
   }
 
-  const carte: React.CSSProperties = {
-    background: '#fff', borderRadius: 20, border: '1px solid #eceee3',
-    boxShadow: '0 3px 12px rgba(46,52,43,0.05)', padding: 26,
+  function demarrerModif() {
+    if (!shift) return
+    setETitle(shift.title)
+    setEFunc(shift.function || '')
+    setEDate(shift.date.slice(0, 10))
+    setEStart(new Date(shift.startTime).toTimeString().slice(0, 5))
+    setEEnd(new Date(shift.endTime).toTimeString().slice(0, 5))
+    setERate(String(shift.hourlyRate))
+    setEStreet(shift.locationStreet || '')
+    setEPostal(shift.locationPostal || '')
+    setECity(shift.locationCity || '')
+    setEUrgent(shift.isUrgent)
+    setModif(true)
+  }
+
+  async function sauvegarderModif(e: React.FormEvent) {
+    e.preventDefault()
+    setEnvoiModif(true)
+    const res = await fetch(`/api/shifts/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        title: eTitle,
+        function: eFunc || eTitle,
+        date: eDate,
+        startTime: eStart,
+        endTime: eEnd,
+        hourlyRate: parseFloat(eRate),
+        locationStreet: eStreet,
+        locationPostal: ePostal,
+        locationCity: eCity,
+        isUrgent: eUrgent,
+      }),
+    })
+    if (res.ok) {
+      setModif(false)
+      await charger()
+    }
+    setEnvoiModif(false)
+  }
+
+  const etiquette: React.CSSProperties = { display: 'block', fontSize: 13, fontWeight: 700, marginBottom: 6, color: '#3c4436' }
+  const champ: React.CSSProperties = {
+    width: '100%', padding: 11, border: '1.5px solid #e2e6d7', borderRadius: 12,
+    fontSize: 14.5, outline: 'none', boxSizing: 'border-box', background: '#fff', fontFamily: FONT,
+  }
+  const etiquetteSection: React.CSSProperties = {
+    fontSize: 11, textTransform: 'uppercase', letterSpacing: 1.5, color: '#8a9a7b', fontWeight: 800, marginBottom: 10,
   }
   const badgeSauge: React.CSSProperties = {
-    background: '#eef2e6', color: '#4c5e42', fontSize: 12.5, fontWeight: 700,
-    padding: '5px 12px', borderRadius: 999,
-  }
-  const badgePoste: React.CSSProperties = {
-    background: '#23281f', color: '#dfe7d1', fontSize: 12.5, fontWeight: 700,
-    padding: '5px 12px', borderRadius: 999,
-  }
-  const titreSection: React.CSSProperties = {
-    fontSize: 11.5, fontWeight: 800, textTransform: 'uppercase', letterSpacing: 1.5,
-    color: '#5f7052', marginBottom: 9, marginTop: 18,
-    display: 'flex', alignItems: 'center', gap: 6,
-  }
-  const meta: React.CSSProperties = {
-    display: 'inline-flex', alignItems: 'center', gap: 5,
-    fontSize: 13.5, color: '#6b7268', fontWeight: 500,
+    background: '#f0f4ea', color: '#4c5e42', fontSize: 12, fontWeight: 700,
+    padding: '5px 13px', borderRadius: 999,
   }
 
   if (chargement) {
@@ -179,16 +222,10 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
     )
   }
 
-  if (erreur || !shift) {
+  if (!shift) {
     return (
-      <main style={{ fontFamily: FONT, background: '#f6f7f2', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div style={{ textAlign: 'center' }}>
-          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}>
-            <IcoTile n="inbox" s={22} taille={56} />
-          </div>
-          <p style={{ color: '#6b7268', fontWeight: 600, marginBottom: 10 }}>Shift niet gevonden</p>
-          <a href="/shifts" style={{ color: '#5f7052', fontWeight: 700 }}>{t('back_shifts')}</a>
-        </div>
+      <main style={{ fontFamily: FONT, background: '#f6f7f2', minHeight: '100vh', padding: 40 }}>
+        <p>Shift niet gevonden.</p>
       </main>
     )
   }
@@ -196,10 +233,15 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
   const dateStr = new Date(shift.date).toLocaleDateString(locale, { weekday: 'long', day: 'numeric', month: 'long' })
   const start = new Date(shift.startTime).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })
   const end = new Date(shift.endTime).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })
-  const confirme = shift.status === 'CONFIRMED' || shift.status === 'COMPLETED'
   const estPaye = shift.invoice?.status === 'PAID'
-  const montantDu = shift.invoice?.amountInclVat
-  const fini = new Date(shift.date) < new Date(new Date().toDateString())
+  const peutModifier = role === 'HORECA' && shift.status === 'OPEN' && !shift.chosenKokId
+  const aujourdhui = new Date(new Date().toDateString())
+  const fini = new Date(shift.date) < aujourdhui
+  const adresse = [shift.locationStreet, shift.locationPostal, shift.locationCity].filter(Boolean).join(', ')
+  const carte: React.CSSProperties = {
+    background: '#fff', borderRadius: 20, border: '1px solid #eceee3',
+    boxShadow: '0 3px 12px rgba(46,52,43,0.05)', padding: 26,
+  }
 
   return (
     <main style={{ fontFamily: FONT, background: '#f6f7f2', color: '#23281f', minHeight: '100vh' }}>
@@ -208,279 +250,370 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
         background: 'rgba(255,255,255,0.88)', backdropFilter: 'blur(12px)',
         borderBottom: '1px solid #e8ebe0',
         padding: '13px 28px', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-        position: 'sticky', top: 0, zIndex: 10,
       }}>
-        <a href="/dashboard" style={{ fontWeight: 800, fontSize: 20, color: '#23281f', textDecoration: 'none', letterSpacing: -0.5 }}>
+        <a href="/shifts" style={{ fontWeight: 800, fontSize: 20, color: '#23281f', textDecoration: 'none', letterSpacing: -0.5 }}>
           Chef<span style={{ color: '#5f7052' }}>Shift</span>
         </a>
         <div style={{ display: 'flex', gap: 18, alignItems: 'center' }}>
           <LangToggle />
-          <a href="/shifts" className="cs-nav-link" style={{ color: '#5f7052', fontWeight: 700, fontSize: 14, textDecoration: 'none' }}>
+          <a href="/shifts" style={{ color: '#5f7052', fontWeight: 700, fontSize: 14, textDecoration: 'none' }}>
             {t('back_shifts')}
           </a>
         </div>
       </nav>
 
-      <div style={{ maxWidth: 900, margin: '0 auto', padding: '48px 24px' }}>
-        {/* ===== Bandeau paiement réussi ===== */}
-        {betaald && (
-          <div className="cs-pop" style={{
-            ...carte, marginBottom: 24, background: '#f0f9f0', border: '1px solid #bfe3bf',
-            display: 'flex', alignItems: 'center', gap: 12,
-          }}>
-            <IcoTile n="check" s={18} taille={40} />
-            <p style={{ fontWeight: 700, color: '#2f6b2f', fontSize: 15 }}>{t('pay_success')}</p>
-          </div>
-        )}
-
-        {/* ===== Résumé du shift ===== */}
-        <div className="cs-fade" style={{ ...carte, marginBottom: 40 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16 }}>
-            <div>
-              <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
-                <h1 style={{ fontSize: 'clamp(22px, 3.5vw, 30px)', fontWeight: 800, letterSpacing: -1 }}>{shift.title}</h1>
-                {confirme && (
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, background: '#eef2e6', color: '#4c5e42', fontSize: 11.5, fontWeight: 800, padding: '5px 12px', borderRadius: 999 }}>
+      <div style={{ maxWidth: 860, margin: '0 auto', padding: '48px 24px' }}>
+        {/* ===== Résumé du shift / Édition ===== */}
+        {modif ? (
+          <form onSubmit={sauvegarderModif} className="cs-pop" style={{ ...carte, marginBottom: 24 }}>
+            <h1 style={{ fontSize: 22, fontWeight: 800, letterSpacing: -0.7, marginBottom: 20 }}>{t('edit_shift')}</h1>
+            <div style={{ display: 'flex', gap: 12, marginBottom: 14, flexWrap: 'wrap' }}>
+              <div style={{ flex: 1, minWidth: 180 }}>
+                <label style={etiquette}>{t('field_shift_title')}</label>
+                <input value={eTitle} onChange={(e) => setETitle(e.target.value)} required style={champ} />
+              </div>
+              <div style={{ flex: 1, minWidth: 180 }}>
+                <label style={etiquette}>{t('field_function')}</label>
+                <input value={eFunc} onChange={(e) => setEFunc(e.target.value)} style={champ} />
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: 12, marginBottom: 14, flexWrap: 'wrap' }}>
+              <div style={{ flex: 1, minWidth: 130 }}>
+                <label style={etiquette}>{t('field_date')}</label>
+                <input type="date" value={eDate} onChange={(e) => setEDate(e.target.value)} required style={champ} />
+              </div>
+              <div style={{ flex: 1, minWidth: 100 }}>
+                <label style={etiquette}>{t('field_start')}</label>
+                <input type="time" value={eStart} onChange={(e) => setEStart(e.target.value)} required style={champ} />
+              </div>
+              <div style={{ flex: 1, minWidth: 100 }}>
+                <label style={etiquette}>{t('field_end')}</label>
+                <input type="time" value={eEnd} onChange={(e) => setEEnd(e.target.value)} required style={champ} />
+              </div>
+              <div style={{ flex: 1, minWidth: 100 }}>
+                <label style={etiquette}>{t('field_rate')}</label>
+                <input type="number" min="1" step="0.5" value={eRate} onChange={(e) => setERate(e.target.value)} required style={champ} />
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: 12, marginBottom: 14, flexWrap: 'wrap' }}>
+              <div style={{ flex: 2, minWidth: 180 }}>
+                <label style={etiquette}>{t('field_street')}</label>
+                <input value={eStreet} onChange={(e) => setEStreet(e.target.value)} style={champ} />
+              </div>
+              <div style={{ flex: 1, minWidth: 110 }}>
+                <label style={etiquette}>{t('field_postal')}</label>
+                <input value={ePostal} onChange={(e) => setEPostal(e.target.value)} style={champ} />
+              </div>
+              <div style={{ flex: 1, minWidth: 130 }}>
+                <label style={etiquette}>{t('field_city')}</label>
+                <input value={eCity} onChange={(e) => setECity(e.target.value)} required style={champ} />
+              </div>
+            </div>
+            <label style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20, cursor: 'pointer', fontSize: 14, fontWeight: 600 }}>
+              <input type="checkbox" checked={eUrgent} onChange={(e) => setEUrgent(e.target.checked)} style={{ width: 18, height: 18 }} />
+              <Ico n="flame" s={15} c="#b91c1c" /> {t('field_urgent')}
+            </label>
+            <div style={{ display: 'flex', gap: 12 }}>
+              <button
+                type="submit"
+                disabled={envoiModif}
+                className="cs-btn"
+                style={{
+                  flex: 1, padding: 13, background: 'linear-gradient(135deg,#647a55,#46553c)', color: '#fff',
+                  border: 'none', borderRadius: 12, fontWeight: 700, fontSize: 14.5, fontFamily: FONT,
+                  cursor: envoiModif ? 'wait' : 'pointer', opacity: envoiModif ? 0.7 : 1,
+                }}
+              >
+                {envoiModif ? t('form_loading') : t('save_changes')}
+              </button>
+              <button
+                type="button"
+                onClick={() => setModif(false)}
+                style={{
+                  padding: '13px 24px', background: 'none', border: '1.5px solid #dfe4d4', borderRadius: 12,
+                  fontWeight: 700, fontSize: 14.5, cursor: 'pointer', color: '#23281f', fontFamily: FONT,
+                }}
+              >
+                {t('cancel')}
+              </button>
+            </div>
+          </form>
+        ) : (
+          <div className="cs-fade" style={{ ...carte, marginBottom: 24 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 16, flexWrap: 'wrap' }}>
+              <div style={{ flex: 1, minWidth: 240 }}>
+                <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', marginBottom: 6 }}>
+                  <h1 style={{ fontSize: 'clamp(22px, 3.5vw, 30px)', fontWeight: 800, letterSpacing: -1 }}>{shift.title}</h1>
+                  {shift.function && (
+                    <span style={{
+                      display: 'inline-flex', alignItems: 'center', gap: 5,
+                      background: '#23281f', color: '#dfe7d1', fontSize: 12, fontWeight: 700,
+                      padding: '5px 13px', borderRadius: 999,
+                    }}>
+                      <Ico n="utensils" s={13} /> {shift.function}
+                    </span>
+                  )}
+                  {shift.isUrgent && (
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, background: '#fee2e2', color: '#b91c1c', fontSize: 12, fontWeight: 800, padding: '5px 13px', borderRadius: 999 }}>
+                      <Ico n="flame" s={12} /> {t('urgent')}
+                    </span>
+                  )}
+                </div>
+                <p style={{ display: 'flex', gap: 16, flexWrap: 'wrap', margin: 0 }}>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: '#6b7268', fontSize: 14.5 }}><Ico n="cal" s={15} c="#8a9a7b" /> {dateStr}</span>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: '#6b7268', fontSize: 14.5 }}><Ico n="clock" s={15} c="#8a9a7b" /> {start} – {end}</span>
+                  {shift.locationCity && <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: '#6b7268', fontSize: 14.5 }}><Ico n="pin" s={15} c="#8a9a7b" /> {shift.locationCity}</span>}
+                </p>
+                {shift.horeca.horecaProfile?.companyName && (
+                  <p style={{ marginTop: 10, fontWeight: 700, fontSize: 15 }}>
+                    {shift.horeca.horecaProfile.companyName}
+                    {shift.horeca.horecaProfile.kvkNumber && (
+                      <span style={{ color: '#6b7268', fontWeight: 500, fontSize: 13 }}> · KvK {shift.horeca.horecaProfile.kvkNumber}</span>
+                    )}
+                  </p>
+                )}
+              </div>
+              <div style={{ textAlign: 'right' }}>
+                <div style={{ fontSize: 27, fontWeight: 800, color: '#4c5e42', letterSpacing: -1 }}>€{shift.hourlyRate}/u</div>
+                {(shift.status === 'CONFIRMED' || shift.status === 'COMPLETED') && (
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, ...badgeSauge }}>
                     <Ico n="check" s={13} /> {t('shift_confirmed')}
                   </span>
                 )}
                 {estPaye && (
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, background: '#dcfce7', color: '#15803d', fontSize: 11.5, fontWeight: 800, padding: '5px 12px', borderRadius: 999 }}>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, background: '#dcfce7', color: '#15803d', fontSize: 12, fontWeight: 800, padding: '5px 13px', borderRadius: 999, marginTop: 6 }}>
                     <Ico n="card" s={13} /> {t('pay_paid_badge')}
                   </span>
                 )}
+                {peutModifier && (
+                  <div style={{ marginTop: 10 }}>
+                    <button
+                      onClick={demarrerModif}
+                      className="cs-btn"
+                      style={{
+                        background: 'none', border: '1.5px solid #dfe4d4', borderRadius: 999,
+                        padding: '9px 18px', fontWeight: 700, fontSize: 13, cursor: 'pointer',
+                        color: '#23281f', fontFamily: FONT,
+                      }}
+                    >
+                      {t('edit_shift')}
+                    </button>
+                  </div>
+                )}
               </div>
-              <p style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap', marginTop: 9 }}>
-                <span style={meta}><Ico n="cal" s={14} c="#8a9a7b" /> {dateStr}</span>
-                <span style={meta}><Ico n="clock" s={14} c="#8a9a7b" /> {start} – {end}</span>
-                {shift.locationCity && <span style={meta}><Ico n="pin" s={14} c="#8a9a7b" /> {shift.locationCity}</span>}
-              </p>
-            </div>
-            <div style={{ background: '#f0f4ea', borderRadius: 14, padding: '12px 18px' }}>
-              <span style={{ fontSize: 25, fontWeight: 800, color: '#4c5e42', letterSpacing: -0.5 }}>€{shift.hourlyRate}</span>
-              <span style={{ fontSize: 14, fontWeight: 600, color: '#7d8877' }}>/u</span>
             </div>
           </div>
+        )}
 
-          {/* ===== Bloc paiement (horeca, shift confirmé, pas encore payé) ===== */}
-          {confirme && !estPaye && role === 'HORECA' && (
-            <div style={{
-              marginTop: 20, paddingTop: 20, borderTop: '1px dashed #dfe4d4',
-            }}>
-              {fini ? (
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 14 }}>
-                  <div>
-                    {montantDu != null && (
-                      <p style={{ fontSize: 14, color: '#6b7268', fontWeight: 600, marginBottom: 3 }}>
-                        {t('pay_to_pay')} : <span style={{ fontSize: 20, fontWeight: 800, color: '#23281f' }}>€{montantDu.toFixed(2)}</span>
-                        <span style={{ fontSize: 12.5, color: '#9aa39b', fontWeight: 500 }}> {t('pay_incl_vat')}</span>
-                      </p>
-                    )}
-                    {paiement === 'erreur' && (
-                      <p style={{ fontSize: 13, color: '#b91c1c', fontWeight: 600, maxWidth: 420 }}>{msgPay}</p>
-                    )}
-                  </div>
-                  <button
-                    onClick={payer}
-                    disabled={paiement === 'envoi'}
-                    className="cs-btn"
-                    style={{
-                      background: 'linear-gradient(135deg,#647a55,#46553c)', color: '#fff', border: 'none',
-                      borderRadius: 12, padding: '13px 26px', fontWeight: 700, fontSize: 14.5, fontFamily: FONT,
-                      cursor: paiement === 'envoi' ? 'wait' : 'pointer', opacity: paiement === 'envoi' ? 0.7 : 1,
-                      boxShadow: '0 10px 22px -8px rgba(70,85,60,.5)',
-                    }}
-                  >
-                    <Ico n="card" s={16} />
-                    {paiement === 'envoi' ? t('pay_starting') : t('pay_now')}
-                  </button>
-                </div>
-              ) : (
-                <p style={{ ...meta, fontSize: 14 }}>
-                  <Ico n="clock" s={15} c="#8a9a7b" /> {t('pay_after')}
-                </p>
-              )}
+        {/* ===== Adresse + carte ===== */}
+        {adresse && (
+          <div className="cs-fade cs-d1" style={{ ...carte, padding: 0, overflow: 'hidden', marginBottom: 40 }}>
+            <div style={{ padding: '16px 22px', display: 'flex', alignItems: 'center', gap: 10 }}>
+              <Ico n="pin" s={16} c="#5f7052" />
+              <span style={{ fontWeight: 700, fontSize: 14.5 }}>{adresse}</span>
             </div>
-          )}
-        </div>
+            <iframe
+              title="Kaart"
+              src={`https://www.google.com/maps?q=${encodeURIComponent(adresse)}&output=embed`}
+              style={{ width: '100%', height: 220, border: 0, display: 'block' }}
+              loading="lazy"
+            />
+          </div>
+        )}
 
-        {/* ===== Candidats ===== */}
-        <h2 className="cs-fade cs-d1" style={{ fontSize: 22, fontWeight: 800, marginBottom: 18, letterSpacing: -0.6 }}>
+        {/* ===== Paiement (horeca, après la fin du shift) ===== */}
+        {role === 'HORECA' && shift.chosenKokId && (shift.status === 'CONFIRMED' || shift.status === 'COMPLETED') && !estPaye && (
+          <div className="cs-fade cs-d2" style={{ ...carte, marginBottom: 40, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 14 }}>
+            <div>
+              {fini ? (
+                <>
+                  <div style={{ fontSize: 14, color: '#6b7268', fontWeight: 600 }}>{t('pay_to_pay')}</div>
+                  <div style={{ fontSize: 22, fontWeight: 800 }}>
+                    €{shift.invoice ? shift.invoice.amountInclVat.toFixed(2) : '...'}{' '}
+                    <span style={{ fontSize: 13, color: '#6b7268', fontWeight: 600 }}>{t('pay_incl_vat')}</span>
+                  </div>
+                </>
+              ) : (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 14, color: '#6b7268', fontWeight: 600 }}>
+                  <Ico n="clock" s={15} /> {t('pay_after')}
+                </div>
+              )}
+              {msgPay && <div style={{ color: '#b91c1c', fontSize: 13, marginTop: 5, fontWeight: 600 }}>{msgPay}</div>}
+            </div>
+            {fini && (
+              <button
+                onClick={payer}
+                disabled={paiement}
+                className="cs-btn"
+                style={{
+                  background: 'linear-gradient(135deg,#647a55,#46553c)', color: '#fff', border: 'none',
+                  borderRadius: 12, padding: '13px 26px', fontWeight: 700, fontSize: 14.5,
+                  cursor: paiement ? 'wait' : 'pointer', opacity: paiement ? 0.7 : 1, fontFamily: FONT,
+                  boxShadow: '0 10px 22px -8px rgba(70,85,60,.5)',
+                }}
+              >
+                <Ico n="card" s={16} />
+                {paiement ? t('pay_starting') : t('pay_now')}
+              </button>
+            )}
+          </div>
+        )}
+        {estPaye && role === 'HORECA' && (
+          <p style={{ color: '#15803d', fontWeight: 700, marginBottom: 40, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <Ico n="check" s={16} /> {t('pay_success')}
+          </p>
+        )}
+
+        {/* ===== Candidatures ===== */}
+        <h2 className="cs-fade cs-d2" style={{ fontSize: 22, fontWeight: 800, marginBottom: 18, letterSpacing: -0.6 }}>
           {t('applicants')} ({shift.applications.length})
         </h2>
-
         {shift.applications.length === 0 ? (
-          <div className="cs-card" style={{ ...carte, textAlign: 'center', padding: 52 }}>
-            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}>
-              <IcoTile n="inbox" s={22} taille={56} />
-            </div>
+          <div className="cs-card" style={{ ...carte, textAlign: 'center', padding: 48 }}>
             <p style={{ color: '#6b7268', fontWeight: 600 }}>{t('no_applicants')}</p>
           </div>
         ) : (
-          <div style={{ display: 'grid', gap: 20 }}>
-            {shift.applications.map((k) => {
-              const p = k.kok.kokProfile
-              const nom = p ? `${p.firstName} ${p.lastName}`.trim() : k.kok.name || k.kok.email
-              const estChoisi = shift.chosenKokId === k.kok.id
-              const age = p?.dateOfBirth ? calculerAge(p.dateOfBirth) : null
-              const note = p ? Math.round(p.averageScore) : 0
+          <div style={{ display: 'grid', gap: 16 }}>
+            {shift.applications.map((app) => {
+              const p = app.kok.kokProfile
+              const reviews = p?.reviewsReceived || []
+              const moy = moyenne(reviews)
+              const estChoisi = shift.chosenKokId === app.kok.kokProfile?.firstName
               return (
-                <div key={k.id} className="cs-card" style={{
-                  ...carte,
-                  border: estChoisi ? '2px solid #5f7052' : '1px solid #eceee3',
-                }}>
-                  {/* ===== En-tête candidat ===== */}
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 16 }}>
+                <div key={app.id} className="cs-card" style={carte}>
+                  {/* En-tête du candidat */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 14, flexWrap: 'wrap' }}>
                     <div>
-                      <h3 style={{ fontSize: 20, fontWeight: 800, letterSpacing: -0.4 }}>{nom}</h3>
-                      <p style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap', marginTop: 5 }}>
-                        {age && <span style={meta}><Ico n="cake" s={14} c="#8a9a7b" /> {age} {t('years_old')}</span>}
-                        {p?.city && <span style={meta}><Ico n="pin" s={14} c="#8a9a7b" /> {p.city}</span>}
-                        {p?.yearsExperience != null && <span style={meta}><Ico n="brief" s={14} c="#8a9a7b" /> {p.yearsExperience} {t('experience_years')}</span>}
-                      </p>
-                      {/* Note */}
-                      <p style={{ display: 'flex', alignItems: 'center', gap: 2, marginTop: 8 }}>
-                        {p && p.reviewCount > 0 ? (
-                          <>
-                            {[1, 2, 3, 4, 5].map((i) => (
-                              <IcoStar key={i} s={15} plein={i <= note} />
-                            ))}
-                            <span style={{ color: '#23281f', fontWeight: 800, fontSize: 14.5, marginLeft: 8 }}>{p.averageScore.toFixed(1)}</span>
-                            <span style={{ color: '#6b7268', fontWeight: 500, fontSize: 13, marginLeft: 5 }}>({p.reviewCount} {t('reviews')})</span>
-                          </>
-                        ) : (
-                          <span style={{ color: '#9aa39b', fontSize: 13.5 }}>{t('no_reviews')}</span>
+                      <div style={{ fontSize: 18, fontWeight: 800, letterSpacing: -0.4 }}>
+                        {p?.firstName} {p?.lastName}
+                        {p?.dateOfBirth && (
+                          <span style={{ color: '#6b7268', fontWeight: 600, fontSize: 14 }}> · {age(p.dateOfBirth)} {t('years_old')}</span>
                         )}
-                      </p>
-                      {/* Certifications */}
-                      {(p?.haccpCertified || p?.svhCertified) && (
-                        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 10 }}>
-                          {p.haccpCertified && (
-                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, background: '#dcfce7', color: '#15803d', fontSize: 12.5, fontWeight: 700, padding: '5px 12px', borderRadius: 999 }}>
-                              <Ico n="shield" s={13} /> HACCP
-                            </span>
-                          )}
-                          {p.svhCertified && (
-                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, background: '#dcfce7', color: '#15803d', fontSize: 12.5, fontWeight: 700, padding: '5px 12px', borderRadius: 999 }}>
-                              <Ico n="shield" s={13} /> SVH{p.svhLevel ? ` ${p.svhLevel}` : ''}
-                            </span>
-                          )}
-                        </div>
-                      )}
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 5 }}>
+                        <Etoiles n={moy} />
+                        <span style={{ fontSize: 13, color: '#6b7268', fontWeight: 600 }}>
+                          {reviews.length > 0 ? `${moy.toFixed(1)} (${reviews.length} ${t('reviews')})` : t('no_reviews')}
+                        </span>
+                      </div>
+                      <div style={{ display: 'flex', gap: 14, marginTop: 7, flexWrap: 'wrap' }}>
+                        {p?.city && <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 13.5, color: '#6b7268' }}><Ico n="pin" s={13} /> {p.city}</span>}
+                        {p?.yearsExperience != null && <span style={{ fontSize: 13.5, color: '#6b7268' }}>{p.yearsExperience} {t('experience_years')}</span>}
+                      </div>
                     </div>
-                    <div style={{ textAlign: 'right' }}>
-                      {k.proposedRate ? (
-                        <p style={{ fontSize: 13, color: '#6b7268', marginBottom: 4, fontWeight: 500 }}>
-                          {t('proposed_rate')}
-                        </p>
-                      ) : null}
-                      {k.proposedRate && (
-                        <p style={{ fontSize: 22, fontWeight: 800, color: '#4c5e42', marginBottom: 9, letterSpacing: -0.5 }}>€{k.proposedRate}/u</p>
-                      )}
-                      {estChoisi ? (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'flex-end' }}>
-                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'linear-gradient(135deg,#647a55,#46553c)', color: '#fff', padding: '11px 24px', borderRadius: 999, fontWeight: 700, fontSize: 14 }}>
-                            <Ico n="check" s={15} /> {t('chosen')}
-                          </span>
-                          {!estPaye && role === 'HORECA' && (
-                            <button
-                              onClick={deselect}
-                              disabled={choixEnCours !== ''}
-                              style={{
-                                background: 'none', border: '1.5px solid #dfe4d4', borderRadius: 999,
-                                padding: '7px 16px', fontWeight: 700, fontSize: 12.5, fontFamily: FONT,
-                                cursor: choixEnCours ? 'wait' : 'pointer', color: '#6b7268',
-                                opacity: choixEnCours ? 0.7 : 1,
-                              }}
-                            >
-                              {choixEnCours === 'desel' ? t('form_loading') : t('unchoose')}
-                            </button>
-                          )}
-                        </div>
-                      ) : (
-                        !confirme && (
+                    {role === 'HORECA' && shift.status === 'OPEN' && app.status === 'PENDING' && (
+                      <button
+                        onClick={() => choisir(app.id, (app as any).kokId || '')}
+                        disabled={choix === app.id}
+                        className="cs-btn"
+                        style={{
+                          background: 'linear-gradient(135deg,#647a55,#46553c)', color: '#fff', border: 'none',
+                          borderRadius: 999, padding: '11px 26px', fontWeight: 700, fontSize: 14,
+                          cursor: choix === app.id ? 'wait' : 'pointer', fontFamily: FONT,
+                          boxShadow: '0 8px 18px -8px rgba(70,85,60,.5)',
+                        }}
+                      >
+                        {choix === app.id ? t('form_loading') : t('choose')}
+                      </button>
+                    )}
+                    {app.status === 'ACCEPTED' && (
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8 }}>
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, ...badgeSauge }}>
+                          <Ico n="check" s={13} /> {t('chosen')}
+                        </span>
+                        {!estPaye && role === 'HORECA' && (
                           <button
-                            onClick={() => choisir(k.kok.id)}
-                            disabled={choixEnCours !== ''}
+                            onClick={deselect}
+                            disabled={choix === 'deselect'}
                             className="cs-btn"
                             style={{
-                              background: 'linear-gradient(135deg,#647a55,#46553c)', color: '#fff', border: 'none', borderRadius: 12,
-                              padding: '11px 24px', fontWeight: 700, fontSize: 14, fontFamily: FONT,
-                              cursor: choixEnCours ? 'wait' : 'pointer',
-                              opacity: choixEnCours ? 0.7 : 1,
-                              boxShadow: '0 10px 22px -8px rgba(70,85,60,.5)',
+                              background: 'none', border: '1.5px solid #dfe4d4', borderRadius: 999,
+                              padding: '7px 16px', fontWeight: 700, fontSize: 12.5, cursor: 'pointer',
+                              color: '#23281f', fontFamily: FONT,
                             }}
                           >
-                            {choixEnCours === k.kok.id ? t('form_loading') : t('choose')}
+                            {choix === 'deselect' ? t('form_loading') : t('unchoose')}
                           </button>
-                        )
-                      )}
-                    </div>
+                        )}
+                      </div>
+                    )}
                   </div>
 
-                  {/* ===== Postes / parties ===== */}
-                  {p && p.functions.length > 0 && (
-                    <div>
-                      <h4 style={titreSection}><Ico n="utensils" s={13} /> {t('functions_title')}</h4>
-                      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                        {p.functions.map((f) => (
-                          <span key={f} style={badgePoste}>{afficherPoste(f, lang)}</span>
-                        ))}
-                      </div>
+                  {/* Certifs */}
+                  {(p?.haccpCertified || p?.svhCertified) && (
+                    <div style={{ display: 'flex', gap: 8, marginTop: 12, flexWrap: 'wrap' }}>
+                      {p.haccpCertified && <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, ...badgeSauge }}><Ico n="shield" s={12} /> HACCP</span>}
+                      {p.svhCertified && <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, ...badgeSauge }}><Ico n="award" s={12} /> SVH{p.svhLevel ? ` ${p.svhLevel}` : ''}</span>}
                     </div>
                   )}
 
-                  {/* ===== Spécialités ===== */}
-                  {p && p.specialties.length > 0 && (
-                    <div>
-                      <h4 style={titreSection}><Ico n="chef" s={13} /> {t('specialties_title')}</h4>
-                      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                        {p.specialties.map((s) => (
-                          <span key={s} style={badgeSauge}>{afficherSpecialite(s, lang)}</span>
-                        ))}
-                      </div>
+                  {/* Tarif proposé */}
+                  {app.proposedRate != null && (
+                    <div style={{ marginTop: 12, fontSize: 14 }}>
+                      {t('proposed_rate')} : <strong style={{ color: '#4c5e42' }}>€{app.proposedRate}/u</strong>
                     </div>
                   )}
 
-                  {/* ===== Tarif souhaité ===== */}
-                  {p && (p.hourlyRateMin || p.hourlyRateMax) && (
-                    <p style={{ ...meta, marginTop: 14 }}>
-                      <Ico n="bank" s={14} c="#8a9a7b" /> {t('rate_range')} : €{p.hourlyRateMin || '?'} – €{p.hourlyRateMax || '?'}/u
+                  {/* Message */}
+                  {app.message && (
+                    <p style={{ marginTop: 12, fontSize: 14, color: '#3c4436', lineHeight: 1.6, background: '#f9faf4', padding: '12px 16px', borderRadius: 12 }}>
+                      {app.message}
                     </p>
                   )}
 
-                  {/* ===== Message du candidat ===== */}
-                  {k.message && (
-                    <p style={{ background: '#f6f7f2', border: '1px solid #eceee3', borderRadius: 12, padding: '13px 17px', fontSize: 14, color: '#23281f', fontStyle: 'italic', marginTop: 14 }}>
-                      “{k.message}”
-                    </p>
+                  {/* Fonctions & spécialités */}
+                  {p && (p.functions.length > 0 || p.specialties.length > 0) && (
+                    <div style={{ marginTop: 14 }}>
+                      {p.functions.length > 0 && (
+                        <>
+                          <div style={etiquetteSection}>{t('functions_title')}</div>
+                          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 10 }}>
+                            {p.functions.map((f) => <span key={f} style={badgeSauge}>{afficherPoste(f, lang)}</span>)}
+                          </div>
+                        </>
+                      )}
+                      {p.specialties.length > 0 && (
+                        <>
+                          <div style={etiquetteSection}>{t('specialties_title')}</div>
+                          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                            {p.specialties.map((s) => <span key={s} style={badgeSauge}>{afficherSpecialite(s, lang)}</span>)}
+                          </div>
+                        </>
+                      )}
+                    </div>
                   )}
 
-                  {/* ===== Description ===== */}
+                  {/* Tarif souhaité */}
+                  {p?.hourlyRateMin != null && (
+                    <div style={{ marginTop: 12, fontSize: 13.5, color: '#6b7268' }}>
+                      {t('rate_range')} : €{p.hourlyRateMin} – €{p.hourlyRateMax}/u
+                    </div>
+                  )}
+
+                  {/* Description */}
                   {p?.description && (
-                    <p style={{ fontSize: 14.5, color: '#6b7268', marginTop: 14, lineHeight: 1.6 }}>{p.description}</p>
+                    <p style={{ marginTop: 12, fontSize: 14, color: '#4a5044', lineHeight: 1.6 }}>{p.description}</p>
                   )}
 
-                  {/* ===== Historique ===== */}
+                  {/* Expérience */}
                   {p && p.workExperience.length > 0 && (
-                    <div>
-                      <h4 style={titreSection}><Ico n="brief" s={13} /> {t('work_history')}</h4>
-                      <div style={{ display: 'grid', gap: 10 }}>
+                    <div style={{ marginTop: 14 }}>
+                      <div style={etiquetteSection}>{t('work_history')}</div>
+                      <div style={{ display: 'grid', gap: 8 }}>
                         {p.workExperience.map((w) => (
-                          <div key={w.id} style={{ borderLeft: '3px solid #dfe5d0', paddingLeft: 12 }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8, fontSize: 14 }}>
-                              <span>
-                                <strong>{afficherPoste(w.function, lang)}</strong>
-                                {w.companyName && <span style={{ color: '#6b7268' }}> · {w.companyName}</span>}
-                                {w.location && <span style={{ color: '#9aa39b' }}> · {w.location}</span>}
-                              </span>
-                              <span style={{ color: '#9aa39b', fontSize: 13 }}>
-                                {new Date(w.fromDate).getFullYear()} – {w.isCurrent ? t('current') : w.toDate ? new Date(w.toDate).getFullYear() : ''}
-                              </span>
+                          <div key={w.id} style={{ fontSize: 13.5 }}>
+                            <strong>{w.function}</strong>
+                            {w.companyName && ` · ${w.companyName}`}
+                            {w.location && ` · ${w.location}`}
+                            <div style={{ color: '#6b7268', fontSize: 12.5 }}>
+                              {new Date(w.fromDate).toLocaleDateString(locale, { month: 'short', year: 'numeric' })}
+                              {' – '}
+                              {w.isCurrent
+                                ? t('current')
+                                : w.toDate
+                                ? new Date(w.toDate).toLocaleDateString(locale, { month: 'short', year: 'numeric' })
+                                : ''}
                             </div>
-                            {w.description && (
-                              <p style={{ fontSize: 13, color: '#6b7268', marginTop: 4, lineHeight: 1.55 }}>{w.description}</p>
-                            )}
                           </div>
                         ))}
                       </div>
