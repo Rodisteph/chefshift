@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { emailNouvelleCandidature } from '@/lib/email'
 
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
   try {
@@ -39,6 +40,20 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
         shiftId,
       }
     })
+
+    // Email à l'horeca : nouvelle candidature
+    const [horeca, kok] = await Promise.all([
+      prisma.user.findUnique({ where: { id: shift.horecaId } }),
+      prisma.user.findUnique({ where: { id: session.user.id } }),
+    ])
+    if (horeca?.email) {
+      await emailNouvelleCandidature(
+        horeca.email,
+        shiftId,
+        shift.title,
+        kok?.name || 'Een kok'
+      )
+    }
 
     return NextResponse.json({ application }, { status: 201 })
   } catch (error) {

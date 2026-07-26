@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { emailShiftBevestigd } from '@/lib/email'
 
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
   try {
@@ -41,6 +42,15 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
         shiftId,
       }
     })
+
+    // Email au chef : choisi pour le shift
+    const kok = await prisma.user.findUnique({ where: { id: kokId } })
+    if (kok?.email) {
+      const datum = new Date(shift.date).toLocaleDateString('nl-NL', {
+        weekday: 'long', day: 'numeric', month: 'long',
+      })
+      await emailShiftBevestigd(kok.email, shiftId, shift.title, datum)
+    }
 
     return NextResponse.json({ shift: updated })
   } catch (error) {

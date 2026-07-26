@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { emailBetalingOntvangen } from '@/lib/email'
 import Stripe from 'stripe'
 
 // Stripe appelle cette route après un paiement réussi
@@ -41,6 +42,12 @@ export async function POST(req: NextRequest) {
               shiftId: invoice.shiftId,
             },
           })
+
+          // Email au chef : paiement reçu
+          const kok = await prisma.user.findUnique({ where: { id: invoice.shift.chosenKokId } })
+          if (kok?.email) {
+            await emailBetalingOntvangen(kok.email, invoice.shift.title, invoice.kokPayout)
+          }
         }
       } catch {}
     }
