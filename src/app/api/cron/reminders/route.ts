@@ -36,8 +36,9 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const pub = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
-    const priv = process.env.VAPID_PRIVATE_KEY
+    // trim + retrait du padding "=" éventuel (copier-coller)
+    const pub = (process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || '').trim().replace(/=+$/, '')
+    const priv = (process.env.VAPID_PRIVATE_KEY || '').trim().replace(/=+$/, '')
     if (!pub || !priv) {
       return NextResponse.json({ ok: false, reason: 'VAPID keys not configured' })
     }
