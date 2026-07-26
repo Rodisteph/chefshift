@@ -25,7 +25,7 @@ async function ensureTables() {
 
 type Sub = { endpoint: string; p256dh: string; auth: string }
 
-// GET : appelé par Vercel Cron toutes les 15 minutes
+// GET : appelé par un minuteur externe (cron-job.org) toutes les 15 minutes
 export async function GET(req: NextRequest) {
   const secret = process.env.CRON_SECRET
   if (secret && req.headers.get('authorization') !== `Bearer ${secret}`) {
@@ -76,7 +76,7 @@ export async function GET(req: NextRequest) {
             { endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } },
             JSON.stringify({
               title: 'ChefShift',
-              body: `Herinnering: je shift "${shift.title}" in ${shift.city} begint over ${f.delai}.`,
+              body: `Herinnering: je shift "${shift.title}" begint over ${f.delai}.`,
               url: '/dashboard',
             })
           )
