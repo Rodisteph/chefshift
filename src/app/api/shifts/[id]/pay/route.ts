@@ -105,7 +105,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
               currency: 'eur',
               unit_amount: Math.round(incl * 100),
               product_data: {
-                name: `ChefShift — ${shift.title}`,
+                name: `ChefShift: ${shift.title}`,
                 description: `${heures.toFixed(1)}u × €${shift.hourlyRate.toFixed(2)} + ${shift.vatRate}% btw`,
               },
             },

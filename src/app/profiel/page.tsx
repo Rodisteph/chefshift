@@ -48,6 +48,7 @@ export default function ProfielPage() {
   const [iban, setIban] = useState('')
   const [connectStatus, setConnectStatus] = useState<'none' | 'pending' | 'ok'>('none')
   const [connectEnvoi, setConnectEnvoi] = useState(false)
+  const [connectFout, setConnectFout] = useState('')
   const [exps, setExps] = useState<Exp[]>([])
 
   useEffect(() => {
@@ -101,6 +102,7 @@ export default function ProfielPage() {
 
   async function connecter() {
     setConnectEnvoi(true)
+    setConnectFout('')
     try {
       const res = await fetch('/api/connect', { method: 'POST' })
       const data = await res.json().catch(() => ({}))
@@ -108,7 +110,10 @@ export default function ProfielPage() {
         window.location.href = data.url
         return
       }
-    } catch {}
+      setConnectFout(data.error || 'Unknown error')
+    } catch (e: any) {
+      setConnectFout(e?.message || 'Network error')
+    }
     setConnectEnvoi(false)
   }
 
@@ -325,6 +330,11 @@ export default function ProfielPage() {
                   <Ico n="card" s={15} />
                   {connectEnvoi ? t('form_loading') : t('connect_btn')}
                 </button>
+                {connectFout && (
+                  <p style={{ marginTop: 12, color: '#b91c1c', fontSize: 13, background: '#fef2f2', padding: '10px 14px', borderRadius: 10, fontWeight: 600, lineHeight: 1.5 }}>
+                    {t('connect_fail')} {connectFout}
+                  </p>
+                )}
               </>
             )}
           </div>
