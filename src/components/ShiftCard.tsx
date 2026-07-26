@@ -1,26 +1,26 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useT } from '@/lib/i18n'
-import { Ico } from '@/components/Icons'
+import { Ico } from './Icons'
+
+const FONT = '"Sora","Inter","Helvetica Neue",Arial,sans-serif'
 
 export type ShiftData = {
   id: string
   title: string
-  function?: string
+  function?: string | null
   date: string
   startTime: string
   endTime: string
+  locationCity?: string | null
   hourlyRate: number
   totalAmount?: number | null
-  locationCity?: string | null
-  isUrgent?: boolean
-  status?: string
-  horeca?: { horecaProfile?: { companyName?: string } | null } | null
+  isUrgent: boolean
+  status: string
   _count?: { applications: number }
+  horeca?: { horecaProfile?: { companyName?: string | null } | null }
 }
-
-const FONT = '"Sora","Inter","Helvetica Neue",Arial,sans-serif'
 
 export default function ShiftCard({
   shift,
@@ -32,39 +32,45 @@ export default function ShiftCard({
   detailHref?: string
 }) {
   const { t, lang } = useT()
-  const [etat, setEtat] = useState<'idle' | 'envoi' | 'ok' | 'erreur'>('idle')
-  const [msgErreur, setMsgErreur] = useState('')
   const locale = lang === 'en' ? 'en-GB' : 'nl-NL'
+  const [etat, setEtat] = useState<'idle' | 'envoi' | 'ok' | 'erreur'>('idle')
+  const [message, setMessage] = useState('')
 
-  const dateObj = new Date(shift.date)
-  const dateStr = dateObj.toLocaleDateString(locale, { weekday: 'short', day: 'numeric', month: 'short' })
-  const start = new Date(shift.startTime).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })
-  const end = new Date(shift.endTime).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })
-  const restaurant = shift.horeca?.horecaProfile?.companyName
+  useEffect(() => {
+    if (!showApply) return
+    fetch('/api/auth/session').then((r) => r.json()).then((s) => {
+      if (s?.user?.applications?.some((a: any) => a.shiftId === shift.id)) {
+        setEtat('ok')
+      }
+    })
+  }, [shift.id, showApply])
 
-  async function postuler(e: React.MouseEvent) {
-    e.preventDefault()
-    e.stopPropagation()
+  async function postuler() {
     setEtat('envoi')
-    setMsgErreur('')
     try {
       const res = await fetch(`/api/shifts/${shift.id}/apply`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({}),
       })
-      if (res.ok) {
+      if (res.status === 201) {
         setEtat('ok')
       } else {
-        const data = await res.json().catch(() => ({}))
-        setMsgErreur(data?.error === 'Already applied' ? t('apply_already') : t('apply_fail'))
+        const data = await res.json()
+        setMessage(data.error === 'Already applied' ? t('apply_already') : t('apply_fail'))
         setEtat('erreur')
       }
     } catch {
-      setMsgErreur(t('apply_fail'))
+      setMessage(t('apply_fail'))
       setEtat('erreur')
     }
   }
+
+  const dateStr = new Date(shift.date).toLocaleDateString(locale, {
+    weekday: 'short', day: 'numeric', month: 'short',
+  })
+  const start = new Date(shift.startTime).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })
+  const end = new Date(shift.endTime).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })
 
   const meta: React.CSSProperties = {
     display: 'inline-flex', alignItems: 'center', gap: 5,
@@ -72,98 +78,104 @@ export default function ShiftCard({
   }
 
   const contenu = (
-    <div className="cs-card" style={{
-      background: '#fff', borderRadius: 20, border: '1px solid #eceee3',
-      boxShadow: '0 3px 12px rgba(46,52,43,0.05)',
-      padding: 24, display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-      flexWrap: 'wrap', gap: 18, fontFamily: FONT,
-      cursor: detailHref ? 'pointer' : 'default',
-    }}>
-      <div style={{ flex: 1, minWidth: 240 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginBottom: 6 }}>
-          <h3 style={{ fontSize: 17.5, fontWeight: 800, letterSpacing: -0.3, color: '#23281f' }}>
-            {shift.title}
-            {detailHref && <> <Ico n="arrow" s={15} c="#5f7052" /></>}
-          </h3>
+    <>
+      <div>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+          <h3 style={{ fontSize: 17, fontWeight: 800, letterSpacing: -0.3 }}>{shift.title}</h3>
+          {shift.function && (
+            <span style={{
+              display: 'inline-flex', alignItems: 'center', gap: 5,
+              background: '#23281f', color: '#dfe7d1', fontSize: 11.5, fontWeight: 700,
+              padding: '4px 11px', borderRadius: 999,
+            }}>
+              <Ico n="utensils" s={12} /> {shift.function}
+            </span>
+          )}
           {shift.isUrgent && (
             <span style={{
               display: 'inline-flex', alignItems: 'center', gap: 5,
-              background: '#fef2f2', color: '#b91c1c', fontSize: 10.5, fontWeight: 800,
-              padding: '4px 11px', borderRadius: 999, textTransform: 'uppercase', letterSpacing: 1,
+              background: '#fee2e2', color: '#b91c1c', fontSize: 11.5, fontWeight: 800,
+              padding: '4px 11px', borderRadius: 999, textTransform: 'uppercase', letterSpacing: 0.5,
             }}>
               <Ico n="flame" s={12} /> {t('urgent')}
             </span>
           )}
-          {shift.status === 'CONFIRMED' && (
-            <span style={{
-              display: 'inline-flex', alignItems: 'center', gap: 5,
-              background: '#eef2e7', color: '#4c5e42', fontSize: 10.5, fontWeight: 800,
-              padding: '4px 11px', borderRadius: 999, textTransform: 'uppercase', letterSpacing: 1,
-            }}>
-              <Ico n="check" s={12} /> {t('status_confirmed')}
-            </span>
-          )}
         </div>
-        {restaurant && (
-          <p style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 14, fontWeight: 700, color: '#4c5e42', marginBottom: 7 }}>
-            <Ico n="chef" s={15} /> {restaurant}
-          </p>
-        )}
-        <p style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap', margin: 0 }}>
+        <p style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap', marginTop: 7 }}>
           <span style={meta}><Ico n="cal" s={14} c="#8a9a7b" /> {dateStr}</span>
           <span style={meta}><Ico n="clock" s={14} c="#8a9a7b" /> {start} – {end}</span>
           {shift.locationCity && <span style={meta}><Ico n="pin" s={14} c="#8a9a7b" /> {shift.locationCity}</span>}
+          {shift.horeca?.horecaProfile?.companyName && (
+            <span style={{ ...meta, fontWeight: 700, color: '#23281f' }}>
+              {shift.horeca.horecaProfile.companyName}
+            </span>
+          )}
         </p>
-        {shift._count && (
-          <p style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 12.5, color: '#9aa39b', marginTop: 7, marginBottom: 0, fontWeight: 500 }}>
-            <Ico n="users" s={13} /> {shift._count.applications} {t('applications')}
-          </p>
-        )}
-        {etat === 'erreur' && (
-          <p style={{ fontSize: 13, color: '#b91c1c', marginTop: 7, marginBottom: 0, fontWeight: 600 }}>{msgErreur}</p>
-        )}
       </div>
       <div style={{ textAlign: 'right' }}>
-        <div style={{
-          display: 'inline-block', background: '#f0f4ea', borderRadius: 14, padding: '10px 16px', marginBottom: 10,
-        }}>
-          <span style={{ fontSize: 23, fontWeight: 800, color: '#4c5e42', letterSpacing: -0.5 }}>€{shift.hourlyRate}</span>
-          <span style={{ fontSize: 13, fontWeight: 600, color: '#7d8877' }}>/u</span>
-        </div>
+        <div style={{ fontSize: 20, fontWeight: 800, color: '#4c5e42', letterSpacing: -0.5 }}>€{shift.hourlyRate}/u</div>
         {shift.totalAmount != null && (
-          <div style={{ fontSize: 12.5, color: '#6b7268', marginBottom: 8, fontWeight: 500 }}>
-            {t('total')} €{Math.round(shift.totalAmount)}
+          <div style={{ fontSize: 12.5, color: '#6b7268', fontWeight: 600 }}>
+            {t('total')} : €{Math.round(shift.totalAmount)}
           </div>
         )}
-        {showApply && shift.status !== 'CONFIRMED' && (
-          <button
-            onClick={postuler}
-            disabled={etat === 'envoi' || etat === 'ok'}
-            className="cs-btn"
-            style={{
-              display: 'flex', width: '100%',
-              background: etat === 'ok' ? '#8a9a7b' : 'linear-gradient(135deg,#647a55,#46553c)',
-              color: '#fff', border: 'none', borderRadius: 12,
-              padding: '11px 22px', fontWeight: 700, fontSize: 13.5, fontFamily: FONT,
-              cursor: etat === 'envoi' || etat === 'ok' ? 'default' : 'pointer',
-              opacity: etat === 'envoi' ? 0.7 : 1,
-            }}
-          >
-            {etat === 'ok' && <Ico n="check" s={14} />}
-            {etat === 'envoi' ? t('apply_sending') : etat === 'ok' ? t('applied') : t('apply_btn')}
-          </button>
+        {shift._count && (
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 12.5, color: '#6b7268', marginTop: 5 }}>
+            <Ico n="users" s={13} /> {shift._count.applications} {t('applications')}
+          </div>
+        )}
+        {showApply && (
+          <div style={{ marginTop: 9 }}>
+            {etat === 'ok' ? (
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: '#4c5e42', fontWeight: 700, fontSize: 13.5 }}>
+                <Ico n="check" s={15} /> {t('applied')}
+              </span>
+            ) : (
+              <button
+                onClick={(e) => { e.preventDefault(); e.stopPropagation(); postuler() }}
+                disabled={etat === 'envoi'}
+                className="cs-btn"
+                style={{
+                  background: 'linear-gradient(135deg,#647a55,#46553c)', color: '#fff', border: 'none',
+                  borderRadius: 999, padding: '10px 22px', fontWeight: 700, fontSize: 13.5,
+                  cursor: etat === 'envoi' ? 'wait' : 'pointer', fontFamily: FONT,
+                  opacity: etat === 'envoi' ? 0.7 : 1,
+                }}
+              >
+                {etat === 'envoi' ? t('apply_sending') : t('apply_btn')}
+              </button>
+            )}
+            {etat === 'erreur' && <div style={{ color: '#b91c1c', fontSize: 12, marginTop: 5, fontWeight: 600 }}>{message}</div>}
+          </div>
+        )}
+        {detailHref && (
+          <div style={{ marginTop: 8, display: 'inline-flex', alignItems: 'center', gap: 5, color: '#5f7052', fontWeight: 700, fontSize: 13 }}>
+            {shift.status === 'CONFIRMED' ? t('status_confirmed') : t('choose')} <Ico n="arrow" s={13} />
+          </div>
         )}
       </div>
-    </div>
+    </>
   )
 
-  // Carte entièrement cliquable pour la horeca
+  const styleCarte: React.CSSProperties = {
+    background: '#fff', borderRadius: 20, border: '1px solid #eceee3',
+    boxShadow: '0 3px 12px rgba(46,52,43,0.05)', padding: 24,
+    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+    gap: 18, flexWrap: 'wrap',
+  }
+
+  // Carte entièrement cliquable si un lien de détail est fourni
   if (detailHref) {
     return (
-      <a href={detailHref} style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}>
+      <a href={detailHref} className="cs-card" style={{ ...styleCarte, textDecoration: 'none', color: 'inherit', display: 'flex' }}>
         {contenu}
       </a>
     )
   }
-  return contenu
+
+  return (
+    <div className="cs-card" style={styleCarte}>
+      {contenu}
+    </div>
+  )
 }

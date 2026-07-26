@@ -15,6 +15,8 @@ export default function NewShiftPage() {
   const [startTime, setStartTime] = useState('')
   const [endTime, setEndTime] = useState('')
   const [hourlyRate, setHourlyRate] = useState('')
+  const [locationStreet, setLocationStreet] = useState('')
+  const [locationPostal, setLocationPostal] = useState('')
   const [locationCity, setLocationCity] = useState('')
   const [isUrgent, setIsUrgent] = useState(false)
   const [error, setError] = useState('')
@@ -48,6 +50,8 @@ export default function NewShiftPage() {
           startTime,
           endTime,
           hourlyRate: parseFloat(hourlyRate),
+          locationStreet,
+          locationPostal,
           locationCity,
           isUrgent,
         }),
@@ -133,6 +137,18 @@ export default function NewShiftPage() {
               <label style={etiquette}>{t('field_rate')}</label>
               <input type="number" min="1" step="0.5" value={hourlyRate} onChange={(e) => setHourlyRate(e.target.value)} required
                 placeholder="22" style={champ} />
+            </div>
+          </div>
+          <div style={{ marginBottom: 16 }}>
+            <label style={etiquette}>{t('field_street')}</label>
+            <input value={locationStreet} onChange={(e) => setLocationStreet(e.target.value)}
+              placeholder="Herengracht 123" style={champ} />
+          </div>
+          <div style={{ display: 'flex', gap: 12, marginBottom: 16 }}>
+            <div style={{ flex: 1 }}>
+              <label style={etiquette}>{t('field_postal')}</label>
+              <input value={locationPostal} onChange={(e) => setLocationPostal(e.target.value)}
+                placeholder="1015 BG" style={champ} />
             </div>
             <div style={{ flex: 1 }}>
               <label style={etiquette}>{t('field_city')}</label>
