@@ -93,7 +93,7 @@ export default function ShiftsPage() {
                 key={shift.id}
                 shift={shift}
                 showApply={estKok}
-                detailHref={!estKok ? `/shifts/${shift.id}` : undefined}
+                detailHref={`/shifts/${shift.id}`}
               />
             ))}
           </div>

@@ -39,11 +39,14 @@ export default function ShiftCard({
 
   useEffect(() => {
     if (!showApply) return
-    fetch('/api/auth/session').then((r) => r.json()).then((s) => {
-      if (s?.user?.applications?.some((a: any) => a.shiftId === shift.id)) {
-        setEtat('ok')
-      }
-    })
+    fetch('/api/applications/mine')
+      .then((r) => r.json())
+      .then((d) => {
+        if (d?.shiftIds && d.shiftIds.indexOf(shift.id) >= 0) {
+          setEtat('ok')
+        }
+      })
+      .catch(() => {})
   }, [shift.id, showApply])
 
   async function postuler() {
@@ -59,7 +62,7 @@ export default function ShiftCard({
       } else {
         const data = await res.json()
         setMessage(data.error === 'Already applied' ? t('apply_already') : t('apply_fail'))
-        setEtat('erreur')
+        setEtat(data.error === 'Already applied' ? 'ok' : 'erreur')
       }
     } catch {
       setMessage(t('apply_fail'))
@@ -151,7 +154,7 @@ export default function ShiftCard({
         )}
         {detailHref && (
           <div style={{ marginTop: 8, display: 'inline-flex', alignItems: 'center', gap: 5, color: '#5f7052', fontWeight: 700, fontSize: 13 }}>
-            {shift.status === 'CONFIRMED' ? t('status_confirmed') : t('choose')} <Ico n="arrow" s={13} />
+            {showApply ? t('details') : shift.status === 'CONFIRMED' ? t('status_confirmed') : t('choose')} <Ico n="arrow" s={13} />
           </div>
         )}
       </div>

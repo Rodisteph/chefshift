@@ -29,6 +29,7 @@ export async function POST() {
     }
 
     let envoyes = 0
+    const erreurs: string[] = []
     for (const s of subs) {
       try {
         await webpush.sendNotification(
@@ -41,13 +42,14 @@ export async function POST() {
         )
         envoyes++
       } catch (e: any) {
+        erreurs.push(`[${e?.statusCode || '?'}] ${e?.message || 'push error'}`)
         if (e?.statusCode === 404 || e?.statusCode === 410) {
           await prisma.$executeRaw`DELETE FROM kok_push WHERE endpoint = ${s.endpoint}`
         }
       }
     }
 
-    return NextResponse.json({ ok: envoyes > 0, envoyes })
+    return NextResponse.json({ ok: envoyes > 0, envoyes, abonnements: subs.length, erreur: erreurs[0] || null })
   } catch (error: any) {
     return NextResponse.json(
       { ok: false, error: error?.message || 'Internal server error' },
