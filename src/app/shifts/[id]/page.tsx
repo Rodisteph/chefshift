@@ -270,7 +270,7 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
   return (
     <main style={{ fontFamily: FONT, background: '#f6f7f2', color: '#23281f', minHeight: '100vh' }}>
       <AnimStyles />
-      <nav style={{
+      <nav className="cs-nav" style={{
         background: 'rgba(255,255,255,0.88)', backdropFilter: 'blur(12px)',
         borderBottom: '1px solid #e8ebe0',
         padding: '13px 28px', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
@@ -286,7 +286,7 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
         </div>
       </nav>
 
-      <div style={{ maxWidth: 860, margin: '0 auto', padding: '48px 24px' }}>
+      <div className="cs-wrap" style={{ maxWidth: 860, margin: '0 auto', padding: '48px 24px' }}>
         {/* ===== Résumé du shift / Édition ===== */}
         {modif ? (
           <form onSubmit={sauvegarderModif} className="cs-pop" style={{ ...carte, marginBottom: 24 }}>
@@ -397,7 +397,7 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
                   </p>
                 )}
               </div>
-              <div style={{ textAlign: 'right' }}>
+              <div className="cs-end" style={{ textAlign: 'right' }}>
                 <div style={{ fontSize: 27, fontWeight: 800, color: '#4c5e42', letterSpacing: -1 }}>€{shift.hourlyRate}{parHeure}</div>
                 {(shift.status === 'CONFIRMED' || shift.status === 'COMPLETED') && (
                   <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, ...badgeSauge }}>
