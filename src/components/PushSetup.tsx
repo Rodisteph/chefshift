@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useT } from '@/lib/i18n'
-import { Ico } from './Icons'
+import { Ico, IcoTile } from './Icons'
 
 const FONT = '"Sora","Inter","Helvetica Neue",Arial,sans-serif'
 
@@ -18,6 +18,31 @@ function urlBase64ToUint8Array(base64String: string) {
 }
 
 type Etat = 'chargement' | 'invite' | 'actif' | 'refuse' | 'indisponible'
+
+function Interrupteur({ on, onClick, disabled }: { on: boolean; onClick: () => void; disabled: boolean }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      aria-pressed={on}
+      style={{
+        width: 54, height: 31, borderRadius: 999, border: 'none', flexShrink: 0,
+        cursor: disabled ? 'wait' : 'pointer',
+        background: on ? '#5f7052' : '#d5d0c4',
+        position: 'relative', transition: 'background .25s ease',
+      }}
+    >
+      <span
+        style={{
+          position: 'absolute', top: 3, left: on ? 26 : 3, width: 25, height: 25,
+          borderRadius: '50%', background: '#fff',
+          boxShadow: '0 1px 4px rgba(0,0,0,.28)', transition: 'left .25s ease',
+        }}
+      />
+    </button>
+  )
+}
 
 export default function PushSetup() {
   const { t } = useT()
@@ -77,6 +102,25 @@ export default function PushSetup() {
     setEnvoi(false)
   }
 
+  async function desactiver() {
+    setEnvoi(true)
+    try {
+      const reg = await navigator.serviceWorker.ready
+      const sub = await reg.pushManager.getSubscription()
+      if (sub) {
+        await fetch('/api/push/subscribe', {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ endpoint: sub.endpoint }),
+        })
+        await sub.unsubscribe()
+      }
+      setEtat('invite')
+      setTestMsg('')
+    } catch {}
+    setEnvoi(false)
+  }
+
   async function tester() {
     setTestEnvoi(true)
     setTestMsg('')
@@ -94,20 +138,69 @@ export default function PushSetup() {
     setTestEnvoi(false)
   }
 
-  if (etat === 'chargement' || etat === 'indisponible') return null
+  const carte: React.CSSProperties = {
+    marginBottom: 24, background: '#fff', border: '1px solid #eceee3', borderRadius: 16,
+    padding: '16px 20px', boxShadow: '0 3px 12px rgba(46,52,43,0.05)', fontFamily: FONT,
+  }
 
-  if (etat === 'actif') {
+  if (etat === 'chargement') {
+    return (
+      <div className="cs-fade cs-d2" style={{ ...carte, color: '#6b7268', fontSize: 13.5, fontWeight: 600 }}>
+        {t('dash_loading')}
+      </div>
+    )
+  }
+
+  if (etat === 'indisponible') {
+    return (
+      <div className="cs-fade cs-d2" style={{ ...carte, display: 'flex', alignItems: 'center', gap: 12 }}>
+        <IcoTile n="bell" s={16} taille={38} />
+        <div style={{ fontSize: 13.5, color: '#9aa39b', fontWeight: 600 }}>{t('push_unsupported')}</div>
+      </div>
+    )
+  }
+
+  if (etat === 'refuse') {
     return (
       <div className="cs-fade cs-d2" style={{
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap',
-        marginBottom: 24, background: '#f0f7ec', border: '1px solid #d9e8cf', borderRadius: 14,
-        padding: '12px 18px', fontSize: 13.5, color: '#3d6b34', fontWeight: 700, fontFamily: FONT,
+        marginBottom: 24, background: '#fffdf4', border: '1px solid #efe7c8', borderRadius: 16,
+        padding: '16px 20px', fontSize: 13.5, color: '#8a7320', fontWeight: 600, fontFamily: FONT,
+        display: 'flex', alignItems: 'flex-start', gap: 12,
       }}>
-        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 10 }}>
-          <Ico n="check" s={15} /> {t('push_ok')}
-        </span>
-        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 10 }}>
-          {testMsg && <span style={{ fontWeight: 600, fontSize: 12.5 }}>{testMsg}</span>}
+        <Ico n="bell" s={17} c="#8a7320" />
+        <span>{t('push_denied')}</span>
+      </div>
+    )
+  }
+
+  const actif = etat === 'actif'
+
+  return (
+    <div className="cs-fade cs-d2" style={carte}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 14 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <IcoTile n="bell" s={16} taille={38} />
+          <div>
+            <div style={{ fontSize: 14.5, fontWeight: 800, color: '#23281f', display: 'flex', alignItems: 'center', gap: 8 }}>
+              {t('push_title')}
+              <span style={{
+                fontSize: 11, fontWeight: 800, padding: '3px 10px', borderRadius: 999,
+                background: actif ? '#dcfce7' : '#f1f0eb',
+                color: actif ? '#15803d' : '#8a8676',
+                textTransform: 'uppercase', letterSpacing: 0.8,
+              }}>
+                {actif ? t('push_state_on') : t('push_state_off')}
+              </span>
+            </div>
+            <div style={{ fontSize: 13, color: '#6b7268', marginTop: 3 }}>
+              {actif ? t('push_ok') : t('push_desc')}
+            </div>
+          </div>
+        </div>
+        <Interrupteur on={actif} onClick={actif ? desactiver : activer} disabled={envoi} />
+      </div>
+      {actif && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 12, paddingLeft: 50, flexWrap: 'wrap' }}>
           <button
             type="button"
             onClick={tester}
@@ -121,48 +214,9 @@ export default function PushSetup() {
           >
             {testEnvoi ? t('form_loading') : t('push_test')}
           </button>
-        </span>
-      </div>
-    )
-  }
-
-  if (etat === 'refuse') {
-    return (
-      <div className="cs-fade cs-d2" style={{
-        marginBottom: 24, background: '#fffdf4', border: '1px solid #efe7c8', borderRadius: 14,
-        padding: '12px 18px', fontSize: 13.5, color: '#8a7320', fontWeight: 600, fontFamily: FONT,
-      }}>
-        {t('push_denied')}
-      </div>
-    )
-  }
-
-  return (
-    <div className="cs-fade cs-d2" style={{
-      display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, flexWrap: 'wrap',
-      marginBottom: 24, background: '#fff', border: '1px solid #eceee3', borderRadius: 16,
-      padding: '16px 20px', boxShadow: '0 3px 12px rgba(46,52,43,0.05)', fontFamily: FONT,
-    }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-        <Ico n="bolt" s={18} c="#5f7052" />
-        <div>
-          <div style={{ fontSize: 14.5, fontWeight: 800, color: '#23281f' }}>{t('push_title')}</div>
-          <div style={{ fontSize: 13, color: '#6b7268' }}>{t('push_desc')}</div>
+          {testMsg && <span style={{ fontWeight: 600, fontSize: 12.5, color: '#3d6b34' }}>{testMsg}</span>}
         </div>
-      </div>
-      <button
-        type="button"
-        onClick={activer}
-        disabled={envoi}
-        className="cs-btn"
-        style={{
-          background: 'linear-gradient(135deg,#647a55,#46553c)', color: '#fff', border: 'none',
-          borderRadius: 999, padding: '10px 20px', fontWeight: 700, fontSize: 13.5,
-          cursor: envoi ? 'wait' : 'pointer', opacity: envoi ? 0.7 : 1, fontFamily: FONT,
-        }}
-      >
-        {envoi ? t('form_loading') : t('push_btn')}
-      </button>
+      )}
     </div>
   )
 }

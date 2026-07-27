@@ -41,3 +41,24 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: error?.message || 'Internal server error' }, { status: 500 })
   }
 }
+
+// DELETE : désactiver les notifications sur cet appareil
+export async function DELETE(req: NextRequest) {
+  try {
+    const session = await getServerSession(authOptions)
+    if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+    const { endpoint } = await req.json()
+    if (!endpoint) {
+      return NextResponse.json({ error: 'Invalid endpoint' }, { status: 400 })
+    }
+
+    await ensurePushTable()
+    await prisma.$executeRaw`
+      DELETE FROM kok_push WHERE endpoint = ${endpoint} AND user_id = ${session.user.id}
+    `
+    return NextResponse.json({ ok: true })
+  } catch (error: any) {
+    return NextResponse.json({ error: error?.message || 'Internal server error' }, { status: 500 })
+  }
+}
