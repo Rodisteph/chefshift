@@ -46,6 +46,11 @@ type Application = {
   }
 }
 
+type Eind = {
+  reportedEnd: string
+  confirmedAt: string | null
+}
+
 type ShiftDetail = {
   id: string
   title: string
@@ -64,6 +69,7 @@ type ShiftDetail = {
   horeca: { horecaProfile: { companyName: string | null; kvkNumber: string | null } | null }
   invoice: { status: string; amountInclVat: number } | null
   applications: Application[]
+  eind: Eind | null
 }
 
 function age(date: string): number {
@@ -108,6 +114,9 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
   const [ePostal, setEPostal] = useState('')
   const [eCity, setECity] = useState('')
   const [eUrgent, setEUrgent] = useState(false)
+  const [eindInvoer, setEindInvoer] = useState('')
+  const [eindEnvoi, setEindEnvoi] = useState(false)
+  const [bevestigEnvoi, setBevestigEnvoi] = useState(false)
   const locale = lang === 'en' ? 'en-GB' : 'nl-NL'
   const parHeure = lang === 'en' ? '/hr' : '/u'
 
@@ -116,6 +125,9 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
     if (res.ok) {
       const data = await res.json()
       setShift(data.shift)
+      if (data.shift && !data.shift.eind && data.shift.endTime) {
+        setEindInvoer(new Date(data.shift.endTime).toTimeString().slice(0, 5))
+      }
     }
     setChargement(false)
   }
@@ -182,6 +194,25 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
       setMsgPay(data.error || t('pay_error'))
       setPaiement(false)
     }
+  }
+
+  async function rapporteerEind() {
+    if (!eindInvoer) return
+    setEindEnvoi(true)
+    const res = await fetch(`/api/shifts/${id}/eindtijd`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ endTime: eindInvoer }),
+    })
+    if (res.ok) await charger()
+    setEindEnvoi(false)
+  }
+
+  async function bevestigEind() {
+    setBevestigEnvoi(true)
+    const res = await fetch(`/api/shifts/${id}/eindtijd/confirm`, { method: 'POST' })
+    if (res.ok) await charger()
+    setBevestigEnvoi(false)
   }
 
   function demarrerModif() {
@@ -266,6 +297,13 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
     background: '#fff', borderRadius: 20, border: '1px solid #eceee3',
     boxShadow: '0 3px 12px rgba(46,52,43,0.05)', padding: 26,
   }
+
+  const shiftActif = shift.status === 'CONFIRMED' || shift.status === 'COMPLETED'
+  const eindGemeld = shift.eind
+    ? new Date(shift.eind.reportedEnd).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })
+    : ''
+  const eindBevestigd = !!(shift.eind && shift.eind.confirmedAt)
+  const voirBlocEind = shiftActif && shift.chosenKokId
 
   return (
     <main style={{ fontFamily: FONT, background: '#f6f7f2', color: '#23281f', minHeight: '100vh' }}>
@@ -469,6 +507,86 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
           </div>
         )}
 
+        {/* ===== Heure de fin : déclaration du chef + confirmation horeca ===== */}
+        {voirBlocEind && (
+          <div className="cs-fade cs-d1" style={{ ...carte, marginBottom: 40 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+              <Ico n="clock" s={17} c="#5f7052" />
+              <span style={{ fontWeight: 800, fontSize: 16.5, letterSpacing: -0.4 }}>
+                {role === 'KOK' ? t('end_title') : t('end_confirm_title')}
+              </span>
+            </div>
+
+            {eindBevestigd ? (
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: '#dcfce7', color: '#15803d', fontSize: 13.5, fontWeight: 800, padding: '8px 16px', borderRadius: 999 }}>
+                <Ico n="check" s={14} /> {t('end_confirmed')} · {eindGemeld}
+              </span>
+            ) : role === 'KOK' ? (
+              shift.eind ? (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 7, ...badgeSauge, fontSize: 13.5, padding: '8px 16px' }}>
+                    <Ico n="clock" s={14} /> {t('end_wait')} · {eindGemeld}
+                  </span>
+                </div>
+              ) : (
+                <>
+                  <p style={{ color: '#6b7268', fontSize: 14, fontWeight: 600, marginTop: 0, marginBottom: 16 }}>{t('end_desc')}</p>
+                  <div style={{ display: 'flex', gap: 12, alignItems: 'flex-end', flexWrap: 'wrap' }}>
+                    <div style={{ minWidth: 130 }}>
+                      <label style={etiquette}>{t('field_end')}</label>
+                      <input type="time" value={eindInvoer} onChange={(e) => setEindInvoer(e.target.value)} required style={champ} />
+                    </div>
+                    <button
+                      onClick={rapporteerEind}
+                      disabled={eindEnvoi || !eindInvoer}
+                      className="cs-btn"
+                      style={{
+                        background: 'linear-gradient(135deg,#647a55,#46553c)', color: '#fff', border: 'none',
+                        borderRadius: 12, padding: '12px 24px', fontWeight: 700, fontSize: 14,
+                        cursor: eindEnvoi ? 'wait' : 'pointer', opacity: eindEnvoi ? 0.7 : 1, fontFamily: FONT,
+                        boxShadow: '0 8px 18px -8px rgba(70,85,60,.5)',
+                      }}
+                    >
+                      {eindEnvoi ? t('end_sending') : t('end_btn')}
+                    </button>
+                  </div>
+                </>
+              )
+            ) : (
+              shift.eind ? (
+                <>
+                  <p style={{ color: '#6b7268', fontSize: 14, fontWeight: 600, marginTop: 0, marginBottom: 16 }}>{t('end_confirm_desc')}</p>
+                  <div style={{ display: 'flex', gap: 24, alignItems: 'center', flexWrap: 'wrap', marginBottom: 18 }}>
+                    <div>
+                      <div style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: 1.5, color: '#8a9a7b', fontWeight: 800, marginBottom: 4 }}>{t('end_planned')}</div>
+                      <div style={{ fontSize: 18, fontWeight: 800, color: '#6b7268' }}>{end}</div>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: 1.5, color: '#8a9a7b', fontWeight: 800, marginBottom: 4 }}>{t('end_reported')}</div>
+                      <div style={{ fontSize: 22, fontWeight: 800, color: '#4c5e42' }}>{eindGemeld}</div>
+                    </div>
+                  </div>
+                  <button
+                    onClick={bevestigEind}
+                    disabled={bevestigEnvoi}
+                    className="cs-btn"
+                    style={{
+                      background: 'linear-gradient(135deg,#647a55,#46553c)', color: '#fff', border: 'none',
+                      borderRadius: 12, padding: '12px 24px', fontWeight: 700, fontSize: 14,
+                      cursor: bevestigEnvoi ? 'wait' : 'pointer', opacity: bevestigEnvoi ? 0.7 : 1, fontFamily: FONT,
+                      boxShadow: '0 8px 18px -8px rgba(70,85,60,.5)',
+                    }}
+                  >
+                    {bevestigEnvoi ? t('form_loading') : t('end_confirm_btn')}
+                  </button>
+                </>
+              ) : (
+                <p style={{ color: '#6b7268', fontSize: 14, fontWeight: 600, margin: 0 }}>{t('end_desc')}</p>
+              )
+            )}
+          </div>
+        )}
+
         {/* ===== Paiement (horeca, après la fin du shift) ===== */}
         {role === 'HORECA' && shift.chosenKokId && (shift.status === 'CONFIRMED' || shift.status === 'COMPLETED') && !estPaye && (
           <div className="cs-fade cs-d2" style={{ ...carte, marginBottom: 40, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 14 }}>
@@ -527,7 +645,6 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
               const p = app.kok.kokProfile
               const reviews = p?.reviewsReceived || []
               const moy = moyenne(reviews)
-              const estChoisi = shift.chosenKokId === app.kok.kokProfile?.firstName
               return (
                 <div key={app.id} className="cs-card" style={carte}>
                   {/* En-tête du candidat */}
