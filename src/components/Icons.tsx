@@ -89,6 +89,13 @@ const PATHS: Record<string, React.ReactNode> = {
     </>
   ),
   x: <path d="M18 6 6 18M6 6l12 12" />,
+  out: (
+    <>
+      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+      <path d="m16 17 5-5-5-5" />
+      <path d="M21 12H9" />
+    </>
+  ),
   bank: (
     <>
       <rect x="2" y="6" width="20" height="12" rx="2" />

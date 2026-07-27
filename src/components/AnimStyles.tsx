@@ -67,6 +67,13 @@ export default function AnimStyles() {
         .cs-sec2 { padding: 0 18px 60px !important; }
         .cs-hero-pad { padding: 0 18px 76px !important; }
         .cs-auth { padding: 30px 22px !important; }
+        /* Barre de navigation compacte : textes masqués, icônes seules */
+        .cs-nav-txt { display: none !important; }
+        /* Statistiques : 2 par ligne, cartes compactes */
+        .cs-stats { grid-template-columns: repeat(2, 1fr) !important; gap: 12px !important; }
+        .cs-stat { padding: 14px 16px !important; gap: 10px !important; border-radius: 16px !important; }
+        .cs-stat-n { font-size: 20px !important; }
+        .cs-stat-l { font-size: 11.5px !important; }
       }
 
       @media (prefers-reduced-motion: reduce) {
