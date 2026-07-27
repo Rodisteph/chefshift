@@ -173,6 +173,9 @@ export default function DashboardPage() {
               <Ico n="user" s={15} /> {t('nav_profile')}
             </a>
           )}
+          <a href="/instellingen" className="cs-nav-link" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: '#5f7052', fontWeight: 700, fontSize: 14, textDecoration: 'none' }}>
+            <Ico n="gear" s={15} /> {t('nav_settings')}
+          </a>
           <span className="cs-hide-mob" style={{ fontSize: 13.5, color: '#6b7268', fontWeight: 500 }}>{user?.email}</span>
           <span style={{
             background: '#eef2e6', color: '#4c5e42', fontSize: 11, fontWeight: 800,
