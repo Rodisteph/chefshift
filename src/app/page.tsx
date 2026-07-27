@@ -7,6 +7,7 @@ import { Ico, IcoTile } from '@/components/Icons'
 
 const FONT = '"Sora","Inter","Helvetica Neue",Arial,sans-serif'
 const hero = 'https://kimi-web-img.moonshot.cn/img/plus.unsplash.com/035b02474f33aabd5af6cf4d2ff2a0971fc1b816'
+const CONTACT_EMAIL = 'rdrgbouabida@gmail.com'
 
 export default function HomePage() {
   const { t } = useT()
@@ -57,6 +58,9 @@ export default function HomePage() {
             </>
           ) : (
             <>
+              <a href={`mailto:${CONTACT_EMAIL}`} className="cs-nav-link cs-hide-mob" style={{ color: 'rgba(255,255,255,0.92)', fontWeight: 600, fontSize: 14, textDecoration: 'none' }}>
+                {t('contact')}
+              </a>
               <a href="/login" className="cs-nav-link" style={{ color: 'rgba(255,255,255,0.92)', fontWeight: 600, fontSize: 14, textDecoration: 'none' }}>
                 {t('nav_login')}
               </a>
@@ -163,6 +167,23 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* ===== Contact ===== */}
+      <section className="cs-sec2" style={{ padding: '0 24px 96px', maxWidth: 1200, margin: '0 auto' }}>
+        <div className="cs-card" style={{ background: '#fff', borderRadius: 20, border: '1px solid #eceee3', boxShadow: '0 3px 12px rgba(46,52,43,0.05)', padding: '44px 32px', textAlign: 'center' }}>
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}><IcoTile n="msg" s={22} taille={56} /></div>
+          <h2 style={{ fontSize: 'clamp(22px, 3vw, 30px)', fontWeight: 800, letterSpacing: -0.8, marginBottom: 10 }}>{t('contact_title')}</h2>
+          <p style={{ color: '#6b7268', fontSize: 15, marginBottom: 24 }}>{t('contact_sub')}</p>
+          <a href={`mailto:${CONTACT_EMAIL}`} className="cs-btn" style={{
+            display: 'inline-flex', alignItems: 'center', gap: 8,
+            background: 'linear-gradient(135deg,#647a55,#46553c)', color: '#fff',
+            padding: '14px 30px', borderRadius: 999, fontWeight: 700, fontSize: 15, textDecoration: 'none',
+            boxShadow: '0 10px 22px -8px rgba(70,85,60,.5)',
+          }}>
+            {CONTACT_EMAIL}
+          </a>
+        </div>
+      </section>
+
       {/* ===== Pied de page ===== */}
       <footer style={{ background: '#23281f', color: 'rgba(255,255,255,0.72)', padding: '64px 24px 30px' }}>
         <div style={{ maxWidth: 1200, margin: '0 auto' }}>
@@ -170,7 +191,8 @@ export default function HomePage() {
           <p style={{ maxWidth: 360, marginBottom: 40, lineHeight: 1.6 }}>{t('footer_tag')}</p>
           <div style={{ borderTop: '1px solid rgba(255,255,255,0.12)', paddingTop: 24, fontSize: 13.5, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 14 }}>
             <span>{t('footer_rights')}</span>
-            <span style={{ display: 'flex', gap: 22 }}>
+            <span style={{ display: 'flex', gap: 22, flexWrap: 'wrap' }}>
+              <a href={`mailto:${CONTACT_EMAIL}`} style={{ color: 'rgba(255,255,255,0.72)', textDecoration: 'none', fontWeight: 600 }}>{t('contact')}</a>
               <a href="/voorwaarden" style={{ color: 'rgba(255,255,255,0.72)', textDecoration: 'none', fontWeight: 600 }}>{t('terms_of')}</a>
               <a href="/privacy" style={{ color: 'rgba(255,255,255,0.72)', textDecoration: 'none', fontWeight: 600 }}>{t('privacy_of')}</a>
             </span>
