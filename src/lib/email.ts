@@ -124,3 +124,37 @@ export async function emailRappelShift(kokEmail: string, shiftId: string, shiftT
     )
   )
 }
+
+// 5. Horeca : le chef a déclaré son heure de fin
+export async function emailEindtijdGemeld(horecaEmail: string, shiftId: string, shiftTitre: string, kokNaam: string, eindtijd: string) {
+  return envoyerEmail(
+    horecaEmail,
+    `Eindtijd doorgegeven voor: ${shiftTitre} · End time reported`,
+    gabarit(
+      'Eindtijd doorgegeven',
+      `${kokNaam} geeft aan om <strong>${eindtijd}</strong> te zijn gestopt met de shift <strong>${shiftTitre}</strong>. Bevestig dit eindtijd in de app.`,
+      'Bevestig eindtijd',
+      'End time reported',
+      `${kokNaam} reported finishing the shift <strong>${shiftTitre}</strong> at <strong>${eindtijd}</strong>. Please confirm this end time in the app.`,
+      'Confirm end time',
+      `${baseUrl()}/shifts/${shiftId}`
+    )
+  )
+}
+
+// 6. Chef : l'horeca a confirmé l'heure de fin
+export async function emailEindtijdBevestigd(kokEmail: string, shiftId: string, shiftTitre: string, eindtijd: string) {
+  return envoyerEmail(
+    kokEmail,
+    `Eindtijd bevestigd voor: ${shiftTitre} · End time confirmed`,
+    gabarit(
+      'Eindtijd bevestigd',
+      `De horeca heeft je eindtijd van <strong>${eindtijd}</strong> voor de shift <strong>${shiftTitre}</strong> bevestigd.`,
+      'Bekijk shift',
+      'End time confirmed',
+      `The business confirmed your end time of <strong>${eindtijd}</strong> for the shift <strong>${shiftTitre}</strong>.`,
+      'View shift',
+      `${baseUrl()}/shifts/${shiftId}`
+    )
+  )
+}
