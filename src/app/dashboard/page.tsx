@@ -2,7 +2,7 @@
 
 import { signOut } from 'next-auth/react'
 import { useEffect, useState } from 'react'
-import { useT, LangToggle } from '@/lib/i18n'
+import { useT, LangToggle, Key } from '@/lib/i18n'
 import ShiftCard, { ShiftData } from '@/components/ShiftCard'
 import AnimStyles from '@/components/AnimStyles'
 import BarChart from '@/components/BarChart'
@@ -82,27 +82,76 @@ export default function DashboardPage() {
 
   const estKok = user?.role === 'KOK'
   const locale = lang === 'en' ? 'en-GB' : 'nl-NL'
+  const aujourdhui = new Date(new Date().toDateString())
 
-  // ===== Cartes de stats selon le rôle (cliquables vers la liste) =====
+  // ===== Shifts à venir et passés =====
+  const aVenir = shifts
+    .filter((s) => new Date(s.date) >= aujourdhui)
+    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+  const passes = (estKok ? shiftsPasses : shifts.filter((s) => new Date(s.date) < aujourdhui))
+    .slice()
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+
+  // ===== Cartes de stats selon le rôle =====
   const statsCartes = estKok
     ? [
-        { c: String(shifts.length), l: t('stat_kok_1'), icone: 'brief', lien: '/shifts' },
+        { c: String(aVenir.length), l: t('stat_kok_1'), icone: 'brief', lien: '/shifts' },
         { c: String(stats?.nbCandidatures ?? 0), l: t('stat_kok_apps'), icone: 'users', lien: '/shifts' },
         { c: String(stats?.nbAcceptees ?? 0), l: t('stat_kok_accepted'), icone: 'check', lien: '/shifts' },
         { c: `€${Math.round(stats?.totalGagne ?? 0)}`, l: t('stat_earn_total'), icone: 'bank', lien: '' },
       ]
     : [
-        { c: String(stats?.nbShifts ?? shifts.length), l: t('stat_hor_1'), icone: 'brief', lien: '/shifts' },
+        { c: String(shifts.length), l: t('stat_hor_1'), icone: 'brief', lien: '/shifts' },
         { c: String(stats?.nbCandidatures ?? 0), l: t('stat_hor_2'), icone: 'users', lien: '/shifts' },
         { c: String(stats?.nbEmbauches ?? 0), l: t('stat_hor_3'), icone: 'chef', lien: '/shifts' },
         { c: `€${Math.round(stats?.totalDepense ?? 0)}`, l: t('stat_spend_total'), icone: 'bank', lien: '' },
       ]
 
-  // ===== Série du graphique (labels localisés) =====
   const serieGraph = (stats?.serie || []).map((m) => ({
     label: new Date(m.key + '-02').toLocaleDateString(locale, { month: 'short' }),
     value: m.value,
   }))
+
+  // ===== Bloc de section (à venir / passés) =====
+  function Section({ titre, icone, liste, vide }: { titre: string; icone: string; liste: ShiftData[]; vide: Key }) {
+    return (
+      <section>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+          <h2 style={{ fontSize: 18, fontWeight: 800, letterSpacing: -0.4, display: 'flex', alignItems: 'center', gap: 9 }}>
+            <IcoTile n={icone} s={16} taille={34} />
+            {titre}
+            <span style={{
+              background: '#eef2e6', color: '#4c5e42', fontSize: 12, fontWeight: 800,
+              padding: '3px 11px', borderRadius: 999,
+            }}>
+              {liste.length}
+            </span>
+          </h2>
+          {liste.length > 4 && (
+            <a href="/shifts" style={{ display: 'inline-flex', alignItems: 'center', gap: 5, color: '#5f7052', fontWeight: 700, fontSize: 13, textDecoration: 'none' }}>
+              {t('view_all')} <Ico n="arrow" s={13} />
+            </a>
+          )}
+        </div>
+        {liste.length === 0 ? (
+          <div className="cs-card" style={{ ...carte, textAlign: 'center', padding: '36px 20px' }}>
+            <p style={{ color: '#9aa39b', fontWeight: 600, fontSize: 14, margin: 0 }}>{t(vide)}</p>
+          </div>
+        ) : (
+          <div style={{ display: 'grid', gap: 14 }}>
+            {liste.slice(0, 4).map((shift) => (
+              <ShiftCard
+                key={shift.id}
+                shift={shift}
+                showApply={estKok}
+                detailHref={`/shifts/${shift.id}`}
+              />
+            ))}
+          </div>
+        )}
+      </section>
+    )
+  }
 
   return (
     <main style={{ fontFamily: FONT, background: '#f6f7f2', color: '#23281f', minHeight: '100vh' }}>
@@ -145,25 +194,42 @@ export default function DashboardPage() {
         </div>
       </nav>
 
-      <div className="cs-wrap" style={{ maxWidth: 1100, margin: '0 auto', padding: '48px 24px' }}>
-        <h1 className="cs-fade" style={{ fontSize: 'clamp(28px, 4vw, 40px)', fontWeight: 800, letterSpacing: -1.4, marginBottom: 8 }}>
-          {t('dash_welcome')}, {user?.name || 'chef'}
-        </h1>
-        <p className="cs-fade cs-d1" style={{ color: '#6b7268', marginBottom: 32, fontSize: 15.5 }}>
-          {estKok
-            ? t('dash_kok_sub')
-            : user?.role === 'HORECA'
-            ? t('dash_horeca_sub')
-            : user?.role === 'ADMIN'
-            ? t('dash_admin_sub')
-            : t('dash_default_sub')}
-        </p>
+      <div className="cs-wrap" style={{ maxWidth: 1100, margin: '0 auto', padding: '40px 24px 56px' }}>
+        {/* ===== En-tête : bienvenue + action principale ===== */}
+        <div className="cs-fade" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: 16, marginBottom: 26 }}>
+          <div>
+            <h1 style={{ fontSize: 'clamp(26px, 4vw, 36px)', fontWeight: 800, letterSpacing: -1.2, marginBottom: 6 }}>
+              {t('dash_welcome')}, {user?.name || 'chef'}
+            </h1>
+            <p style={{ color: '#6b7268', fontSize: 14.5, margin: 0 }}>
+              {estKok
+                ? t('dash_kok_sub')
+                : user?.role === 'HORECA'
+                ? t('dash_horeca_sub')
+                : user?.role === 'ADMIN'
+                ? t('dash_admin_sub')
+                : t('dash_default_sub')}
+            </p>
+          </div>
+          <a
+            href={estKok ? '/shifts' : '/shifts/new'}
+            className="cs-btn"
+            style={{
+              background: 'linear-gradient(135deg,#647a55,#46553c)', color: '#fff', borderRadius: 999,
+              padding: '13px 26px', fontWeight: 700, fontSize: 14.5, textDecoration: 'none',
+              boxShadow: '0 10px 22px -8px rgba(70,85,60,.5)',
+              display: 'inline-flex', alignItems: 'center', gap: 8,
+            }}
+          >
+            {estKok ? t('action_kok_btn') : t('action_hor_btn')} <Ico n="arrow" s={15} />
+          </a>
+        </div>
 
-        {/* ===== Activation des notifications push ===== */}
+        {/* ===== Notifications push ===== */}
         <PushSetup />
 
         {/* ===== Statistiques ===== */}
-        <div className="cs-fade cs-d2" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 18, marginBottom: 24 }}>
+        <div className="cs-fade cs-d1" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: 16, marginBottom: 34 }}>
           {statsCartes.map((s) => {
             const contenu = (
               <>
@@ -174,7 +240,7 @@ export default function DashboardPage() {
                 </div>
               </>
             )
-            const styleCarte: React.CSSProperties = { ...carte, display: 'flex', alignItems: 'center', gap: 14, padding: 20 }
+            const styleCarte: React.CSSProperties = { ...carte, display: 'flex', alignItems: 'center', gap: 14, padding: 18 }
             return s.lien ? (
               <a key={s.l} href={s.lien} className="cs-card" style={{ ...styleCarte, textDecoration: 'none', cursor: 'pointer' }}>
                 {contenu}
@@ -187,8 +253,24 @@ export default function DashboardPage() {
           })}
         </div>
 
+        {/* ===== Deux colonnes : à venir | passés ===== */}
+        <div className="cs-fade cs-d2" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))', gap: 28, alignItems: 'start', marginBottom: 34 }}>
+          <Section
+            titre={estKok ? t('list_kok') : t('list_upcoming')}
+            icone="cal"
+            liste={aVenir}
+            vide="empty_none"
+          />
+          <Section
+            titre={t('list_past')}
+            icone="check"
+            liste={passes}
+            vide="empty_past"
+          />
+        </div>
+
         {/* ===== Graphique budget / revenus ===== */}
-        <div className="cs-fade cs-d3 cs-card" style={{ ...carte, marginBottom: 40 }}>
+        <div className="cs-fade cs-d3 cs-card" style={{ ...carte }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
             <IcoTile n="bank" s={18} taille={40} />
             <h2 style={{ fontSize: 17, fontWeight: 800, letterSpacing: -0.4 }}>
@@ -201,83 +283,6 @@ export default function DashboardPage() {
             <BarChart data={serieGraph} />
           )}
         </div>
-
-        {/* ===== Action principale ===== */}
-        <div className="cs-fade cs-d3 cs-card" style={{
-          ...carte, marginBottom: 40, display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-          flexWrap: 'wrap', gap: 18,
-          background: 'linear-gradient(135deg, #ffffff, #f2f5ea)',
-        }}>
-          <div>
-            <h2 style={{ fontSize: 20, fontWeight: 800, marginBottom: 6, letterSpacing: -0.5 }}>
-              {estKok ? t('action_kok_t') : t('action_hor_t')}
-            </h2>
-            <p style={{ color: '#6b7268', fontSize: 14.5 }}>
-              {estKok ? t('action_kok_d') : t('action_hor_d')}
-            </p>
-          </div>
-          <a
-            href={estKok ? '/shifts' : '/shifts/new'}
-            className="cs-btn"
-            style={{
-              background: 'linear-gradient(135deg,#647a55,#46553c)', color: '#fff', borderRadius: 999,
-              padding: '13px 28px', fontWeight: 700, fontSize: 14.5, textDecoration: 'none',
-              boxShadow: '0 10px 22px -8px rgba(70,85,60,.5)',
-            }}
-          >
-            {estKok ? t('action_kok_btn') : t('action_hor_btn')} <Ico n="arrow" s={15} />
-          </a>
-        </div>
-
-        {/* ===== Liste des shifts ===== */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}>
-          <h2 style={{ fontSize: 21, fontWeight: 800, letterSpacing: -0.5 }}>
-            {estKok ? t('list_kok') : t('list_other')}
-          </h2>
-          <a href="/shifts" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: '#5f7052', fontWeight: 700, fontSize: 14, textDecoration: 'none' }}>
-            {estKok ? t('list_kok') : t('list_other')} <Ico n="arrow" s={14} />
-          </a>
-        </div>
-        {shifts.length === 0 ? (
-          <div className="cs-card" style={{ ...carte, textAlign: 'center', padding: 52 }}>
-            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}>
-              <IcoTile n="inbox" s={22} taille={56} />
-            </div>
-            <p style={{ color: '#6b7268', fontWeight: 600 }}>{t('empty_none')}</p>
-          </div>
-        ) : (
-          <div style={{ display: 'grid', gap: 16 }}>
-            {shifts.slice(0, 3).map((shift) => (
-              <ShiftCard
-                key={shift.id}
-                shift={shift}
-                showApply={estKok}
-                detailHref={`/shifts/${shift.id}`}
-              />
-            ))}
-          </div>
-        )}
-
-        {/* ===== Shifts passés / terminés ===== */}
-        <h2 style={{ fontSize: 21, fontWeight: 800, letterSpacing: -0.5, marginTop: 48, marginBottom: 18, display: 'flex', alignItems: 'center', gap: 10 }}>
-          <Ico n="clock" s={19} c="#8a9a7b" /> {t('list_past')}
-        </h2>
-        {shiftsPasses.length === 0 ? (
-          <div className="cs-card" style={{ ...carte, textAlign: 'center', padding: 40 }}>
-            <p style={{ color: '#9aa39b', fontWeight: 600, fontSize: 14 }}>{t('empty_past')}</p>
-          </div>
-        ) : (
-          <div style={{ display: 'grid', gap: 16 }}>
-            {shiftsPasses.map((shift) => (
-              <ShiftCard
-                key={shift.id}
-                shift={shift}
-                showApply={false}
-                detailHref={`/shifts/${shift.id}`}
-              />
-            ))}
-          </div>
-        )}
       </div>
     </main>
   )
