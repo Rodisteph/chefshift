@@ -166,18 +166,18 @@ export default function DashboardPage() {
         <a href="/" style={{ fontWeight: 800, fontSize: 20, color: '#23281f', textDecoration: 'none', letterSpacing: -0.5 }}>
           Chef<span style={{ color: '#5f7052' }}>Shift</span>
         </a>
-        <div style={{ display: 'flex', gap: 16, alignItems: 'center', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: 14, alignItems: 'center' }}>
           <LangToggle />
           {estKok && (
             <a href="/profiel" className="cs-nav-link" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: '#5f7052', fontWeight: 700, fontSize: 14, textDecoration: 'none' }}>
-              <Ico n="user" s={15} /> {t('nav_profile')}
+              <Ico n="user" s={15} /> <span className="cs-nav-txt">{t('nav_profile')}</span>
             </a>
           )}
           <a href="/instellingen" className="cs-nav-link" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: '#5f7052', fontWeight: 700, fontSize: 14, textDecoration: 'none' }}>
-            <Ico n="gear" s={15} /> {t('nav_settings')}
+            <Ico n="gear" s={15} /> <span className="cs-nav-txt">{t('nav_settings')}</span>
           </a>
           <span className="cs-hide-mob" style={{ fontSize: 13.5, color: '#6b7268', fontWeight: 500 }}>{user?.email}</span>
-          <span style={{
+          <span className="cs-hide-mob" style={{
             background: '#eef2e6', color: '#4c5e42', fontSize: 11, fontWeight: 800,
             padding: '5px 12px', borderRadius: 999, textTransform: 'uppercase', letterSpacing: 1,
           }}>
@@ -186,13 +186,14 @@ export default function DashboardPage() {
           <button
             onClick={() => signOut({ callbackUrl: '/' })}
             className="cs-btn"
+            aria-label={t('nav_logout')}
             style={{
               background: 'none', border: '1.5px solid #dfe4d4', borderRadius: 999,
-              padding: '8px 18px', fontWeight: 700, fontSize: 13.5, cursor: 'pointer',
-              color: '#23281f', fontFamily: FONT,
+              padding: '8px 16px', fontWeight: 700, fontSize: 13.5, cursor: 'pointer',
+              color: '#23281f', fontFamily: FONT, gap: 6,
             }}
           >
-            {t('nav_logout')}
+            <Ico n="out" s={14} /> <span className="cs-nav-txt">{t('nav_logout')}</span>
           </button>
         </div>
       </nav>
@@ -232,24 +233,24 @@ export default function DashboardPage() {
         <PushSetup />
 
         {/* ===== Statistiques ===== */}
-        <div className="cs-fade cs-d1" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: 16, marginBottom: 34 }}>
+        <div className="cs-fade cs-d1 cs-stats" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: 16, marginBottom: 34 }}>
           {statsCartes.map((s) => {
             const contenu = (
               <>
                 <IcoTile n={s.icone} s={19} taille={42} />
                 <div>
-                  <div style={{ fontSize: 25, fontWeight: 800, color: '#23281f', letterSpacing: -0.8 }}>{s.c}</div>
-                  <div style={{ fontSize: 12.5, color: '#6b7268', fontWeight: 600 }}>{s.l}</div>
+                  <div className="cs-stat-n" style={{ fontSize: 25, fontWeight: 800, color: '#23281f', letterSpacing: -0.8 }}>{s.c}</div>
+                  <div className="cs-stat-l" style={{ fontSize: 12.5, color: '#6b7268', fontWeight: 600 }}>{s.l}</div>
                 </div>
               </>
             )
             const styleCarte: React.CSSProperties = { ...carte, display: 'flex', alignItems: 'center', gap: 14, padding: 18 }
             return s.lien ? (
-              <a key={s.l} href={s.lien} className="cs-card" style={{ ...styleCarte, textDecoration: 'none', cursor: 'pointer' }}>
+              <a key={s.l} href={s.lien} className="cs-card cs-stat" style={{ ...styleCarte, textDecoration: 'none', cursor: 'pointer' }}>
                 {contenu}
               </a>
             ) : (
-              <div key={s.l} className="cs-card" style={styleCarte}>
+              <div key={s.l} className="cs-card cs-stat" style={styleCarte}>
                 {contenu}
               </div>
             )
