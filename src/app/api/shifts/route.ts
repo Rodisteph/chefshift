@@ -11,6 +11,24 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url)
     const where: any = {}
 
+    // ?passe=1 : shifts terminés (date passée) qui concernent l'utilisateur
+    if (searchParams.get('passe') === '1') {
+      const aujourdhui = new Date(new Date().toDateString())
+      where.date = { lt: aujourdhui }
+      if (session.user.role === 'HORECA') where.horecaId = session.user.id
+      if (session.user.role === 'KOK') where.chosenKokId = session.user.id
+      const shifts = await prisma.shift.findMany({
+        where,
+        include: {
+          horeca: { include: { horecaProfile: true } },
+          chosenKok: { include: { kokProfile: true } },
+          _count: { select: { applications: true } },
+        },
+        orderBy: [{ date: 'desc' }],
+      })
+      return NextResponse.json({ shifts })
+    }
+
     if (session.user.role === 'HORECA') where.horecaId = session.user.id
     if (session.user.role === 'KOK') where.status = 'OPEN'
     if (searchParams.get('status')) where.status = searchParams.get('status')?.toUpperCase()

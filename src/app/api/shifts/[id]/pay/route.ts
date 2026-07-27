@@ -48,11 +48,34 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
       return NextResponse.json({ error: 'Shift not finished yet' }, { status: 400 })
     }
 
-    // ===== Calcul du montant =====
-    const dureeMs = new Date(shift.endTime).getTime() - new Date(shift.startTime).getTime()
+    // ===== Début réel : date du shift + heure de début =====
+    const jour = new Date(shift.date)
+    const st = new Date(shift.startTime)
+    const debut = new Date(jour)
+    debut.setHours(st.getHours(), st.getMinutes(), 0, 0)
+
+    // ===== Fin réelle : heure déclarée par le chef si elle existe, sinon fin prévue =====
+    const et = new Date(shift.endTime)
+    let fin = new Date(jour)
+    fin.setHours(et.getHours(), et.getMinutes(), 0, 0)
+    if (fin.getTime() <= debut.getTime()) {
+      fin.setDate(fin.getDate() + 1)
+    }
+    let finReelle = false
+    try {
+      const fins: { reported_end: Date }[] = await prisma.$queryRaw`
+        SELECT reported_end FROM shift_end WHERE shift_id = ${shift.id} LIMIT 1
+      `
+      if (fins.length > 0) {
+        fin = new Date(fins[0].reported_end)
+        finReelle = true
+      }
+    } catch {}
+
+    // ===== Calcul du montant sur les heures réellement travaillées =====
+    const dureeMs = fin.getTime() - debut.getTime()
     const heures = Math.max(1, dureeMs / 3600000 - shift.breakMinutes / 60)
-    const base = shift.totalAmount ?? shift.hourlyRate * heures
-    const excl = Math.round(base * 100) / 100
+    const excl = Math.round(shift.hourlyRate * heures * 100) / 100
     const vat = Math.round(excl * shift.vatRate) / 100
     const incl = Math.round((excl + vat) * 100) / 100
     const fee = Math.round(incl * 0.12 * 100) / 100
@@ -106,7 +129,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
               unit_amount: Math.round(incl * 100),
               product_data: {
                 name: `ChefShift: ${shift.title}`,
-                description: `${heures.toFixed(1)}u × €${shift.hourlyRate.toFixed(2)} + ${shift.vatRate}% btw`,
+                description: `${heures.toFixed(1)}u × €${shift.hourlyRate.toFixed(2)} + ${shift.vatRate}% btw${finReelle ? ' (werkelijke eindtijd)' : ''}`,
               },
             },
           },
