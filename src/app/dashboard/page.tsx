@@ -33,6 +33,7 @@ export default function DashboardPage() {
   const [user, setUser] = useState<SessionUser | null>(null)
   const [chargement, setChargement] = useState(true)
   const [shifts, setShifts] = useState<ShiftData[]>([])
+  const [shiftsPasses, setShiftsPasses] = useState<ShiftData[]>([])
   const [stats, setStats] = useState<Stats | null>(null)
 
   useEffect(() => {
@@ -44,13 +45,18 @@ export default function DashboardPage() {
       }
       setUser(s.user)
       try {
-        const [resShifts, resStats] = await Promise.all([
+        const [resShifts, resPasses, resStats] = await Promise.all([
           fetch('/api/shifts'),
+          fetch('/api/shifts?passe=1'),
           fetch('/api/stats'),
         ])
         if (resShifts.ok) {
           const data = await resShifts.json()
           setShifts(data.shifts || [])
+        }
+        if (resPasses.ok) {
+          const dataPasses = await resPasses.json()
+          setShiftsPasses(dataPasses.shifts || [])
         }
         if (resStats.ok) {
           setStats(await resStats.json())
@@ -246,6 +252,27 @@ export default function DashboardPage() {
                 key={shift.id}
                 shift={shift}
                 showApply={estKok}
+                detailHref={`/shifts/${shift.id}`}
+              />
+            ))}
+          </div>
+        )}
+
+        {/* ===== Shifts passés / terminés ===== */}
+        <h2 style={{ fontSize: 21, fontWeight: 800, letterSpacing: -0.5, marginTop: 48, marginBottom: 18, display: 'flex', alignItems: 'center', gap: 10 }}>
+          <Ico n="clock" s={19} c="#8a9a7b" /> {t('list_past')}
+        </h2>
+        {shiftsPasses.length === 0 ? (
+          <div className="cs-card" style={{ ...carte, textAlign: 'center', padding: 40 }}>
+            <p style={{ color: '#9aa39b', fontWeight: 600, fontSize: 14 }}>{t('empty_past')}</p>
+          </div>
+        ) : (
+          <div style={{ display: 'grid', gap: 16 }}>
+            {shiftsPasses.map((shift) => (
+              <ShiftCard
+                key={shift.id}
+                shift={shift}
+                showApply={false}
                 detailHref={`/shifts/${shift.id}`}
               />
             ))}
