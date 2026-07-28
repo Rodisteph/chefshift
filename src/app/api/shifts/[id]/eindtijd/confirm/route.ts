@@ -35,10 +35,17 @@ export async function POST(req: Request, { params }: { params: { id: string } })
       return NextResponse.json({ error: 'No chef chosen' }, { status: 400 })
     }
 
+    // La confirmation n'est possible qu'une fois le jour du shift arrivé (sauf admin)
+    const aujourdhui = new Date(new Date().toDateString())
+    if (!isAdmin && new Date(shift.date) > aujourdhui) {
+      return NextResponse.json({ error: 'Shift not finished yet' }, { status: 400 })
+    }
+
     await ensureTable()
 
     const body = await req.json().catch(() => ({}))
     const endTime = typeof body?.endTime === 'string' ? body.endTime : ''
+    const endAt = typeof body?.endAt === 'string' ? body.endAt : ''
 
     const lignes: { reported_end: Date; confirmed_at: Date | null }[] = await prisma.$queryRaw`
       SELECT reported_end, confirmed_at FROM shift_end WHERE shift_id = ${shift.id} LIMIT 1
@@ -48,11 +55,14 @@ export async function POST(req: Request, { params }: { params: { id: string } })
       return NextResponse.json({ error: 'Already confirmed' }, { status: 400 })
     }
 
-    // Heure de fin finale : saisie fournie > heure déclarée par le chef > horaire prévu
+    // Heure de fin finale : instant fourni par le client (sans décalage) > heure déclarée > horaire prévu
     const debut = new Date(shift.startTime)
     const startMin = debut.getHours() * 60 + debut.getMinutes()
     let fin: Date
-    if (/^\d{2}:\d{2}$/.test(endTime)) {
+    const parsed = endAt ? new Date(endAt) : null
+    if (parsed && !isNaN(parsed.getTime())) {
+      fin = parsed
+    } else if (/^\d{2}:\d{2}$/.test(endTime)) {
       const [h, m] = endTime.split(':').map(Number)
       fin = new Date(shift.date)
       fin.setHours(h, m, 0, 0)

@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useT, LangToggle, afficherPoste, afficherSpecialite } from '@/lib/i18n'
 import AnimStyles from '@/components/AnimStyles'
-import { Ico, IcoTile } from '@/components/Icons'
+import { Ico, IcoTile, IcoStar } from '@/components/Icons'
 
 const FONT = '"Sora","Inter","Helvetica Neue",Arial,sans-serif'
 
@@ -33,6 +33,8 @@ export default function ProfielPage() {
   const [sauvegarde, setSauvegarde] = useState<'idle' | 'envoi' | 'ok' | 'erreur'>('idle')
 
   const [firstName, setFirstName] = useState('')
+  const [avgScore, setAvgScore] = useState(0)
+  const [nbReviews, setNbReviews] = useState(0)
   const [lastName, setLastName] = useState('')
   const [dateOfBirth, setDateOfBirth] = useState('')
   const [city, setCity] = useState('')
@@ -71,6 +73,8 @@ export default function ProfielPage() {
         setIban(data.iban || '')
         const p = data.profile
         if (p) {
+          setAvgScore(p.averageScore || 0)
+          setNbReviews(p.reviewCount || 0)
           setFirstName(p.firstName || '')
           setLastName(p.lastName || '')
           setDateOfBirth(p.dateOfBirth ? p.dateOfBirth.slice(0, 10) : '')
@@ -199,7 +203,19 @@ export default function ProfielPage() {
 
       <form onSubmit={sauvegarder} className="cs-wrap" style={{ maxWidth: 760, margin: '0 auto', padding: '48px 24px' }}>
         <h1 className="cs-fade" style={{ fontSize: 'clamp(26px, 4vw, 36px)', fontWeight: 800, letterSpacing: -1.2 }}>{t('profile_title')}</h1>
-        <p className="cs-fade cs-d1" style={{ color: 'hsl(var(--muted-foreground))', marginTop: 6, marginBottom: 32, fontSize: 15 }}>{t('profile_sub')}</p>
+        <p className="cs-fade cs-d1" style={{ color: 'hsl(var(--muted-foreground))', marginTop: 6, marginBottom: 20, fontSize: 15 }}>{t('profile_sub')}</p>
+
+        {/* Notes reçues */}
+        <div className="cs-fade cs-d1" style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 32, flexWrap: 'wrap' }}>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}>
+            {[1, 2, 3, 4, 5].map((i) => <IcoStar key={i} s={20} plein={i <= Math.round(avgScore)} />)}
+          </span>
+          <span style={{ fontWeight: 700, fontSize: 15 }}>
+            {nbReviews > 0
+              ? `${avgScore.toFixed(1)} · ${nbReviews} ${t('reviews')}`
+              : t('no_reviews')}
+          </span>
+        </div>
 
         {/* ===== Persoonlijke gegevens ===== */}
         <div className="cs-card" style={section}>

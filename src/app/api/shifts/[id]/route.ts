@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { MIN_HOURLY_RATE } from '@/lib/constants'
 
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
   try {
@@ -72,10 +73,15 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
     const body = await req.json()
     const { title, function: func, date, startTime, endTime, hourlyRate, locationStreet, locationPostal, locationCity, isUrgent } = body
 
+    const rate = Number(hourlyRate)
+    if (!(rate >= MIN_HOURLY_RATE)) {
+      return NextResponse.json({ error: 'RATE_TOO_LOW', min: MIN_HOURLY_RATE }, { status: 400 })
+    }
+
     const start = new Date(`${date}T${startTime}`)
     const end = new Date(`${date}T${endTime}`)
     const hours = Math.max(0, (end.getTime() - start.getTime()) / (1000 * 60 * 60) - 0.5)
-    const totalAmount = hours * Number(hourlyRate)
+    const totalAmount = hours * rate
 
     const updated = await prisma.shift.update({
       where: { id: params.id },
@@ -88,7 +94,7 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
         locationStreet: locationStreet || null,
         locationPostal: locationPostal || null,
         locationCity,
-        hourlyRate: Number(hourlyRate),
+        hourlyRate: rate,
         totalAmount,
         isUrgent: !!isUrgent,
       },

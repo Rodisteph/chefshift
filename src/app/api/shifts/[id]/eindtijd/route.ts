@@ -31,17 +31,24 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
 
     const body = await req.json()
     const endTime = String(body.endTime || '')
-    if (!/^\d{2}:\d{2}$/.test(endTime)) {
+    const endAt = typeof body.endAt === 'string' ? body.endAt : ''
+    if (!/^\d{2}:\d{2}$/.test(endTime) && !endAt) {
       return NextResponse.json({ error: 'Invalid time' }, { status: 400 })
     }
 
-    // Date du shift + heure déclarée ; +1 jour si la fin est avant le début (shift de nuit)
-    const jour = new Date(shift.date)
-    const [h, m] = endTime.split(':').map(Number)
-    const fin = new Date(jour)
-    fin.setHours(h, m, 0, 0)
-    if (fin.getTime() < new Date(shift.startTime).getTime()) {
-      fin.setDate(fin.getDate() + 1)
+    // Instant fourni par le client (sans décalage de fuseau) sinon reconstruction depuis HH:MM
+    let fin: Date
+    const parsed = endAt ? new Date(endAt) : null
+    if (parsed && !isNaN(parsed.getTime())) {
+      fin = parsed
+    } else {
+      const jour = new Date(shift.date)
+      const [h, m] = endTime.split(':').map(Number)
+      fin = new Date(jour)
+      fin.setHours(h, m, 0, 0)
+      if (fin.getTime() < new Date(shift.startTime).getTime()) {
+        fin.setDate(fin.getDate() + 1)
+      }
     }
 
     await ensureTable()

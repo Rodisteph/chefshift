@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useT, LangToggle, afficherPoste, afficherSpecialite } from '@/lib/i18n'
 import AnimStyles from '@/components/AnimStyles'
 import { Ico, IcoStar } from '@/components/Icons'
+import { MIN_HOURLY_RATE } from '@/lib/constants'
 
 const FONT = '"Sora","Inter","Helvetica Neue",Arial,sans-serif'
 
@@ -42,6 +43,8 @@ type Application = {
       description: string | null
       workExperience: WorkExp[]
       reviewsReceived: Review[]
+      averageScore?: number | null
+      reviewCount?: number | null
     } | null
   }
 }
@@ -83,6 +86,19 @@ function moyenne(reviews: Review[]): number {
   return reviews.reduce((s, r) => s + r.rating, 0) / reviews.length
 }
 
+// Construit l'instant de fin (ISO) à partir d'une saisie HH:MM, en l'ancrant sur le
+// fuseau local du navigateur — même encodage que les heures du shift, donc pas de décalage
+// à l'affichage ni au calcul du montant.
+function finInstant(shift: { date: string; startTime: string }, val: string): string | null {
+  if (!/^\d{2}:\d{2}$/.test(val)) return null
+  const jour = shift.date.slice(0, 10)
+  const startHHMM = new Date(shift.startTime).toTimeString().slice(0, 5)
+  const debut = new Date(`${jour}T${startHHMM}:00`)
+  let fin = new Date(`${jour}T${val}:00`)
+  if (fin.getTime() <= debut.getTime()) fin = new Date(fin.getTime() + 86400000)
+  return fin.toISOString()
+}
+
 function Etoiles({ n, taille = 13 }: { n: number; taille?: number }) {
   return (
     <span style={{ display: 'inline-flex', alignItems: 'center', gap: 2 }}>
@@ -106,6 +122,7 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
   const [paiement, setPaiement] = useState(false)
   const [modif, setModif] = useState(false)
   const [envoiModif, setEnvoiModif] = useState(false)
+  const [msgModif, setMsgModif] = useState('')
   const [eTitle, setETitle] = useState('')
   const [eFunc, setEFunc] = useState('')
   const [eDate, setEDate] = useState('')
@@ -204,23 +221,24 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
   }
 
   async function rapporteerEind() {
-    if (!eindInvoer) return
+    if (!eindInvoer || !shift) return
     setEindEnvoi(true)
     const res = await fetch(`/api/shifts/${id}/eindtijd`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ endTime: eindInvoer }),
+      body: JSON.stringify({ endTime: eindInvoer, endAt: finInstant(shift, eindInvoer) }),
     })
     if (res.ok) await charger()
     setEindEnvoi(false)
   }
 
   async function bevestigEind() {
+    if (!shift) return
     setBevestigEnvoi(true)
     const res = await fetch(`/api/shifts/${id}/eindtijd/confirm`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ endTime: eindInvoer }),
+      body: JSON.stringify({ endTime: eindInvoer, endAt: finInstant(shift, eindInvoer) }),
     })
     if (res.ok) await charger()
     setBevestigEnvoi(false)
@@ -255,6 +273,11 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
 
   async function sauvegarderModif(e: React.FormEvent) {
     e.preventDefault()
+    setMsgModif('')
+    if (!(parseFloat(eRate) >= MIN_HOURLY_RATE)) {
+      setMsgModif(`${t('rate_too_low')} €${MIN_HOURLY_RATE.toFixed(2)}`)
+      return
+    }
     setEnvoiModif(true)
     const res = await fetch(`/api/shifts/${id}`, {
       method: 'PUT',
@@ -272,6 +295,12 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
         isUrgent: eUrgent,
       }),
     })
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}))
+      setMsgModif(data?.error === 'RATE_TOO_LOW' ? `${t('rate_too_low')} €${(data.min ?? MIN_HOURLY_RATE).toFixed(2)}` : t('shift_fail'))
+      setEnvoiModif(false)
+      return
+    }
     if (res.ok) {
       setModif(false)
       await charger()
@@ -316,6 +345,11 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
   const aujourdhui = new Date(new Date().toDateString())
   const fini = new Date(shift.date) < aujourdhui
   const adresse = [shift.locationStreet, shift.locationPostal, shift.locationCity].filter(Boolean).join(', ')
+
+  // Le shift est-il réellement terminé (heure de fin dépassée) ? La confirmation n'est
+  // possible qu'après l'heure de fin.
+  const finPrevueISO = finInstant(shift, new Date(shift.endTime).toTimeString().slice(0, 5))
+  const shiftTermine = finPrevueISO ? Date.now() >= new Date(finPrevueISO).getTime() : fini
 
   // Montant estimé affiché tant que la facture n'est pas créée :
   // heures réellement travaillées si l'heure de fin est déclarée, sinon horaire prévu, +9% btw.
@@ -385,7 +419,7 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
               </div>
               <div style={{ flex: 1, minWidth: 100 }}>
                 <label style={etiquette}>{t('field_rate')}</label>
-                <input type="number" min="1" step="0.5" value={eRate} onChange={(e) => setERate(e.target.value)} required style={champ} />
+                <input type="number" min={MIN_HOURLY_RATE} step="0.5" value={eRate} onChange={(e) => setERate(e.target.value)} required style={champ} />
               </div>
             </div>
             <div style={{ display: 'flex', gap: 12, marginBottom: 14, flexWrap: 'wrap' }}>
@@ -406,6 +440,9 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
               <input type="checkbox" checked={eUrgent} onChange={(e) => setEUrgent(e.target.checked)} style={{ width: 18, height: 18 }} />
               <Ico n="flame" s={15} c="#b91c1c" /> {t('field_urgent')}
             </label>
+            {msgModif && (
+              <p style={{ color: '#b91c1c', fontSize: 13.5, marginTop: 0, marginBottom: 14, background: '#fef2f2', padding: '10px 14px', borderRadius: 10, fontWeight: 600 }}>{msgModif}</p>
+            )}
             <div style={{ display: 'flex', gap: 12 }}>
               <button
                 type="submit"
@@ -460,9 +497,6 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
                 {shift.horeca.horecaProfile?.companyName && (
                   <p style={{ marginTop: 10, fontWeight: 700, fontSize: 15 }}>
                     {shift.horeca.horecaProfile.companyName}
-                    {shift.horeca.horecaProfile.kvkNumber && !fini && (
-                      <span style={{ color: 'hsl(var(--muted-foreground))', fontWeight: 500, fontSize: 13 }}> · KvK {shift.horeca.horecaProfile.kvkNumber}</span>
-                    )}
                   </p>
                 )}
               </div>
@@ -661,6 +695,11 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
                   </div>
                 </>
               )
+            ) : !shiftTermine && role !== 'ADMIN' ? (
+              // La confirmation n'est possible qu'après l'heure de fin du shift
+              <p style={{ color: 'hsl(var(--muted-foreground))', fontSize: 14, fontWeight: 600, margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
+                <Ico n="clock" s={15} /> {t('end_after_only')}
+              </p>
             ) : (
               // Restaurant (ou admin) : confirmer l'heure de fin — fonctionne même si le chef
               // ne l'a pas déclarée (le restaurant la saisit / corrige lui-même).
@@ -756,8 +795,9 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
           <div style={{ display: 'grid', gap: 16 }}>
             {shift.applications.map((app) => {
               const p = app.kok.kokProfile
-              const reviews = p?.reviewsReceived || []
-              const moy = moyenne(reviews)
+              // Moyenne réelle du profil (mise à jour à chaque avis), pas la liste non chargée
+              const nbAvis = p?.reviewCount || 0
+              const moy = p?.averageScore || 0
               return (
                 <div key={app.id} className="cs-card" style={carte}>
                   {/* En-tête du candidat */}
@@ -772,7 +812,7 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 5 }}>
                         <Etoiles n={moy} />
                         <span style={{ fontSize: 13, color: 'hsl(var(--muted-foreground))', fontWeight: 600 }}>
-                          {reviews.length > 0 ? `${moy.toFixed(1)} (${reviews.length} ${t('reviews')})` : t('no_reviews')}
+                          {nbAvis > 0 ? `${moy.toFixed(1)} (${nbAvis} ${t('reviews')})` : t('no_reviews')}
                         </span>
                       </div>
                       <div style={{ display: 'flex', gap: 14, marginTop: 7, flexWrap: 'wrap' }}>
