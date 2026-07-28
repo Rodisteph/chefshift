@@ -20,11 +20,12 @@ export async function GET(req: NextRequest) {
     ])
 
     const recentShifts = await prisma.shift.findMany({
-      take: 10,
-      orderBy: { createdAt: 'desc' },
+      take: 60,
+      orderBy: [{ date: 'desc' }],
       include: {
         horeca: { include: { horecaProfile: true } },
         chosenKok: { include: { kokProfile: true } },
+        _count: { select: { applications: true } },
       },
     })
 
