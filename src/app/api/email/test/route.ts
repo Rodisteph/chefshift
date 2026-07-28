@@ -24,7 +24,8 @@ const POSTS: Record<string, { sujet: string; img: string; fichier: string; texte
 // GET /api/email/test?secret=<CRON_SECRET>&to=<email>[&mode=mix][&mode=post&which=1|2]
 export async function GET(req: NextRequest) {
   const secret = (process.env.CRON_SECRET || '').trim()
-  if (secret && req.nextUrl.searchParams.get('secret') !== secret) {
+  // Fermé par défaut : sans secret configuré, l'endpoint reste inaccessible
+  if (!secret || req.nextUrl.searchParams.get('secret') !== secret) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
