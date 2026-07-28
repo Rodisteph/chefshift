@@ -8,6 +8,8 @@ import { Ico } from '@/components/Icons'
 
 const FONT = '"Sora","Inter","Helvetica Neue",Arial,sans-serif'
 
+const sources = ['google', 'facebook', 'linkedin', 'doorverwezen', 'anders']
+
 export default function RegisterPage() {
   const { t } = useT()
   const [name, setName] = useState('')
@@ -68,18 +70,16 @@ export default function RegisterPage() {
 
   const champ = {
     width: '100%', padding: 12, border: '1.5px solid #e2e6d7', borderRadius: 12,
-    fontSize: 15, outline: 'none', boxSizing: 'border-box' as const, background: '#fff', fontFamily: FONT,
+    fontSize: 15, outline: 'none', boxSizing: 'border-box' as const, background: 'hsl(var(--card))', fontFamily: FONT,
   }
   const etiquette = { display: 'block', fontSize: 13, fontWeight: 700, marginBottom: 6, color: '#3c4436' }
 
-  const sources = ['google', 'facebook', 'linkedin', 'doorverwezen', 'anders']
-
   return (
-    <main style={{ fontFamily: FONT, background: '#f6f7f2', color: '#23281f', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+    <main style={{ fontFamily: FONT, background: 'hsl(var(--background))', color: 'hsl(var(--foreground))', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       <AnimStyles />
 
       <nav style={{ padding: '22px 32px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <a href="/" style={{ fontWeight: 800, fontSize: 20, color: '#23281f', textDecoration: 'none', letterSpacing: -0.5 }}>
+        <a href="/" style={{ fontWeight: 800, fontSize: 20, color: 'hsl(var(--foreground))', textDecoration: 'none', letterSpacing: -0.5 }}>
           Chef<span style={{ color: '#5f7052' }}>Shift</span>
         </a>
         <div style={{ display: 'flex', gap: 18, alignItems: 'center' }}>
@@ -92,12 +92,12 @@ export default function RegisterPage() {
 
       <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
         <div className="cs-pop cs-auth" style={{
-          background: '#fff', width: '100%', maxWidth: 440, padding: 42,
+          background: 'hsl(var(--card))', width: '100%', maxWidth: 440, padding: 42,
           borderRadius: 22, border: '1px solid #eceee3',
           boxShadow: '0 18px 44px -16px rgba(46,52,43,0.18)',
         }}>
           <h1 style={{ fontSize: 27, fontWeight: 800, letterSpacing: -0.9, marginBottom: 6 }}>{t('register_title')}</h1>
-          <p style={{ color: '#6b7268', fontSize: 14.5, marginBottom: 28 }}>{t('register_sub')}</p>
+          <p style={{ color: 'hsl(var(--muted-foreground))', fontSize: 14.5, marginBottom: 28 }}>{t('register_sub')}</p>
 
           {/* Choix du rôle */}
           <div style={{ display: 'flex', gap: 12, marginBottom: 20 }}>
@@ -108,6 +108,8 @@ export default function RegisterPage() {
               <button
                 key={o.valeur} type="button"
                 onClick={() => setRole(o.valeur)}
+                className="cs-seg"
+                data-active={role === o.valeur}
                 style={{
                   flex: 1, padding: '14px 12px', borderRadius: 14, cursor: 'pointer', textAlign: 'left',
                   border: role === o.valeur ? '2px solid #5f7052' : '1.5px solid #e2e6d7',
@@ -115,10 +117,10 @@ export default function RegisterPage() {
                   fontFamily: FONT, transition: 'border-color .2s ease, background .2s ease',
                 }}
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: 7, fontWeight: 800, fontSize: 15, color: '#23281f' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 7, fontWeight: 800, fontSize: 15, color: 'hsl(var(--foreground))' }}>
                   <Ico n={o.icone} s={16} c="#5f7052" /> {o.titre}
                 </div>
-                <div style={{ fontSize: 12.5, color: '#6b7268', marginTop: 3 }}>{o.desc}</div>
+                <div style={{ fontSize: 12.5, color: 'hsl(var(--muted-foreground))', marginTop: 3 }}>{o.desc}</div>
               </button>
             ))}
           </div>
@@ -144,6 +146,16 @@ export default function RegisterPage() {
                 placeholder="8 cijfers" style={champ} />
             </div>
 
+            <div style={{ marginBottom: 18 }}>
+              <label style={etiquette}>{t('source_label')}</label>
+              <select value={source} onChange={(e) => setSource(e.target.value)} style={{ ...champ, cursor: 'pointer' }}>
+                <option value="">{t('source_choose')}</option>
+                {sources.map((s) => (
+                  <option key={s} value={s}>{t(`source_${s}` as any)}</option>
+                ))}
+              </select>
+            </div>
+
             <div style={{ marginBottom: 16 }}>
               <label style={etiquette}>{t('field_email')}</label>
               <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required
@@ -153,17 +165,6 @@ export default function RegisterPage() {
               <label style={etiquette}>{t('field_password')}</label>
               <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required
                 minLength={8} placeholder="Minimaal 8 tekens" style={champ} />
-            </div>
-
-            {/* Canal d'acquisition */}
-            <div style={{ marginBottom: 18 }}>
-              <label style={etiquette}>{t('source_label')}</label>
-              <select value={source} onChange={(e) => setSource(e.target.value)} style={{ ...champ, cursor: 'pointer' }}>
-                <option value="">{t('source_choose')}</option>
-                {sources.map((s) => (
-                  <option key={s} value={s}>{t(`source_${s}` as any)}</option>
-                ))}
-              </select>
             </div>
 
             {/* Acceptation des CGV */}
