@@ -259,7 +259,7 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
   const etiquette: React.CSSProperties = { display: 'block', fontSize: 13, fontWeight: 700, marginBottom: 6, color: '#3c4436' }
   const champ: React.CSSProperties = {
     width: '100%', padding: 11, border: '1.5px solid #e2e6d7', borderRadius: 12,
-    fontSize: 14.5, outline: 'none', boxSizing: 'border-box', background: '#fff', fontFamily: FONT,
+    fontSize: 14.5, outline: 'none', boxSizing: 'border-box', background: 'hsl(var(--card))', fontFamily: FONT,
   }
   const etiquetteSection: React.CSSProperties = {
     fontSize: 11, textTransform: 'uppercase', letterSpacing: 1.5, color: '#8a9a7b', fontWeight: 800, marginBottom: 10,
@@ -271,15 +271,15 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
 
   if (chargement) {
     return (
-      <main style={{ fontFamily: FONT, background: '#f6f7f2', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <p style={{ color: '#6b7268', fontWeight: 600 }}>{t('dash_loading')}</p>
+      <main style={{ fontFamily: FONT, background: 'hsl(var(--background))', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <p style={{ color: 'hsl(var(--muted-foreground))', fontWeight: 600 }}>{t('dash_loading')}</p>
       </main>
     )
   }
 
   if (!shift) {
     return (
-      <main style={{ fontFamily: FONT, background: '#f6f7f2', minHeight: '100vh', padding: 40 }}>
+      <main style={{ fontFamily: FONT, background: 'hsl(var(--background))', minHeight: '100vh', padding: 40 }}>
         <p>Shift niet gevonden.</p>
       </main>
     )
@@ -294,7 +294,7 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
   const fini = new Date(shift.date) < aujourdhui
   const adresse = [shift.locationStreet, shift.locationPostal, shift.locationCity].filter(Boolean).join(', ')
   const carte: React.CSSProperties = {
-    background: '#fff', borderRadius: 20, border: '1px solid #eceee3',
+    background: 'hsl(var(--card))', borderRadius: 20, border: '1px solid #eceee3',
     boxShadow: '0 3px 12px rgba(46,52,43,0.05)', padding: 26,
   }
 
@@ -306,14 +306,14 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
   const voirBlocEind = shiftActif && shift.chosenKokId
 
   return (
-    <main style={{ fontFamily: FONT, background: '#f6f7f2', color: '#23281f', minHeight: '100vh' }}>
+    <main style={{ fontFamily: FONT, background: 'hsl(var(--background))', color: 'hsl(var(--foreground))', minHeight: '100vh' }}>
       <AnimStyles />
       <nav className="cs-nav" style={{
         background: 'rgba(255,255,255,0.88)', backdropFilter: 'blur(12px)',
         borderBottom: '1px solid #e8ebe0',
         padding: '13px 28px', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
       }}>
-        <a href="/shifts" style={{ fontWeight: 800, fontSize: 20, color: '#23281f', textDecoration: 'none', letterSpacing: -0.5 }}>
+        <a href="/shifts" style={{ fontWeight: 800, fontSize: 20, color: 'hsl(var(--foreground))', textDecoration: 'none', letterSpacing: -0.5 }}>
           Chef<span style={{ color: '#5f7052' }}>Shift</span>
         </a>
         <div style={{ display: 'flex', gap: 18, alignItems: 'center' }}>
@@ -393,7 +393,7 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
                 onClick={() => setModif(false)}
                 style={{
                   padding: '13px 24px', background: 'none', border: '1.5px solid #dfe4d4', borderRadius: 12,
-                  fontWeight: 700, fontSize: 14.5, cursor: 'pointer', color: '#23281f', fontFamily: FONT,
+                  fontWeight: 700, fontSize: 14.5, cursor: 'pointer', color: 'hsl(var(--foreground))', fontFamily: FONT,
                 }}
               >
                 {t('cancel')}
@@ -422,15 +422,15 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
                   )}
                 </div>
                 <p style={{ display: 'flex', gap: 16, flexWrap: 'wrap', margin: 0 }}>
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: '#6b7268', fontSize: 14.5 }}><Ico n="cal" s={15} c="#8a9a7b" /> {dateStr}</span>
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: '#6b7268', fontSize: 14.5 }}><Ico n="clock" s={15} c="#8a9a7b" /> {start} – {end}</span>
-                  {shift.locationCity && <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: '#6b7268', fontSize: 14.5 }}><Ico n="pin" s={15} c="#8a9a7b" /> {shift.locationCity}</span>}
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: 'hsl(var(--muted-foreground))', fontSize: 14.5 }}><Ico n="cal" s={15} c="#8a9a7b" /> {dateStr}</span>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: 'hsl(var(--muted-foreground))', fontSize: 14.5 }}><Ico n="clock" s={15} c="#8a9a7b" /> {start} – {end}</span>
+                  {shift.locationCity && <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: 'hsl(var(--muted-foreground))', fontSize: 14.5 }}><Ico n="pin" s={15} c="#8a9a7b" /> {shift.locationCity}</span>}
                 </p>
                 {shift.horeca.horecaProfile?.companyName && (
                   <p style={{ marginTop: 10, fontWeight: 700, fontSize: 15 }}>
                     {shift.horeca.horecaProfile.companyName}
                     {shift.horeca.horecaProfile.kvkNumber && (
-                      <span style={{ color: '#6b7268', fontWeight: 500, fontSize: 13 }}> · KvK {shift.horeca.horecaProfile.kvkNumber}</span>
+                      <span style={{ color: 'hsl(var(--muted-foreground))', fontWeight: 500, fontSize: 13 }}> · KvK {shift.horeca.horecaProfile.kvkNumber}</span>
                     )}
                   </p>
                 )}
@@ -479,7 +479,7 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
                       style={{
                         background: 'none', border: '1.5px solid #dfe4d4', borderRadius: 999,
                         padding: '9px 18px', fontWeight: 700, fontSize: 13, cursor: 'pointer',
-                        color: '#23281f', fontFamily: FONT,
+                        color: 'hsl(var(--foreground))', fontFamily: FONT,
                       }}
                     >
                       {t('edit_shift')}
@@ -530,7 +530,7 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
                 </div>
               ) : (
                 <>
-                  <p style={{ color: '#6b7268', fontSize: 14, fontWeight: 600, marginTop: 0, marginBottom: 16 }}>{t('end_desc')}</p>
+                  <p style={{ color: 'hsl(var(--muted-foreground))', fontSize: 14, fontWeight: 600, marginTop: 0, marginBottom: 16 }}>{t('end_desc')}</p>
                   <div style={{ display: 'flex', gap: 12, alignItems: 'flex-end', flexWrap: 'wrap' }}>
                     <div style={{ minWidth: 130 }}>
                       <label style={etiquette}>{t('field_end')}</label>
@@ -555,11 +555,11 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
             ) : (
               shift.eind ? (
                 <>
-                  <p style={{ color: '#6b7268', fontSize: 14, fontWeight: 600, marginTop: 0, marginBottom: 16 }}>{t('end_confirm_desc')}</p>
+                  <p style={{ color: 'hsl(var(--muted-foreground))', fontSize: 14, fontWeight: 600, marginTop: 0, marginBottom: 16 }}>{t('end_confirm_desc')}</p>
                   <div style={{ display: 'flex', gap: 24, alignItems: 'center', flexWrap: 'wrap', marginBottom: 18 }}>
                     <div>
                       <div style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: 1.5, color: '#8a9a7b', fontWeight: 800, marginBottom: 4 }}>{t('end_planned')}</div>
-                      <div style={{ fontSize: 18, fontWeight: 800, color: '#6b7268' }}>{end}</div>
+                      <div style={{ fontSize: 18, fontWeight: 800, color: 'hsl(var(--muted-foreground))' }}>{end}</div>
                     </div>
                     <div>
                       <div style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: 1.5, color: '#8a9a7b', fontWeight: 800, marginBottom: 4 }}>{t('end_reported')}</div>
@@ -581,7 +581,7 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
                   </button>
                 </>
               ) : (
-                <p style={{ color: '#6b7268', fontSize: 14, fontWeight: 600, margin: 0 }}>{t('end_desc')}</p>
+                <p style={{ color: 'hsl(var(--muted-foreground))', fontSize: 14, fontWeight: 600, margin: 0 }}>{t('end_desc')}</p>
               )
             )}
           </div>
@@ -593,14 +593,14 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
             <div>
               {fini ? (
                 <>
-                  <div style={{ fontSize: 14, color: '#6b7268', fontWeight: 600 }}>{t('pay_to_pay')}</div>
+                  <div style={{ fontSize: 14, color: 'hsl(var(--muted-foreground))', fontWeight: 600 }}>{t('pay_to_pay')}</div>
                   <div style={{ fontSize: 22, fontWeight: 800 }}>
                     €{shift.invoice ? shift.invoice.amountInclVat.toFixed(2) : '...'}{' '}
-                    <span style={{ fontSize: 13, color: '#6b7268', fontWeight: 600 }}>{t('pay_incl_vat')}</span>
+                    <span style={{ fontSize: 13, color: 'hsl(var(--muted-foreground))', fontWeight: 600 }}>{t('pay_incl_vat')}</span>
                   </div>
                 </>
               ) : (
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 14, color: '#6b7268', fontWeight: 600 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 14, color: 'hsl(var(--muted-foreground))', fontWeight: 600 }}>
                   <Ico n="clock" s={15} /> {t('pay_after')}
                 </div>
               )}
@@ -637,7 +637,7 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
         </h2>
         {shift.applications.length === 0 ? (
           <div className="cs-card" style={{ ...carte, textAlign: 'center', padding: 48 }}>
-            <p style={{ color: '#6b7268', fontWeight: 600 }}>{t('no_applicants')}</p>
+            <p style={{ color: 'hsl(var(--muted-foreground))', fontWeight: 600 }}>{t('no_applicants')}</p>
           </div>
         ) : (
           <div style={{ display: 'grid', gap: 16 }}>
@@ -653,18 +653,18 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
                       <div style={{ fontSize: 18, fontWeight: 800, letterSpacing: -0.4 }}>
                         {p?.firstName} {p?.lastName}
                         {p?.dateOfBirth && (
-                          <span style={{ color: '#6b7268', fontWeight: 600, fontSize: 14 }}> · {age(p.dateOfBirth)} {t('years_old')}</span>
+                          <span style={{ color: 'hsl(var(--muted-foreground))', fontWeight: 600, fontSize: 14 }}> · {age(p.dateOfBirth)} {t('years_old')}</span>
                         )}
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 5 }}>
                         <Etoiles n={moy} />
-                        <span style={{ fontSize: 13, color: '#6b7268', fontWeight: 600 }}>
+                        <span style={{ fontSize: 13, color: 'hsl(var(--muted-foreground))', fontWeight: 600 }}>
                           {reviews.length > 0 ? `${moy.toFixed(1)} (${reviews.length} ${t('reviews')})` : t('no_reviews')}
                         </span>
                       </div>
                       <div style={{ display: 'flex', gap: 14, marginTop: 7, flexWrap: 'wrap' }}>
-                        {p?.city && <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 13.5, color: '#6b7268' }}><Ico n="pin" s={13} /> {p.city}</span>}
-                        {p?.yearsExperience != null && <span style={{ fontSize: 13.5, color: '#6b7268' }}>{p.yearsExperience} {t('experience_years')}</span>}
+                        {p?.city && <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 13.5, color: 'hsl(var(--muted-foreground))' }}><Ico n="pin" s={13} /> {p.city}</span>}
+                        {p?.yearsExperience != null && <span style={{ fontSize: 13.5, color: 'hsl(var(--muted-foreground))' }}>{p.yearsExperience} {t('experience_years')}</span>}
                       </div>
                     </div>
                     {role === 'HORECA' && shift.status === 'OPEN' && app.status === 'PENDING' && (
@@ -695,7 +695,7 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
                             style={{
                               background: 'none', border: '1.5px solid #dfe4d4', borderRadius: 999,
                               padding: '7px 16px', fontWeight: 700, fontSize: 12.5, cursor: 'pointer',
-                              color: '#23281f', fontFamily: FONT,
+                              color: 'hsl(var(--foreground))', fontFamily: FONT,
                             }}
                           >
                             {choix === 'deselect' ? t('form_loading') : t('unchoose')}
@@ -751,7 +751,7 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
 
                   {/* Tarif souhaité */}
                   {p?.hourlyRateMin != null && (
-                    <div style={{ marginTop: 12, fontSize: 13.5, color: '#6b7268' }}>
+                    <div style={{ marginTop: 12, fontSize: 13.5, color: 'hsl(var(--muted-foreground))' }}>
                       {t('rate_range')} : €{p.hourlyRateMin} – €{p.hourlyRateMax}{parHeure}
                     </div>
                   )}
@@ -771,7 +771,7 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
                             <strong>{w.function}</strong>
                             {w.companyName && ` · ${w.companyName}`}
                             {w.location && ` · ${w.location}`}
-                            <div style={{ color: '#6b7268', fontSize: 12.5 }}>
+                            <div style={{ color: 'hsl(var(--muted-foreground))', fontSize: 12.5 }}>
                               {new Date(w.fromDate).toLocaleDateString(locale, { month: 'short', year: 'numeric' })}
                               {' – '}
                               {w.isCurrent

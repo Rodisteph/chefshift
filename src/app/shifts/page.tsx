@@ -37,7 +37,7 @@ export default function ShiftsPage() {
   const estKok = role === 'KOK'
 
   return (
-    <main style={{ fontFamily: FONT, background: '#f6f7f2', color: '#23281f', minHeight: '100vh' }}>
+    <main style={{ fontFamily: FONT, background: 'hsl(var(--background))', color: 'hsl(var(--foreground))', minHeight: '100vh' }}>
       <AnimStyles />
       <nav className="cs-nav" style={{
         background: 'rgba(255,255,255,0.88)', backdropFilter: 'blur(12px)',
@@ -45,7 +45,7 @@ export default function ShiftsPage() {
         padding: '13px 28px', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
         position: 'sticky', top: 0, zIndex: 10,
       }}>
-        <a href="/dashboard" style={{ fontWeight: 800, fontSize: 20, color: '#23281f', textDecoration: 'none', letterSpacing: -0.5 }}>
+        <a href="/dashboard" style={{ fontWeight: 800, fontSize: 20, color: 'hsl(var(--foreground))', textDecoration: 'none', letterSpacing: -0.5 }}>
           Chef<span style={{ color: '#5f7052' }}>Shift</span>
         </a>
         <div style={{ display: 'flex', gap: 18, alignItems: 'center' }}>
@@ -62,7 +62,7 @@ export default function ShiftsPage() {
             <h1 style={{ fontSize: 'clamp(26px, 4vw, 36px)', fontWeight: 800, letterSpacing: -1.2 }}>
               {estKok ? t('shifts_title') : t('shifts_my')}
             </h1>
-            <p style={{ color: '#6b7268', marginTop: 6, fontSize: 15 }}>
+            <p style={{ color: 'hsl(var(--muted-foreground))', marginTop: 6, fontSize: 15 }}>
               {estKok ? t('shifts_sub') : ''}
             </p>
           </div>
@@ -78,13 +78,13 @@ export default function ShiftsPage() {
         </div>
 
         {chargement ? (
-          <p style={{ color: '#6b7268', fontWeight: 600, textAlign: 'center', padding: 40 }}>{t('dash_loading')}</p>
+          <p style={{ color: 'hsl(var(--muted-foreground))', fontWeight: 600, textAlign: 'center', padding: 40 }}>{t('dash_loading')}</p>
         ) : shifts.length === 0 ? (
-          <div className="cs-card" style={{ background: '#fff', borderRadius: 20, border: '1px solid #eceee3', boxShadow: '0 3px 12px rgba(46,52,43,0.05)', padding: 52, textAlign: 'center' }}>
+          <div className="cs-card" style={{ background: 'hsl(var(--card))', borderRadius: 20, border: '1px solid #eceee3', boxShadow: '0 3px 12px rgba(46,52,43,0.05)', padding: 52, textAlign: 'center' }}>
             <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}>
               <IcoTile n="inbox" s={22} taille={56} />
             </div>
-            <p style={{ color: '#6b7268', fontWeight: 600 }}>{t('empty_shifts')}</p>
+            <p style={{ color: 'hsl(var(--muted-foreground))', fontWeight: 600 }}>{t('empty_shifts')}</p>
           </div>
         ) : (
           <div style={{ display: 'grid', gap: 16 }}>

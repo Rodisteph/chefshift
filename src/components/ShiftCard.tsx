@@ -78,7 +78,7 @@ export default function ShiftCard({
 
   const meta: React.CSSProperties = {
     display: 'inline-flex', alignItems: 'center', gap: 5,
-    fontSize: 13.5, color: '#6b7268', fontWeight: 500,
+    fontSize: 13.5, color: 'hsl(var(--muted-foreground))', fontWeight: 500,
   }
 
   const contenu = (
@@ -110,7 +110,7 @@ export default function ShiftCard({
           <span style={meta}><Ico n="clock" s={14} c="#8a9a7b" /> {start} – {end}</span>
           {shift.locationCity && <span style={meta}><Ico n="pin" s={14} c="#8a9a7b" /> {shift.locationCity}</span>}
           {shift.horeca?.horecaProfile?.companyName && (
-            <span style={{ ...meta, fontWeight: 700, color: '#23281f' }}>
+            <span style={{ ...meta, fontWeight: 700, color: 'hsl(var(--foreground))' }}>
               {shift.horeca.horecaProfile.companyName}
             </span>
           )}
@@ -119,12 +119,12 @@ export default function ShiftCard({
       <div className="cs-end" style={{ textAlign: 'right' }}>
         <div style={{ fontSize: 20, fontWeight: 800, color: '#4c5e42', letterSpacing: -0.5 }}>€{shift.hourlyRate}{parHeure}</div>
         {shift.totalAmount != null && (
-          <div style={{ fontSize: 12.5, color: '#6b7268', fontWeight: 600 }}>
+          <div style={{ fontSize: 12.5, color: 'hsl(var(--muted-foreground))', fontWeight: 600 }}>
             {t('total')} : €{Math.round(shift.totalAmount)}
           </div>
         )}
         {shift._count && (
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 12.5, color: '#6b7268', marginTop: 5 }}>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 12.5, color: 'hsl(var(--muted-foreground))', marginTop: 5 }}>
             <Ico n="users" s={13} /> {shift._count.applications} {t('applications')}
           </div>
         )}
@@ -162,7 +162,7 @@ export default function ShiftCard({
   )
 
   const styleCarte: React.CSSProperties = {
-    background: '#fff', borderRadius: 20, border: '1px solid #eceee3',
+    background: 'hsl(var(--card))', borderRadius: 20, border: '1px solid #eceee3',
     boxShadow: '0 3px 12px rgba(46,52,43,0.05)', padding: 24,
     display: 'flex', justifyContent: 'space-between', alignItems: 'center',
     gap: 18, flexWrap: 'wrap',

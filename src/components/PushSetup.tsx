@@ -36,7 +36,7 @@ function Interrupteur({ on, onClick, disabled }: { on: boolean; onClick: () => v
       <span
         style={{
           position: 'absolute', top: 3, left: on ? 26 : 3, width: 25, height: 25,
-          borderRadius: '50%', background: '#fff',
+          borderRadius: '50%', background: 'hsl(var(--card))',
           boxShadow: '0 1px 4px rgba(0,0,0,.28)', transition: 'left .25s ease',
         }}
       />
@@ -165,13 +165,13 @@ export default function PushSetup() {
   }
 
   const carte: React.CSSProperties = {
-    marginBottom: 24, background: '#fff', border: '1px solid #eceee3', borderRadius: 16,
+    marginBottom: 24, background: 'hsl(var(--card))', border: '1px solid #eceee3', borderRadius: 16,
     padding: '16px 20px', boxShadow: '0 3px 12px rgba(46,52,43,0.05)', fontFamily: FONT,
   }
 
   if (etat === 'chargement') {
     return (
-      <div className="cs-fade cs-d2" style={{ ...carte, color: '#6b7268', fontSize: 13.5, fontWeight: 600 }}>
+      <div className="cs-fade cs-d2 cs-panel" style={{ ...carte, color: 'hsl(var(--muted-foreground))', fontSize: 13.5, fontWeight: 600 }}>
         {t('dash_loading')}
       </div>
     )
@@ -179,7 +179,7 @@ export default function PushSetup() {
 
   if (etat === 'indisponible') {
     return (
-      <div className="cs-fade cs-d2" style={{ ...carte, display: 'flex', alignItems: 'center', gap: 12 }}>
+      <div className="cs-fade cs-d2 cs-panel" style={{ ...carte, display: 'flex', alignItems: 'center', gap: 12 }}>
         <IcoTile n="bell" s={16} taille={38} />
         <div style={{ fontSize: 13.5, color: '#9aa39b', fontWeight: 600 }}>{t('push_unsupported')}</div>
       </div>
@@ -188,7 +188,7 @@ export default function PushSetup() {
 
   if (etat === 'refuse') {
     return (
-      <div className="cs-fade cs-d2" style={{
+      <div className="cs-fade cs-d2 cs-panel" style={{
         marginBottom: 24, background: '#fffdf4', border: '1px solid #efe7c8', borderRadius: 16,
         padding: '16px 20px', fontSize: 13.5, color: '#8a7320', fontWeight: 600, fontFamily: FONT,
         display: 'flex', alignItems: 'flex-start', gap: 12,
@@ -202,12 +202,12 @@ export default function PushSetup() {
   const actif = etat === 'actif'
 
   return (
-    <div className="cs-fade cs-d2" style={carte}>
+    <div className="cs-fade cs-d2 cs-panel" style={carte}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 14 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <IcoTile n="bell" s={16} taille={38} />
           <div>
-            <div style={{ fontSize: 14.5, fontWeight: 800, color: '#23281f', display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div style={{ fontSize: 14.5, fontWeight: 800, color: 'hsl(var(--foreground))', display: 'flex', alignItems: 'center', gap: 8 }}>
               {t('push_title')}
               <span style={{
                 fontSize: 11, fontWeight: 800, padding: '3px 10px', borderRadius: 999,
@@ -218,7 +218,7 @@ export default function PushSetup() {
                 {actif ? t('push_state_on') : t('push_state_off')}
               </span>
             </div>
-            <div style={{ fontSize: 13, color: '#6b7268', marginTop: 3 }}>
+            <div style={{ fontSize: 13, color: 'hsl(var(--muted-foreground))', marginTop: 3 }}>
               {actif ? t('push_ok') : t('push_desc')}
             </div>
           </div>

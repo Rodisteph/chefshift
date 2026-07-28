@@ -1,36 +1,37 @@
 /* ============================================================
-   Design tokens ChefShift
-   Ces variables alimentent tailwind.config.ts (hsl(var(--x))).
-   Volontairement SANS @tailwind base (Preflight) pour ne pas
-   réinitialiser les styles inline existants.
-   Palette : vert olive « cuisine » sur fond crème.
+   Design tokens ChefShift + thème sombre
+   Les valeurs CLAIRES sont calées au pixel sur les couleurs
+   inline d'origine (#f6f7f2, #fff, #23281f, #6b7268) : le mode
+   clair reste donc strictement identique. Le mode sombre bascule
+   automatiquement via <html data-theme="dark">.
+   Pas de @tailwind base (Preflight) pour ne rien réinitialiser.
    ============================================================ */
 
 :root {
-  --background: 72 20% 96%;   /* #f6f7f2 */
-  --foreground: 96 13% 14%;   /* #23281f */
+  --background: 72 23% 96%;    /* #f6f7f2 */
+  --foreground: 93 13% 14%;    /* #23281f */
 
-  --card: 0 0% 100%;
-  --card-foreground: 96 13% 14%;
+  --card: 0 0% 100%;           /* #fff */
+  --card-foreground: 93 13% 14%;
   --popover: 0 0% 100%;
-  --popover-foreground: 96 13% 14%;
+  --popover-foreground: 93 13% 14%;
 
-  --primary: 96 17% 28%;      /* #46553c */
+  --primary: 96 17% 28%;       /* #46553c */
   --primary-foreground: 0 0% 100%;
 
   --secondary: 78 24% 92%;
   --secondary-foreground: 96 17% 22%;
 
   --muted: 78 14% 92%;
-  --muted-foreground: 100 7% 43%;
+  --muted-foreground: 102 5% 43%;  /* #6b7268 */
 
-  --accent: 84 30% 87%;       /* #cfdcba-ish */
+  --accent: 84 30% 87%;
   --accent-foreground: 96 17% 22%;
 
-  --destructive: 0 72% 42%;   /* #b91c1c */
+  --destructive: 0 72% 42%;
   --destructive-foreground: 0 0% 100%;
 
-  --border: 80 16% 90%;       /* #e2e6d7 */
+  --border: 80 16% 90%;        /* ~#e2e6d7 */
   --input: 80 16% 90%;
   --ring: 96 17% 40%;
 
@@ -39,10 +40,7 @@
   color-scheme: light;
 }
 
-/* Thème sombre — activable via <html class="dark"> ou data-theme="dark".
-   Groundwork : opérationnel dès qu'un composant utilise les tokens
-   (bg-background, text-foreground, bg-primary, border-border, …). */
-:root.dark,
+/* ===== Thème sombre ===== */
 :root[data-theme="dark"] {
   --background: 96 14% 9%;
   --foreground: 72 18% 92%;
@@ -59,17 +57,62 @@
   --secondary-foreground: 72 18% 92%;
 
   --muted: 96 8% 18%;
-  --muted-foreground: 90 8% 62%;
+  --muted-foreground: 96 8% 62%;
 
   --accent: 96 10% 22%;
   --accent-foreground: 72 18% 92%;
 
-  --destructive: 0 62% 48%;
+  --destructive: 0 62% 52%;
   --destructive-foreground: 0 0% 100%;
 
   --border: 96 8% 22%;
-  --input: 96 8% 22%;
+  --input: 96 8% 24%;
   --ring: 92 22% 55%;
 
   color-scheme: dark;
+}
+
+/* Filet de sécurité global : couleurs par défaut du document.
+   En clair, ces valeurs sont identiques aux fonds/textes d'origine. */
+body {
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
+}
+
+/* ------------------------------------------------------------
+   Surcouche sombre : uniquement les propriétés inline (bordures,
+   nav translucide, labels) que les tokens ne peuvent pas atteindre.
+   Ces règles sont INACTIVES en mode clair — le clair reste intact.
+   ------------------------------------------------------------ */
+:root[data-theme="dark"] .cs-card,
+:root[data-theme="dark"] .cs-stat,
+:root[data-theme="dark"] .cs-auth,
+:root[data-theme="dark"] .cs-panel {
+  border-color: hsl(96 8% 20%) !important;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.42) !important;
+}
+
+:root[data-theme="dark"] .cs-nav {
+  background: rgba(18, 21, 14, 0.86) !important;
+  border-color: hsl(96 8% 18%) !important;
+}
+
+:root[data-theme="dark"] input,
+:root[data-theme="dark"] textarea,
+:root[data-theme="dark"] select {
+  border-color: hsl(96 8% 26%) !important;
+}
+
+:root[data-theme="dark"] label {
+  color: hsl(90 8% 74%) !important;
+}
+
+/* Boutons segmentés (NL/EN) à fond conditionnel clair : lisibles en sombre */
+:root[data-theme="dark"] .cs-seg {
+  background: hsl(var(--secondary)) !important;
+  border-color: hsl(96 8% 26%) !important;
+}
+:root[data-theme="dark"] .cs-seg[data-active="true"] {
+  background: hsl(var(--accent)) !important;
+  border-color: hsl(var(--primary)) !important;
 }

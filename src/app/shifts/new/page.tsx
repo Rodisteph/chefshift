@@ -70,27 +70,27 @@ export default function NewShiftPage() {
 
   const champ = {
     width: '100%', padding: 12, border: '1.5px solid #e2e6d7', borderRadius: 12,
-    fontSize: 15, outline: 'none', boxSizing: 'border-box' as const, background: '#fff', fontFamily: FONT,
+    fontSize: 15, outline: 'none', boxSizing: 'border-box' as const, background: 'hsl(var(--card))', fontFamily: FONT,
   }
   const etiquette = { display: 'block', fontSize: 13, fontWeight: 700, marginBottom: 6, color: '#3c4436' }
 
   if (!autorise) {
     return (
-      <main style={{ fontFamily: FONT, background: '#f6f7f2', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <p style={{ color: '#6b7268', fontWeight: 600 }}>{t('dash_loading')}</p>
+      <main style={{ fontFamily: FONT, background: 'hsl(var(--background))', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <p style={{ color: 'hsl(var(--muted-foreground))', fontWeight: 600 }}>{t('dash_loading')}</p>
       </main>
     )
   }
 
   return (
-    <main style={{ fontFamily: FONT, background: '#f6f7f2', color: '#23281f', minHeight: '100vh' }}>
+    <main style={{ fontFamily: FONT, background: 'hsl(var(--background))', color: 'hsl(var(--foreground))', minHeight: '100vh' }}>
       <AnimStyles />
       <nav style={{
         background: 'rgba(255,255,255,0.88)', backdropFilter: 'blur(12px)',
         borderBottom: '1px solid #e8ebe0',
         padding: '13px 28px', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
       }}>
-        <a href="/dashboard" style={{ fontWeight: 800, fontSize: 20, color: '#23281f', textDecoration: 'none', letterSpacing: -0.5 }}>
+        <a href="/dashboard" style={{ fontWeight: 800, fontSize: 20, color: 'hsl(var(--foreground))', textDecoration: 'none', letterSpacing: -0.5 }}>
           Chef<span style={{ color: '#5f7052' }}>Shift</span>
         </a>
         <div style={{ display: 'flex', gap: 18, alignItems: 'center' }}>
@@ -105,9 +105,9 @@ export default function NewShiftPage() {
         <h1 className="cs-fade" style={{ fontSize: 'clamp(26px, 4vw, 34px)', fontWeight: 800, letterSpacing: -1.2, marginBottom: 8 }}>
           {t('shifts_new')}
         </h1>
-        <p className="cs-fade cs-d1" style={{ color: '#6b7268', marginBottom: 32 }}>{t('shifts_new_sub')}</p>
+        <p className="cs-fade cs-d1" style={{ color: 'hsl(var(--muted-foreground))', marginBottom: 32 }}>{t('shifts_new_sub')}</p>
 
-        <form onSubmit={handleSubmit} className="cs-pop" style={{ background: '#fff', borderRadius: 20, border: '1px solid #eceee3', boxShadow: '0 12px 34px -12px rgba(46,52,43,0.14)', padding: 32 }}>
+        <form onSubmit={handleSubmit} className="cs-pop" style={{ background: 'hsl(var(--card))', borderRadius: 20, border: '1px solid #eceee3', boxShadow: '0 12px 34px -12px rgba(46,52,43,0.14)', padding: 32 }}>
           <div style={{ marginBottom: 16 }}>
             <label style={etiquette}>{t('field_shift_title')}</label>
             <input value={title} onChange={(e) => setTitle(e.target.value)} required

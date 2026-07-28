@@ -25,11 +25,11 @@ export default function LoginPage() {
   }
 
   return (
-    <main style={{ fontFamily: FONT, background: '#f6f7f2', color: '#23281f', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+    <main style={{ fontFamily: FONT, background: 'hsl(var(--background))', color: 'hsl(var(--foreground))', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       <AnimStyles />
 
       <nav style={{ padding: '22px 32px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <a href="/" style={{ fontWeight: 800, fontSize: 20, color: '#23281f', textDecoration: 'none', letterSpacing: -0.5 }}>
+        <a href="/" style={{ fontWeight: 800, fontSize: 20, color: 'hsl(var(--foreground))', textDecoration: 'none', letterSpacing: -0.5 }}>
           Chef<span style={{ color: '#5f7052' }}>Shift</span>
         </a>
         <div style={{ display: 'flex', gap: 18, alignItems: 'center' }}>
@@ -42,12 +42,12 @@ export default function LoginPage() {
 
       <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
         <div className="cs-pop cs-auth" style={{
-          background: '#fff', width: '100%', maxWidth: 440, padding: 42,
+          background: 'hsl(var(--card))', width: '100%', maxWidth: 440, padding: 42,
           borderRadius: 22, border: '1px solid #eceee3',
           boxShadow: '0 18px 44px -16px rgba(46,52,43,0.18)',
         }}>
           <h1 style={{ fontSize: 27, fontWeight: 800, letterSpacing: -0.9, marginBottom: 6 }}>{t('login_title')}</h1>
-          <p style={{ color: '#6b7268', fontSize: 14.5, marginBottom: 28 }}>{t('login_sub')}</p>
+          <p style={{ color: 'hsl(var(--muted-foreground))', fontSize: 14.5, marginBottom: 28 }}>{t('login_sub')}</p>
 
           <form onSubmit={handleSubmit}>
             <div style={{ marginBottom: 16 }}>
@@ -84,7 +84,7 @@ export default function LoginPage() {
             </button>
           </form>
 
-          <p style={{ textAlign: 'center', marginTop: 20, fontSize: 13.5, color: '#6b7268' }}>
+          <p style={{ textAlign: 'center', marginTop: 20, fontSize: 13.5, color: 'hsl(var(--muted-foreground))' }}>
             <a href="/register" style={{ color: '#5f7052', fontWeight: 700, textDecoration: 'none' }}>{t('nav_register')}</a>
           </p>
         </div>

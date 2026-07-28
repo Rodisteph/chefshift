@@ -7,6 +7,7 @@ import ShiftCard, { ShiftData } from '@/components/ShiftCard'
 import AnimStyles from '@/components/AnimStyles'
 import BarChart from '@/components/BarChart'
 import PushSetup from '@/components/PushSetup'
+import ThemeToggle from '@/components/ThemeToggle'
 import { Ico, IcoTile } from '@/components/Icons'
 
 const FONT = '"Sora","Inter","Helvetica Neue",Arial,sans-serif'
@@ -68,14 +69,14 @@ export default function DashboardPage() {
   }, [])
 
   const carte: React.CSSProperties = {
-    background: '#fff', borderRadius: 20, border: '1px solid #eceee3',
+    background: 'hsl(var(--card))', borderRadius: 20, border: '1px solid #eceee3',
     boxShadow: '0 3px 12px rgba(46,52,43,0.05)', padding: 26,
   }
 
   if (chargement) {
     return (
-      <main style={{ fontFamily: FONT, background: '#f6f7f2', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <p style={{ color: '#6b7268', fontWeight: 600 }}>{t('dash_loading')}</p>
+      <main style={{ fontFamily: FONT, background: 'hsl(var(--background))', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <p style={{ color: 'hsl(var(--muted-foreground))', fontWeight: 600 }}>{t('dash_loading')}</p>
       </main>
     )
   }
@@ -154,7 +155,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <main style={{ fontFamily: FONT, background: '#f6f7f2', color: '#23281f', minHeight: '100vh' }}>
+    <main style={{ fontFamily: FONT, background: 'hsl(var(--background))', color: 'hsl(var(--foreground))', minHeight: '100vh' }}>
       <AnimStyles />
       {/* ===== Barre de navigation ===== */}
       <nav className="cs-nav" style={{
@@ -163,11 +164,12 @@ export default function DashboardPage() {
         padding: '13px 28px', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
         position: 'sticky', top: 0, zIndex: 10,
       }}>
-        <a href="/" style={{ fontWeight: 800, fontSize: 20, color: '#23281f', textDecoration: 'none', letterSpacing: -0.5 }}>
+        <a href="/" style={{ fontWeight: 800, fontSize: 20, color: 'hsl(var(--foreground))', textDecoration: 'none', letterSpacing: -0.5 }}>
           Chef<span style={{ color: '#5f7052' }}>Shift</span>
         </a>
         <div style={{ display: 'flex', gap: 14, alignItems: 'center' }}>
           <LangToggle />
+          <ThemeToggle />
           {estKok && (
             <a href="/profiel" className="cs-nav-link" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: '#5f7052', fontWeight: 700, fontSize: 14, textDecoration: 'none' }}>
               <Ico n="user" s={15} /> <span className="cs-nav-txt">{t('nav_profile')}</span>
@@ -176,7 +178,7 @@ export default function DashboardPage() {
           <a href="/instellingen" className="cs-nav-link" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: '#5f7052', fontWeight: 700, fontSize: 14, textDecoration: 'none' }}>
             <Ico n="gear" s={15} /> <span className="cs-nav-txt">{t('nav_settings')}</span>
           </a>
-          <span className="cs-hide-mob" style={{ fontSize: 13.5, color: '#6b7268', fontWeight: 500 }}>{user?.email}</span>
+          <span className="cs-hide-mob" style={{ fontSize: 13.5, color: 'hsl(var(--muted-foreground))', fontWeight: 500 }}>{user?.email}</span>
           <span className="cs-hide-mob" style={{
             background: '#eef2e6', color: '#4c5e42', fontSize: 11, fontWeight: 800,
             padding: '5px 12px', borderRadius: 999, textTransform: 'uppercase', letterSpacing: 1,
@@ -190,7 +192,7 @@ export default function DashboardPage() {
             style={{
               background: 'none', border: '1.5px solid #dfe4d4', borderRadius: 999,
               padding: '8px 16px', fontWeight: 700, fontSize: 13.5, cursor: 'pointer',
-              color: '#23281f', fontFamily: FONT, gap: 6,
+              color: 'hsl(var(--foreground))', fontFamily: FONT, gap: 6,
             }}
           >
             <Ico n="out" s={14} /> <span className="cs-nav-txt">{t('nav_logout')}</span>
@@ -205,7 +207,7 @@ export default function DashboardPage() {
             <h1 style={{ fontSize: 'clamp(26px, 4vw, 36px)', fontWeight: 800, letterSpacing: -1.2, marginBottom: 6 }}>
               {t('dash_welcome')}, {user?.name || 'chef'}
             </h1>
-            <p style={{ color: '#6b7268', fontSize: 14.5, margin: 0 }}>
+            <p style={{ color: 'hsl(var(--muted-foreground))', fontSize: 14.5, margin: 0 }}>
               {estKok
                 ? t('dash_kok_sub')
                 : user?.role === 'HORECA'
@@ -239,8 +241,8 @@ export default function DashboardPage() {
               <>
                 <IcoTile n={s.icone} s={19} taille={42} />
                 <div>
-                  <div className="cs-stat-n" style={{ fontSize: 25, fontWeight: 800, color: '#23281f', letterSpacing: -0.8 }}>{s.c}</div>
-                  <div className="cs-stat-l" style={{ fontSize: 12.5, color: '#6b7268', fontWeight: 600 }}>{s.l}</div>
+                  <div className="cs-stat-n" style={{ fontSize: 25, fontWeight: 800, color: 'hsl(var(--foreground))', letterSpacing: -0.8 }}>{s.c}</div>
+                  <div className="cs-stat-l" style={{ fontSize: 12.5, color: 'hsl(var(--muted-foreground))', fontWeight: 600 }}>{s.l}</div>
                 </div>
               </>
             )

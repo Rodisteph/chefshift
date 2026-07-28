@@ -153,11 +153,11 @@ export default function ProfielPage() {
 
   const champ: React.CSSProperties = {
     width: '100%', padding: 11, border: '1.5px solid #e2e6d7', borderRadius: 12,
-    fontSize: 14.5, outline: 'none', boxSizing: 'border-box', background: '#fff', fontFamily: FONT,
+    fontSize: 14.5, outline: 'none', boxSizing: 'border-box', background: 'hsl(var(--card))', fontFamily: FONT,
   }
   const etiquette: React.CSSProperties = { display: 'block', fontSize: 13, fontWeight: 700, marginBottom: 6, color: '#3c4436' }
   const section: React.CSSProperties = {
-    background: '#fff', borderRadius: 20, border: '1px solid #eceee3',
+    background: 'hsl(var(--card))', borderRadius: 20, border: '1px solid #eceee3',
     boxShadow: '0 3px 12px rgba(46,52,43,0.05)', padding: 28, marginBottom: 24,
   }
   const enteteSection: React.CSSProperties = { display: 'flex', alignItems: 'center', gap: 12, marginBottom: 18 }
@@ -171,14 +171,14 @@ export default function ProfielPage() {
 
   if (chargement) {
     return (
-      <main style={{ fontFamily: FONT, background: '#f6f7f2', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <p style={{ color: '#6b7268', fontWeight: 600 }}>{t('dash_loading')}</p>
+      <main style={{ fontFamily: FONT, background: 'hsl(var(--background))', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <p style={{ color: 'hsl(var(--muted-foreground))', fontWeight: 600 }}>{t('dash_loading')}</p>
       </main>
     )
   }
 
   return (
-    <main style={{ fontFamily: FONT, background: '#f6f7f2', color: '#23281f', minHeight: '100vh' }}>
+    <main style={{ fontFamily: FONT, background: 'hsl(var(--background))', color: 'hsl(var(--foreground))', minHeight: '100vh' }}>
       <AnimStyles />
       <nav className="cs-nav" style={{
         background: 'rgba(255,255,255,0.88)', backdropFilter: 'blur(12px)',
@@ -186,7 +186,7 @@ export default function ProfielPage() {
         padding: '13px 28px', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
         position: 'sticky', top: 0, zIndex: 10,
       }}>
-        <a href="/dashboard" style={{ fontWeight: 800, fontSize: 20, color: '#23281f', textDecoration: 'none', letterSpacing: -0.5 }}>
+        <a href="/dashboard" style={{ fontWeight: 800, fontSize: 20, color: 'hsl(var(--foreground))', textDecoration: 'none', letterSpacing: -0.5 }}>
           Chef<span style={{ color: '#5f7052' }}>Shift</span>
         </a>
         <div style={{ display: 'flex', gap: 18, alignItems: 'center' }}>
@@ -199,7 +199,7 @@ export default function ProfielPage() {
 
       <form onSubmit={sauvegarder} className="cs-wrap" style={{ maxWidth: 760, margin: '0 auto', padding: '48px 24px' }}>
         <h1 className="cs-fade" style={{ fontSize: 'clamp(26px, 4vw, 36px)', fontWeight: 800, letterSpacing: -1.2 }}>{t('profile_title')}</h1>
-        <p className="cs-fade cs-d1" style={{ color: '#6b7268', marginTop: 6, marginBottom: 32, fontSize: 15 }}>{t('profile_sub')}</p>
+        <p className="cs-fade cs-d1" style={{ color: 'hsl(var(--muted-foreground))', marginTop: 6, marginBottom: 32, fontSize: 15 }}>{t('profile_sub')}</p>
 
         {/* ===== Persoonlijke gegevens ===== */}
         <div className="cs-card" style={section}>
@@ -285,9 +285,9 @@ export default function ProfielPage() {
           <label style={etiquette}>{t('rates_label')}</label>
           <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
             <input type="number" min="10" step="0.5" value={hourlyRateMin} onChange={(e) => setHourlyRateMin(e.target.value)} placeholder={t('min')} style={{ ...champ, width: 110 }} />
-            <span style={{ color: '#6b7268' }}>–</span>
+            <span style={{ color: 'hsl(var(--muted-foreground))' }}>–</span>
             <input type="number" min="10" step="0.5" value={hourlyRateMax} onChange={(e) => setHourlyRateMax(e.target.value)} placeholder={t('max')} style={{ ...champ, width: 110 }} />
-            <span style={{ color: '#6b7268', fontSize: 14 }}>{lang === 'en' ? '€/hr' : '€/u'}</span>
+            <span style={{ color: 'hsl(var(--muted-foreground))', fontSize: 14 }}>{lang === 'en' ? '€/hr' : '€/u'}</span>
           </div>
         </div>
 
@@ -312,7 +312,7 @@ export default function ProfielPage() {
               </p>
             ) : (
               <>
-                <p style={{ fontSize: 13.5, color: '#6b7268', marginBottom: 12, lineHeight: 1.6 }}>
+                <p style={{ fontSize: 13.5, color: 'hsl(var(--muted-foreground))', marginBottom: 12, lineHeight: 1.6 }}>
                   {connectStatus === 'pending' ? t('connect_pending') : t('connect_desc')}
                 </p>
                 <button
