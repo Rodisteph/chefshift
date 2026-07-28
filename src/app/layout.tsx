@@ -7,18 +7,39 @@ export const viewport = {
 }
 
 export const metadata = {
-  metadataBase: new URL(process.env.APP_URL || 'http://localhost:3000'),
+  metadataBase: new URL('https://www.chefshift.nl'),
   title: {
-    default: 'ChefShift NL — ZZP-koks & Horeca',
+    default: 'ZZP-koks en horeca personeel vinden | ChefShift NL',
     template: '%s · ChefShift',
   },
-  description: 'Platform voor ZZP-koks en horeca in Nederland',
+  description:
+    'Vind geverifieerde zzp-koks voor jouw shift, of vind als kok zelf shifts bij restaurants en hotels in heel Nederland. Gratis aanmelden in 1 minuut.',
   applicationName: 'ChefShift',
+  alternates: {
+    canonical: '/',
+  },
   openGraph: {
-    title: 'ChefShift NL — ZZP-koks & Horeca',
-    description: 'Platform voor ZZP-koks en horeca in Nederland',
+    title: 'ZZP-koks en horeca personeel vinden | ChefShift NL',
+    description:
+      'Vind geverifieerde zzp-koks voor jouw shift, of vind als kok zelf shifts bij restaurants en hotels in heel Nederland. Gratis aanmelden in 1 minuut.',
     type: 'website',
     locale: 'nl_NL',
+    url: '/',
+    siteName: 'ChefShift',
+    images: [
+      {
+        url: 'https://www.kimi.com/apiv2-files/sign-obj/kimi-fs%2Ffiles%2Fblob%2F27b665a925688f5be2e3e4a8cb9c3d9a2e7e646e33aa32d129d44e5cdd26d54e?filename=hero-chefshift.jpg&sig=1974T8mF3RlDIwOmP3yXKXTFq5DvJ5-l2Pt9nFGwyDQ=&t=o',
+        width: 2048,
+        height: 1062,
+        alt: 'ZZP-kok aan het werk in een professionele horecakeuken',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'ZZP-koks en horeca personeel vinden | ChefShift NL',
+    description:
+      'Vind geverifieerde zzp-koks voor jouw shift, of vind als kok zelf shifts bij restaurants en hotels in heel Nederland.',
   },
 }
 
