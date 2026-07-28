@@ -343,6 +343,8 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
   let finReelle = new Date(`${jourStr}T${versChamp(shift.endTime)}:00`)
   if (finReelle.getTime() <= debutReel.getTime()) finReelle.setDate(finReelle.getDate() + 1)
   const shiftTermine = Date.now() >= finReelle.getTime()
+  // On ne peut plus désélectionner le chef à moins de 24 h du début du shift
+  const deselectBloque = Date.now() >= debutReel.getTime() - 24 * 3600 * 1000
 
   // Montant estimé affiché tant que la facture n'est pas créée :
   // heures réellement travaillées si l'heure de fin est déclarée, sinon horaire prévu, +9% btw.
@@ -733,7 +735,7 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
         {role === 'HORECA' && shift.chosenKokId && (shift.status === 'CONFIRMED' || shift.status === 'COMPLETED') && !estPaye && (
           <div className="cs-fade cs-d2" style={{ ...carte, marginBottom: 40, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 14 }}>
             <div>
-              {fini ? (
+              {eindBevestigd ? (
                 <>
                   <div style={{ fontSize: 14, color: 'hsl(var(--muted-foreground))', fontWeight: 600 }}>{t('pay_to_pay')}</div>
                   <div style={{ fontSize: 22, fontWeight: 800 }}>
@@ -748,7 +750,7 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
               )}
               {msgPay && <div style={{ color: '#b91c1c', fontSize: 13, marginTop: 5, fontWeight: 600 }}>{msgPay}</div>}
             </div>
-            {fini && (
+            {eindBevestigd && (
               <button
                 onClick={payer}
                 disabled={paiement}
@@ -830,7 +832,7 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
                         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, ...badgeSauge }}>
                           <Ico n="check" s={13} /> {t('chosen')}
                         </span>
-                        {!estPaye && (!fini || role === 'ADMIN') && (
+                        {!estPaye && (!deselectBloque || role === 'ADMIN') && (
                           <button
                             onClick={deselect}
                             disabled={choix === 'deselect'}

@@ -158,3 +158,37 @@ export async function emailEindtijdBevestigd(kokEmail: string, shiftId: string, 
     )
   )
 }
+
+// 7. Rappel : le chef n'a pas encore déclaré son heure de fin
+export async function emailRappelEindtijdChef(kokEmail: string, shiftId: string, shiftTitre: string) {
+  return envoyerEmail(
+    kokEmail,
+    `Herinnering: geef je eindtijd door · ${shiftTitre}`,
+    gabarit(
+      'Vergeet je eindtijd niet',
+      `Je hebt de shift <strong>${shiftTitre}</strong> gewerkt maar nog geen eindtijd doorgegeven. Geef ze door zodat de betaling kan starten.`,
+      'Eindtijd doorgeven',
+      "Don't forget your end time",
+      `You worked the shift <strong>${shiftTitre}</strong> but haven't reported your end time yet. Report it so payment can start.`,
+      'Report end time',
+      `${baseUrl()}/shifts/${shiftId}`
+    )
+  )
+}
+
+// 8. Rappel : l'horeca n'a pas encore confirmé l'heure de fin
+export async function emailRappelEindtijdHoreca(horecaEmail: string, shiftId: string, shiftTitre: string) {
+  return envoyerEmail(
+    horecaEmail,
+    `Herinnering: bevestig de eindtijd · ${shiftTitre}`,
+    gabarit(
+      'Bevestig de gewerkte uren',
+      `De shift <strong>${shiftTitre}</strong> is afgelopen. Bevestig de eindtijd in de app zodat de betaling kan plaatsvinden.`,
+      'Eindtijd bevestigen',
+      'Confirm the worked hours',
+      `The shift <strong>${shiftTitre}</strong> has ended. Confirm the end time in the app so payment can take place.`,
+      'Confirm end time',
+      `${baseUrl()}/shifts/${shiftId}`
+    )
+  )
+}

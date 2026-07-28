@@ -22,10 +22,16 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     if (shift.invoice?.status === 'PAID') {
       return NextResponse.json({ error: 'Already paid' }, { status: 400 })
     }
-    // On ne peut plus désélectionner le chef d'un shift passé (sauf admin)
-    const aujourdhui = new Date(new Date().toDateString())
-    if (!isAdmin && new Date(shift.date) < aujourdhui) {
-      return NextResponse.json({ error: 'Shift already passed' }, { status: 400 })
+    // On ne peut plus désélectionner le chef à moins de 24 h du début du shift (sauf admin)
+    if (!isAdmin) {
+      const dateStr = new Date(shift.date).toISOString().slice(0, 10)
+      const st = new Date(shift.startTime)
+      const hh = String(st.getUTCHours()).padStart(2, '0')
+      const mm = String(st.getUTCMinutes()).padStart(2, '0')
+      const debut = new Date(`${dateStr}T${hh}:${mm}:00.000Z`).getTime()
+      if (Date.now() >= debut - 24 * 3600 * 1000) {
+        return NextResponse.json({ error: 'Too close to shift start' }, { status: 400 })
+      }
     }
 
     const updated = await prisma.shift.update({

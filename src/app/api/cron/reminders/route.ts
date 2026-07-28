@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { emailRappelShift } from '@/lib/email'
+import { emailRappelShift, emailRappelEindtijdChef, emailRappelEindtijdHoreca } from '@/lib/email'
 import webpush from 'web-push'
 
 // Tables auto-créées : abonnements push + journal des rappels envoyés
@@ -120,11 +120,58 @@ export async function GET(req: NextRequest) {
       }
     }
 
+    // ===== Rappel : heure de fin non confirmée après un shift terminé =====
+    // Une partie a oublié -> on relance le chef (déclarer) et/ou l'horeca (confirmer).
+    let rappelsFin = 0
+    const ilYa3Jours = new Date(maintenant - 3 * 24 * heure)
+    const shiftsFin = await prisma.shift.findMany({
+      where: { status: 'CONFIRMED', chosenKokId: { not: null }, date: { gte: ilYa3Jours } },
+    })
+    for (const s of shiftsFin) {
+      const dateStr = new Date(s.date).toISOString().slice(0, 10)
+      const et = new Date(s.endTime)
+      const st = new Date(s.startTime)
+      const p2 = (n: number) => String(n).padStart(2, '0')
+      const startUTC = new Date(`${dateStr}T${p2(st.getUTCHours())}:${p2(st.getUTCMinutes())}:00.000Z`).getTime()
+      let finUTC = new Date(`${dateStr}T${p2(et.getUTCHours())}:${p2(et.getUTCMinutes())}:00.000Z`).getTime()
+      if (finUTC <= startUTC) finUTC += 24 * heure
+      // Le shift doit être terminé depuis au moins 1 h (marge)
+      if (maintenant < finUTC + heure) continue
+
+      const fins: { confirmed_at: Date | null }[] = await prisma.$queryRaw`
+        SELECT confirmed_at FROM shift_end WHERE shift_id = ${s.id} LIMIT 1
+      `
+      if (fins.length > 0 && fins[0].confirmed_at) continue // déjà confirmé
+
+      const deja: { shift_id: string }[] = await prisma.$queryRaw`
+        SELECT shift_id FROM kok_reminder WHERE shift_id = ${s.id} AND kind = 'ENDCONF' LIMIT 1
+      `
+      if (deja.length > 0) continue
+
+      const kok = s.chosenKokId ? await prisma.user.findUnique({ where: { id: s.chosenKokId } }) : null
+      const horeca = await prisma.user.findUnique({ where: { id: s.horecaId } })
+      // Chef : rappel s'il n'a pas encore déclaré son heure de fin
+      if (fins.length === 0 && kok?.email) {
+        const r = await emailRappelEindtijdChef(kok.email, s.id, s.title)
+        if (r.ok) emails++
+      }
+      // Horeca : rappel pour confirmer
+      if (horeca?.email) {
+        const r = await emailRappelEindtijdHoreca(horeca.email, s.id, s.title)
+        if (r.ok) emails++
+      }
+      await prisma.$executeRaw`
+        INSERT INTO kok_reminder (shift_id, kind, sent_at)
+        VALUES (${s.id}, 'ENDCONF', now()) ON CONFLICT DO NOTHING
+      `
+      rappelsFin++
+    }
+
     // Diagnostic : nombre total d'abonnements push en base
     const compte: { n: bigint }[] = await prisma.$queryRaw`SELECT COUNT(*)::int AS n FROM kok_push`
     const abonnements = Number(compte[0]?.n || 0)
 
-    return NextResponse.json({ ok: true, envoyes, emails, shiftsTrouves, abonnements, erreurs: erreurs.slice(0, 5) })
+    return NextResponse.json({ ok: true, envoyes, emails, rappelsFin, shiftsTrouves, abonnements, erreurs: erreurs.slice(0, 5) })
   } catch (error: any) {
     return NextResponse.json(
       { ok: false, error: error?.message || 'Internal server error' },

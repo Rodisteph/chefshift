@@ -42,10 +42,21 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
       return NextResponse.json({ error: 'Already paid' }, { status: 400 })
     }
 
-    // ===== Le shift doit être terminé avant le paiement =====
-    const aujourdhui = new Date(new Date().toDateString())
-    if (new Date(shift.date) >= aujourdhui) {
-      return NextResponse.json({ error: 'Shift not finished yet' }, { status: 400 })
+    // ===== L'heure de fin doit être confirmée avant le paiement =====
+    try {
+      await prisma.$executeRaw`
+        CREATE TABLE IF NOT EXISTS shift_end (
+          shift_id TEXT PRIMARY KEY,
+          reported_end TIMESTAMP NOT NULL,
+          reported_at TIMESTAMP DEFAULT now(),
+          confirmed_at TIMESTAMP
+        )`
+    } catch {}
+    const conf: { confirmed_at: Date | null }[] = await prisma.$queryRaw`
+      SELECT confirmed_at FROM shift_end WHERE shift_id = ${shift.id} LIMIT 1
+    `
+    if (!conf.length || !conf[0].confirmed_at) {
+      return NextResponse.json({ error: 'End time not confirmed yet' }, { status: 400 })
     }
 
     // ===== Heures "wall-clock" (composantes UTC), sans conversion de fuseau =====
