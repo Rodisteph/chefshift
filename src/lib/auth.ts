@@ -3,6 +3,7 @@ import { PrismaAdapter } from '@auth/prisma-adapter'
 import CredentialsProvider from 'next-auth/providers/credentials'
 import bcrypt from 'bcryptjs'
 import { prisma } from './prisma'
+import { estAutorise } from './ratelimit'
 
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma) as any,
@@ -26,11 +27,15 @@ export const authOptions: NextAuthOptions = {
           return null
         }
 
-        const user = await prisma.user.findUnique({
-          where: { email: credentials.email },
-        })
-       console.log('DEBUG LOGIN email:', credentials.email, '| user trouvé:', !!user)
+        const email = credentials.email.trim().toLowerCase()
+        // Anti brute-force : 8 tentatives max par compte par quart d'heure
+        if (!estAutorise(`login:${email}`, 8, 900_000)) {
+          return null
+        }
 
+        const user = await prisma.user.findUnique({
+          where: { email },
+        })
 
         if (!user || !user.password) {
           return null
@@ -40,8 +45,6 @@ export const authOptions: NextAuthOptions = {
           credentials.password,
           user.password
         )
-        console.log('DEBUG password valide:', isPasswordValid)
-
 
         if (!isPasswordValid) {
           return null
