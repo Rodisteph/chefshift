@@ -128,7 +128,7 @@ export default function DashboardPage() {
               {liste.length}
             </span>
           </h2>
-          {liste.length > 4 && (
+          {liste.length > 3 && (
             <a href="/shifts" style={{ display: 'inline-flex', alignItems: 'center', gap: 5, color: '#5f7052', fontWeight: 700, fontSize: 13, textDecoration: 'none' }}>
               {t('view_all')} <Ico n="arrow" s={13} />
             </a>
@@ -140,7 +140,7 @@ export default function DashboardPage() {
           </div>
         ) : (
           <div style={{ display: 'grid', gap: 14 }}>
-            {liste.slice(0, 4).map((shift) => (
+            {liste.slice(0, 3).map((shift) => (
               <ShiftCard
                 key={shift.id}
                 shift={shift}
@@ -148,6 +148,20 @@ export default function DashboardPage() {
                 detailHref={`/shifts/${shift.id}`}
               />
             ))}
+            {liste.length > 3 && (
+              <a
+                href="/shifts"
+                className="cs-btn"
+                style={{
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
+                  padding: '13px 18px', borderRadius: 14, border: '1.5px dashed #cfd8c2',
+                  background: 'hsl(var(--card))', color: '#5f7052', fontWeight: 800, fontSize: 13.5,
+                  textDecoration: 'none',
+                }}
+              >
+                {t('view_all')} ({liste.length}) <Ico n="arrow" s={14} />
+              </a>
+            )}
           </div>
         )}
       </section>

@@ -9,6 +9,36 @@ import { MIN_HOURLY_RATE } from '@/lib/constants'
 
 const FONT = '"Sora","Inter","Helvetica Neue",Arial,sans-serif'
 
+// Catégories prêtes à cliquer pour remplir rapidement titre & fonction
+const TITRES = ['Lunchdienst', 'Dinerdienst', 'Ontbijtdienst', 'Avonddienst', 'Weekenddienst', 'Banqueting', 'Evenement']
+const FONCTIES = ['Chef de partie', 'Sous-chef', 'Zelfstandig werkend kok', 'Commis', 'Keukenhulp', 'Afwas', 'Garde-manger', 'Saucier', 'Pâtisserie', 'Grillkok']
+
+function Chips({ options, current, onPick }: { options: string[]; current: string; onPick: (v: string) => void }) {
+  return (
+    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7, marginTop: 8 }}>
+      {options.map((o) => {
+        const actif = current.trim().toLowerCase() === o.toLowerCase()
+        return (
+          <button
+            key={o}
+            type="button"
+            onClick={() => onPick(o)}
+            style={{
+              padding: '6px 13px', borderRadius: 999, fontSize: 12.5, fontWeight: 700, cursor: 'pointer', fontFamily: FONT,
+              border: actif ? '1.5px solid #5f7052' : '1.5px solid #e2e6d7',
+              background: actif ? '#eef2e6' : 'hsl(var(--card))',
+              color: actif ? '#3d5233' : 'hsl(var(--foreground))',
+              transition: 'border-color .15s ease, background .15s ease',
+            }}
+          >
+            {o}
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
 export default function NewShiftPage() {
   const { t } = useT()
   const [title, setTitle] = useState('')
@@ -122,11 +152,13 @@ export default function NewShiftPage() {
             <label style={etiquette}>{t('field_shift_title')}</label>
             <input value={title} onChange={(e) => setTitle(e.target.value)} required
               placeholder={t('shift_title_ph')} style={champ} />
+            <Chips options={TITRES} current={title} onPick={setTitle} />
           </div>
           <div style={{ marginBottom: 16 }}>
             <label style={etiquette}>{t('field_function')}</label>
             <input value={func} onChange={(e) => setFunc(e.target.value)}
               placeholder={t('shift_function_ph')} style={champ} />
+            <Chips options={FONCTIES} current={func} onPick={setFunc} />
           </div>
           <div style={{ marginBottom: 16 }}>
             <label style={etiquette}>{t('field_date')}</label>
