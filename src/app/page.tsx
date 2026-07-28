@@ -8,6 +8,9 @@ import { Ico, IcoTile, IcoStar } from '@/components/Icons'
 const FONT = '"Sora","Inter","Helvetica Neue",Arial,sans-serif'
 const CONTACT_EMAIL = 'info@chefshift.nl'
 
+// Photo du hero générée pour ChefShift (hébergée en ligne)
+const HERO_URL = 'https://www.kimi.com/apiv2-files/sign-obj/kimi-fs%2Ffiles%2Fblob%2F27b665a925688f5be2e3e4a8cb9c3d9a2e7e646e33aa32d129d44e5cdd26d54e?filename=hero-chefshift.jpg&sig=1974T8mF3RlDIwOmP3yXKXTFq5DvJ5-l2Pt9nFGwyDQ=&t=o'
+
 // Décor du hero : halos lumineux animés sur dégradé olive (aucune image externe)
 function Halos() {
   return (
@@ -19,18 +22,18 @@ function Halos() {
   )
 }
 
-// Photo de fond optionnelle : déposer une image dans public/hero.jpg et elle s'affiche
-// automatiquement (fondu doux par-dessus le dégradé). Si le fichier n'existe pas,
-// l'image se retire d'elle-même et seul le décor CSS reste — rien ne casse.
+// Photo de fond : la version en ligne (HERO_URL) est affichée en priorité ;
+// si elle ne charge pas, on essaie une éventuelle image locale public/hero.jpg ;
+// sinon seul le décor CSS reste — rien ne casse.
 function PhotoFond({ alt = '' }: { alt?: string }) {
-  const [ok, setOk] = useState(true)
-  if (!ok) return null
+  const [src, setSrc] = useState(HERO_URL)
+  if (!src) return null
   return (
     <img
-      src="/hero.jpg"
+      src={src}
       alt={alt}
       aria-hidden={alt ? undefined : true}
-      onError={() => setOk(false)}
+      onError={() => setSrc(src === HERO_URL ? '/hero.jpg' : '')}
       className="cs-heroimg"
       style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
     />
@@ -116,19 +119,13 @@ export default function HomePage() {
         </div>
       </nav>
 
-      {/* ===== Hero : décor CSS + photo locale optionnelle (public/hero.jpg) ===== */}
+      {/* ===== Hero : photo pro + décor CSS ===== */}
       <header style={{
         position: 'relative', height: '100vh', minHeight: 640, display: 'flex', alignItems: 'flex-end', overflow: 'hidden',
         background: 'linear-gradient(160deg, #1c2317 0%, #2b3522 48%, #46553c 100%)',
       }}>
         <PhotoFond alt="ChefShift" />
         <Halos />
-        {/* Grille pointillée subtile */}
-        <div aria-hidden="true" style={{
-          position: 'absolute', inset: 0, opacity: 0.5,
-          backgroundImage: 'radial-gradient(rgba(207,220,186,0.13) 1px, transparent 1px)',
-          backgroundSize: '34px 34px',
-        }} />
         {/* Voile de lisibilité : garantit le contraste du texte blanc, avec ou sans photo */}
         <div aria-hidden="true" style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(24,30,21,0.80) 0%, rgba(24,30,21,0.28) 48%, rgba(24,30,21,0.42) 100%)' }} />
         <div className="cs-hero-pad" style={{ position: 'relative', zIndex: 2, width: '100%', maxWidth: 1200, margin: '0 auto', padding: '0 24px 92px', color: '#fff' }}>
