@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useT, LangToggle, afficherPoste, afficherSpecialite } from '@/lib/i18n'
 import AnimStyles from '@/components/AnimStyles'
 import { Ico, IcoStar } from '@/components/Icons'
+import RateStepper from '@/components/RateStepper'
 import { MIN_HOURLY_RATE } from '@/lib/constants'
 
 const FONT = '"Sora","Inter","Helvetica Neue",Arial,sans-serif'
@@ -421,7 +422,7 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
               </div>
               <div style={{ flex: 1, minWidth: 100 }}>
                 <label style={etiquette}>{t('field_rate')}</label>
-                <input type="number" min={MIN_HOURLY_RATE} step="0.5" value={eRate} onChange={(e) => setERate(e.target.value)} required style={champ} />
+                <RateStepper value={eRate} onChange={setERate} min={MIN_HOURLY_RATE} inputStyle={champ} />
               </div>
             </div>
             <div style={{ display: 'flex', gap: 12, marginBottom: 14, flexWrap: 'wrap' }}>
