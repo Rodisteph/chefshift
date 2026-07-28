@@ -4,11 +4,65 @@ import { useEffect, useState } from 'react'
 import { useT, LangToggle } from '@/lib/i18n'
 import AnimStyles from '@/components/AnimStyles'
 import { Ico } from '@/components/Icons'
+import RateStepper from '@/components/RateStepper'
+import { MIN_HOURLY_RATE } from '@/lib/constants'
 
 const FONT = '"Sora","Inter","Helvetica Neue",Arial,sans-serif'
 
+// Catégories prêtes à cliquer pour remplir rapidement titre & fonction (NL / EN)
+type Cat = { nl: string; en: string }
+const TITRES: Cat[] = [
+  { nl: 'Ontbijtdienst', en: 'Breakfast' },
+  { nl: 'Lunchdienst', en: 'Lunch shift' },
+  { nl: 'Dinerdienst', en: 'Dinner shift' },
+  { nl: 'Avonddienst', en: 'Evening shift' },
+  { nl: 'Weekenddienst', en: 'Weekend shift' },
+  { nl: 'Banqueting', en: 'Banqueting' },
+  { nl: 'Evenement', en: 'Event' },
+]
+const FONCTIES: Cat[] = [
+  { nl: 'Chef de partie', en: 'Chef de partie' },
+  { nl: 'Sous-chef', en: 'Sous-chef' },
+  { nl: 'Zelfstandig werkend kok', en: 'Self-employed chef' },
+  { nl: 'Mise en place', en: 'Mise en place' },
+  { nl: 'Commis', en: 'Commis' },
+  { nl: 'Keukenhulp', en: 'Kitchen assistant' },
+  { nl: 'Afwas', en: 'Dishwashing' },
+  { nl: 'Garde-manger', en: 'Garde-manger' },
+  { nl: 'Saucier', en: 'Saucier' },
+  { nl: 'Pâtisserie', en: 'Pastry' },
+  { nl: 'Grillkok', en: 'Grill cook' },
+]
+
+function Chips({ options, current, onPick, lang }: { options: Cat[]; current: string; onPick: (v: string) => void; lang: 'nl' | 'en' }) {
+  return (
+    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7, marginTop: 8 }}>
+      {options.map((o) => {
+        const label = lang === 'en' ? o.en : o.nl
+        const actif = current.trim().toLowerCase() === label.toLowerCase()
+        return (
+          <button
+            key={o.nl}
+            type="button"
+            onClick={() => onPick(label)}
+            style={{
+              padding: '6px 13px', borderRadius: 999, fontSize: 12.5, fontWeight: 700, cursor: 'pointer', fontFamily: FONT,
+              border: actif ? '1.5px solid #5f7052' : '1.5px solid #e2e6d7',
+              background: actif ? '#eef2e6' : 'hsl(var(--card))',
+              color: actif ? '#3d5233' : 'hsl(var(--foreground))',
+              transition: 'border-color .15s ease, background .15s ease',
+            }}
+          >
+            {label}
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
 export default function NewShiftPage() {
-  const { t } = useT()
+  const { t, lang } = useT()
   const [title, setTitle] = useState('')
   const [func, setFunc] = useState('')
   const [date, setDate] = useState('')
@@ -38,6 +92,10 @@ export default function NewShiftPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError('')
+    if (!(parseFloat(hourlyRate) >= MIN_HOURLY_RATE)) {
+      setError(`${t('rate_too_low')} €${MIN_HOURLY_RATE.toFixed(2)}`)
+      return
+    }
     setLoading(true)
     try {
       const res = await fetch('/api/shifts', {
@@ -57,7 +115,8 @@ export default function NewShiftPage() {
         }),
       })
       if (!res.ok) {
-        setError(t('shift_fail'))
+        const data = await res.json().catch(() => ({}))
+        setError(data?.error === 'RATE_TOO_LOW' ? `${t('rate_too_low')} €${(data.min ?? MIN_HOURLY_RATE).toFixed(2)}` : t('shift_fail'))
         setLoading(false)
         return
       }
@@ -70,27 +129,27 @@ export default function NewShiftPage() {
 
   const champ = {
     width: '100%', padding: 12, border: '1.5px solid #e2e6d7', borderRadius: 12,
-    fontSize: 15, outline: 'none', boxSizing: 'border-box' as const, background: '#fff', fontFamily: FONT,
+    fontSize: 15, outline: 'none', boxSizing: 'border-box' as const, background: 'hsl(var(--card))', fontFamily: FONT,
   }
   const etiquette = { display: 'block', fontSize: 13, fontWeight: 700, marginBottom: 6, color: '#3c4436' }
 
   if (!autorise) {
     return (
-      <main style={{ fontFamily: FONT, background: '#f6f7f2', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <p style={{ color: '#6b7268', fontWeight: 600 }}>{t('dash_loading')}</p>
+      <main style={{ fontFamily: FONT, background: 'hsl(var(--background))', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <p style={{ color: 'hsl(var(--muted-foreground))', fontWeight: 600 }}>{t('dash_loading')}</p>
       </main>
     )
   }
 
   return (
-    <main style={{ fontFamily: FONT, background: '#f6f7f2', color: '#23281f', minHeight: '100vh' }}>
+    <main style={{ fontFamily: FONT, background: 'hsl(var(--background))', color: 'hsl(var(--foreground))', minHeight: '100vh' }}>
       <AnimStyles />
       <nav style={{
         background: 'rgba(255,255,255,0.88)', backdropFilter: 'blur(12px)',
         borderBottom: '1px solid #e8ebe0',
         padding: '13px 28px', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
       }}>
-        <a href="/dashboard" style={{ fontWeight: 800, fontSize: 20, color: '#23281f', textDecoration: 'none', letterSpacing: -0.5 }}>
+        <a href="/dashboard" style={{ fontWeight: 800, fontSize: 20, color: 'hsl(var(--foreground))', textDecoration: 'none', letterSpacing: -0.5 }}>
           Chef<span style={{ color: '#5f7052' }}>Shift</span>
         </a>
         <div style={{ display: 'flex', gap: 18, alignItems: 'center' }}>
@@ -105,18 +164,20 @@ export default function NewShiftPage() {
         <h1 className="cs-fade" style={{ fontSize: 'clamp(26px, 4vw, 34px)', fontWeight: 800, letterSpacing: -1.2, marginBottom: 8 }}>
           {t('shifts_new')}
         </h1>
-        <p className="cs-fade cs-d1" style={{ color: '#6b7268', marginBottom: 32 }}>{t('shifts_new_sub')}</p>
+        <p className="cs-fade cs-d1" style={{ color: 'hsl(var(--muted-foreground))', marginBottom: 32 }}>{t('shifts_new_sub')}</p>
 
-        <form onSubmit={handleSubmit} className="cs-pop" style={{ background: '#fff', borderRadius: 20, border: '1px solid #eceee3', boxShadow: '0 12px 34px -12px rgba(46,52,43,0.14)', padding: 32 }}>
+        <form onSubmit={handleSubmit} className="cs-pop" style={{ background: 'hsl(var(--card))', borderRadius: 20, border: '1px solid #eceee3', boxShadow: '0 12px 34px -12px rgba(46,52,43,0.14)', padding: 32 }}>
           <div style={{ marginBottom: 16 }}>
             <label style={etiquette}>{t('field_shift_title')}</label>
             <input value={title} onChange={(e) => setTitle(e.target.value)} required
               placeholder={t('shift_title_ph')} style={champ} />
+            <Chips options={TITRES} current={title} onPick={setTitle} lang={lang} />
           </div>
           <div style={{ marginBottom: 16 }}>
             <label style={etiquette}>{t('field_function')}</label>
             <input value={func} onChange={(e) => setFunc(e.target.value)}
               placeholder={t('shift_function_ph')} style={champ} />
+            <Chips options={FONCTIES} current={func} onPick={setFunc} lang={lang} />
           </div>
           <div style={{ marginBottom: 16 }}>
             <label style={etiquette}>{t('field_date')}</label>
@@ -135,8 +196,10 @@ export default function NewShiftPage() {
           <div style={{ display: 'flex', gap: 12, marginBottom: 16 }}>
             <div style={{ flex: 1 }}>
               <label style={etiquette}>{t('field_rate')}</label>
-              <input type="number" min="1" step="0.5" value={hourlyRate} onChange={(e) => setHourlyRate(e.target.value)} required
-                placeholder="22" style={champ} />
+              <RateStepper value={hourlyRate} onChange={setHourlyRate} min={MIN_HOURLY_RATE} inputStyle={champ} />
+              <div style={{ fontSize: 12, color: 'hsl(var(--muted-foreground))', marginTop: 5, fontWeight: 600 }}>
+                {t('rate_min_hint')} €{MIN_HOURLY_RATE.toFixed(2)}
+              </div>
             </div>
           </div>
           <div style={{ marginBottom: 16 }}>
