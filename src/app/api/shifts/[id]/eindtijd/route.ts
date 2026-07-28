@@ -35,13 +35,14 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
       return NextResponse.json({ error: 'Invalid time' }, { status: 400 })
     }
 
-    // Date du shift + heure déclarée ; +1 jour si la fin est avant le début (shift de nuit)
-    const jour = new Date(shift.date)
+    // Heure "wall-clock" : instant UTC sur la date du shift (+1 jour si shift de nuit)
+    const dateStr = new Date(shift.date).toISOString().slice(0, 10)
     const [h, m] = endTime.split(':').map(Number)
-    const fin = new Date(jour)
-    fin.setHours(h, m, 0, 0)
-    if (fin.getTime() < new Date(shift.startTime).getTime()) {
-      fin.setDate(fin.getDate() + 1)
+    const st = new Date(shift.startTime)
+    const startMin = st.getUTCHours() * 60 + st.getUTCMinutes()
+    let fin = new Date(`${dateStr}T${endTime}:00.000Z`)
+    if (h * 60 + m < startMin) {
+      fin = new Date(fin.getTime() + 86400000)
     }
 
     await ensureTable()
