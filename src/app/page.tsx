@@ -61,6 +61,10 @@ export default function HomePage() {
     textDecoration: 'none', boxShadow: '0 10px 24px -8px rgba(70,85,60,.55)',
   }
 
+  // Destination du bouton "Plaats een shift" : connecté → création directe,
+  // sinon → connexion (le compte existe déjà dans ce cas le plus souvent)
+  const shiftCtaHref = charge && user ? '/shifts/new' : '/login'
+
   // Témoignages (restaurant, hôtel, chef) affichés dans la section "Wat gebruikers zeggen"
   const temoignages = [
     { q: t('testi1_q'), a: t('testi1_a'), r: t('testi1_r'), score: 5 },
@@ -224,7 +228,7 @@ export default function HomePage() {
               ))}
             </div>
             <div>
-              <a href="/register" className="cs-btn" style={btnPrimaire}>
+              <a href={shiftCtaHref} className="cs-btn" style={btnPrimaire}>
                 {t('hor_cta')} <Ico n="arrow" s={15} />
               </a>
             </div>
