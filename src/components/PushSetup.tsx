@@ -36,7 +36,7 @@ function Interrupteur({ on, onClick, disabled }: { on: boolean; onClick: () => v
       <span
         style={{
           position: 'absolute', top: 3, left: on ? 26 : 3, width: 25, height: 25,
-          borderRadius: '50%', background: '#fff',
+          borderRadius: '50%', background: 'hsl(var(--card))',
           boxShadow: '0 1px 4px rgba(0,0,0,.28)', transition: 'left .25s ease',
         }}
       />
@@ -68,6 +68,13 @@ export default function PushSetup() {
         const sub = await reg.pushManager.getSubscription()
         if (sub) {
           setEtat('actif')
+          // Resynchronise l'abonnement du navigateur avec le serveur :
+          // évite un « no subscription » si la base ne connaît pas (ou plus) cet endpoint.
+          fetch('/api/push/subscribe', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ subscription: sub.toJSON() }),
+          }).catch(() => {})
           return
         }
         setEtat(Notification.permission === 'denied' ? 'refuse' : 'invite')
@@ -75,27 +82,39 @@ export default function PushSetup() {
       .catch(() => setEtat('indisponible'))
   }, [])
 
+  // (Ré)abonne le navigateur et enregistre l'abonnement côté serveur.
+  // force = true : on jette l'abonnement local d'abord pour repartir d'un endpoint frais
+  // (utile quand l'abonnement stocké a expiré = erreur 410).
+  async function sabonner(force = false): Promise<boolean> {
+    const cle = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY as string | undefined
+    if (!cle) return false
+    const reg = await navigator.serviceWorker.ready
+    if (force) {
+      const existante = await reg.pushManager.getSubscription()
+      if (existante) {
+        try { await existante.unsubscribe() } catch {}
+      }
+    }
+    const permission = await Notification.requestPermission()
+    if (permission !== 'granted') return false
+    const sub = await reg.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array(cle),
+    })
+    const res = await fetch('/api/push/subscribe', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ subscription: sub.toJSON() }),
+    })
+    return res.ok
+  }
+
   async function activer() {
     setEnvoi(true)
     try {
-      const cle = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY as string
-      const reg = await navigator.serviceWorker.ready
-      const permission = await Notification.requestPermission()
-      if (permission !== 'granted') {
-        setEtat('refuse')
-        setEnvoi(false)
-        return
-      }
-      const sub = await reg.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(cle),
-      })
-      const res = await fetch('/api/push/subscribe', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ subscription: sub.toJSON() }),
-      })
-      setEtat(res.ok ? 'actif' : 'invite')
+      const ok = await sabonner(false)
+      if (ok) setEtat('actif')
+      else setEtat(Notification.permission === 'denied' ? 'refuse' : 'invite')
     } catch {
       setEtat('invite')
     }
@@ -125,13 +144,20 @@ export default function PushSetup() {
     setTestEnvoi(true)
     setTestMsg('')
     try {
-      const res = await fetch('/api/push/test', { method: 'POST' })
-      const data = await res.json()
-      if (data.ok) {
-        setTestMsg(t('push_test_sent'))
-      } else {
-        setTestMsg(data.erreur || data.error || t('push_test_none'))
+      let res = await fetch('/api/push/test', { method: 'POST' })
+      let data = await res.json()
+
+      // Abonnement périmé/absent côté serveur (ex. erreur 410) :
+      // on se réabonne silencieusement avec un endpoint frais, puis on réessaie une fois.
+      if (!data.ok && (data.code === 'stale' || data.code === 'no_subscription')) {
+        const ok = await sabonner(true)
+        if (ok) {
+          res = await fetch('/api/push/test', { method: 'POST' })
+          data = await res.json()
+        }
       }
+
+      setTestMsg(data.ok ? t('push_test_sent') : t('push_test_none'))
     } catch {
       setTestMsg(t('push_test_none'))
     }
@@ -139,13 +165,13 @@ export default function PushSetup() {
   }
 
   const carte: React.CSSProperties = {
-    marginBottom: 24, background: '#fff', border: '1px solid #eceee3', borderRadius: 16,
+    marginBottom: 24, background: 'hsl(var(--card))', border: '1px solid #eceee3', borderRadius: 16,
     padding: '16px 20px', boxShadow: '0 3px 12px rgba(46,52,43,0.05)', fontFamily: FONT,
   }
 
   if (etat === 'chargement') {
     return (
-      <div className="cs-fade cs-d2" style={{ ...carte, color: '#6b7268', fontSize: 13.5, fontWeight: 600 }}>
+      <div className="cs-fade cs-d2 cs-panel" style={{ ...carte, color: 'hsl(var(--muted-foreground))', fontSize: 13.5, fontWeight: 600 }}>
         {t('dash_loading')}
       </div>
     )
@@ -153,7 +179,7 @@ export default function PushSetup() {
 
   if (etat === 'indisponible') {
     return (
-      <div className="cs-fade cs-d2" style={{ ...carte, display: 'flex', alignItems: 'center', gap: 12 }}>
+      <div className="cs-fade cs-d2 cs-panel" style={{ ...carte, display: 'flex', alignItems: 'center', gap: 12 }}>
         <IcoTile n="bell" s={16} taille={38} />
         <div style={{ fontSize: 13.5, color: '#9aa39b', fontWeight: 600 }}>{t('push_unsupported')}</div>
       </div>
@@ -162,7 +188,7 @@ export default function PushSetup() {
 
   if (etat === 'refuse') {
     return (
-      <div className="cs-fade cs-d2" style={{
+      <div className="cs-fade cs-d2 cs-panel" style={{
         marginBottom: 24, background: '#fffdf4', border: '1px solid #efe7c8', borderRadius: 16,
         padding: '16px 20px', fontSize: 13.5, color: '#8a7320', fontWeight: 600, fontFamily: FONT,
         display: 'flex', alignItems: 'flex-start', gap: 12,
@@ -176,12 +202,12 @@ export default function PushSetup() {
   const actif = etat === 'actif'
 
   return (
-    <div className="cs-fade cs-d2" style={carte}>
+    <div className="cs-fade cs-d2 cs-panel" style={carte}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 14 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <IcoTile n="bell" s={16} taille={38} />
           <div>
-            <div style={{ fontSize: 14.5, fontWeight: 800, color: '#23281f', display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div style={{ fontSize: 14.5, fontWeight: 800, color: 'hsl(var(--foreground))', display: 'flex', alignItems: 'center', gap: 8 }}>
               {t('push_title')}
               <span style={{
                 fontSize: 11, fontWeight: 800, padding: '3px 10px', borderRadius: 999,
@@ -192,7 +218,7 @@ export default function PushSetup() {
                 {actif ? t('push_state_on') : t('push_state_off')}
               </span>
             </div>
-            <div style={{ fontSize: 13, color: '#6b7268', marginTop: 3 }}>
+            <div style={{ fontSize: 13, color: 'hsl(var(--muted-foreground))', marginTop: 3 }}>
               {actif ? t('push_ok') : t('push_desc')}
             </div>
           </div>
