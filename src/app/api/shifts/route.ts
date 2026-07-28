@@ -3,6 +3,13 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 
+const INCLUSIONS = {
+  horeca: { include: { horecaProfile: true } },
+  chosenKok: { include: { kokProfile: true } },
+  invoice: { select: { status: true } },
+  _count: { select: { applications: true } },
+} as const
+
 export async function GET(req: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
@@ -19,11 +26,7 @@ export async function GET(req: NextRequest) {
       if (session.user.role === 'KOK') where.chosenKokId = session.user.id
       const shifts = await prisma.shift.findMany({
         where,
-        include: {
-          horeca: { include: { horecaProfile: true } },
-          chosenKok: { include: { kokProfile: true } },
-          _count: { select: { applications: true } },
-        },
+        include: INCLUSIONS,
         orderBy: [{ date: 'desc' }],
       })
       return NextResponse.json({ shifts })
@@ -35,11 +38,7 @@ export async function GET(req: NextRequest) {
 
     const shifts = await prisma.shift.findMany({
       where,
-      include: {
-        horeca: { include: { horecaProfile: true } },
-        chosenKok: { include: { kokProfile: true } },
-        _count: { select: { applications: true } },
-      },
+      include: INCLUSIONS,
       orderBy: [{ isUrgent: 'desc' }, { createdAt: 'desc' }],
     })
 

@@ -18,6 +18,7 @@ export type ShiftData = {
   totalAmount?: number | null
   isUrgent: boolean
   status: string
+  invoice?: { status: string } | null
   _count?: { applications: number }
   horeca?: { horecaProfile?: { companyName?: string | null } | null }
 }
@@ -75,6 +76,7 @@ export default function ShiftCard({
   })
   const start = new Date(shift.startTime).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })
   const end = new Date(shift.endTime).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })
+  const estPaye = shift.invoice?.status === 'PAID'
 
   const meta: React.CSSProperties = {
     display: 'inline-flex', alignItems: 'center', gap: 5,
@@ -121,6 +123,29 @@ export default function ShiftCard({
         {shift.totalAmount != null && (
           <div style={{ fontSize: 12.5, color: '#6b7268', fontWeight: 600 }}>
             {t('total')} : €{Math.round(shift.totalAmount)}
+          </div>
+        )}
+        {/* Mention payé : visible des deux côtés */}
+        {estPaye && (
+          <div style={{ marginTop: 6 }}>
+            <span style={{
+              display: 'inline-flex', alignItems: 'center', gap: 5,
+              background: '#dcfce7', color: '#15803d', fontSize: 12, fontWeight: 800,
+              padding: '5px 13px', borderRadius: 999,
+            }}>
+              <Ico n="card" s={13} /> {t('pay_paid_badge')}
+            </span>
+          </div>
+        )}
+        {!estPaye && (shift.status === 'CONFIRMED' || shift.status === 'COMPLETED') && (
+          <div style={{ marginTop: 6 }}>
+            <span style={{
+              display: 'inline-flex', alignItems: 'center', gap: 5,
+              background: '#f0f4ea', color: '#4c5e42', fontSize: 12, fontWeight: 700,
+              padding: '5px 13px', borderRadius: 999,
+            }}>
+              <Ico n="check" s={13} /> {t('status_confirmed')}
+            </span>
           </div>
         )}
         {shift._count && (
