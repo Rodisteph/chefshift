@@ -54,6 +54,9 @@ export default function NewShiftPage() {
           date,
           startTime,
           endTime,
+          // Instants construits dans le fuseau local du navigateur (évite le décalage d'1h)
+          startAt: new Date(`${date}T${startTime}`).toISOString(),
+          endAt: new Date(`${date}T${endTime}`).toISOString(),
           hourlyRate: parseFloat(hourlyRate),
           locationStreet,
           locationPostal,

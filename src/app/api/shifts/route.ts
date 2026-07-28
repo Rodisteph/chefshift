@@ -62,15 +62,16 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json()
-    const { title, function: func, date, startTime, endTime, hourlyRate, locationStreet, locationPostal, locationCity, isUrgent } = body
+    const { title, function: func, date, startTime, endTime, startAt, endAt, hourlyRate, locationStreet, locationPostal, locationCity, isUrgent } = body
 
     const rate = Number(hourlyRate)
     if (!(rate >= MIN_HOURLY_RATE)) {
       return NextResponse.json({ error: 'RATE_TOO_LOW', min: MIN_HOURLY_RATE }, { status: 400 })
     }
 
-    const start = new Date(`${date}T${startTime}`)
-    const end = new Date(`${date}T${endTime}`)
+    // Instants fournis par le client (fuseau local) sinon reconstruction (fallback)
+    const start = startAt ? new Date(startAt) : new Date(`${date}T${startTime}`)
+    const end = endAt ? new Date(endAt) : new Date(`${date}T${endTime}`)
     const hours = Math.max(0, (end.getTime() - start.getTime()) / (1000 * 60 * 60) - 0.5)
     const totalAmount = hours * rate
 

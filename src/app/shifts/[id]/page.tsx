@@ -288,6 +288,8 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
         date: eDate,
         startTime: eStart,
         endTime: eEnd,
+        startAt: new Date(`${eDate}T${eStart}`).toISOString(),
+        endAt: new Date(`${eDate}T${eEnd}`).toISOString(),
         hourlyRate: parseFloat(eRate),
         locationStreet: eStreet,
         locationPostal: ePostal,
