@@ -7,7 +7,7 @@ import { Ico, IcoTile } from '@/components/Icons'
 
 const FONT = '"Sora","Inter","Helvetica Neue",Arial,sans-serif'
 const hero = 'https://kimi-web-img.moonshot.cn/img/plus.unsplash.com/035b02474f33aabd5af6cf4d2ff2a0971fc1b816'
-const CONTACT_EMAIL = 'rdrgbouabida@gmail.com'
+const CONTACT_EMAIL = process.env.NEXT_PUBLIC_CONTACT_EMAIL || 'info@chefshift.nl'
 
 export default function HomePage() {
   const { t } = useT()

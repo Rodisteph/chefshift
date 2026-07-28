@@ -9,7 +9,7 @@ import ThemeToggle from '@/components/ThemeToggle'
 import { Ico, IcoTile } from '@/components/Icons'
 
 const FONT = '"Sora","Inter","Helvetica Neue",Arial,sans-serif'
-const CONTACT_EMAIL = 'rdrgbouabida@gmail.com'
+const CONTACT_EMAIL = process.env.NEXT_PUBLIC_CONTACT_EMAIL || 'info@chefshift.nl'
 
 type SessionUser = {
   name?: string | null
