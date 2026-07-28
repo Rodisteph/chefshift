@@ -1,8 +1,10 @@
 export default function AnimStyles() {
   return (
     <style>{`
-      @import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap');
+      /* Les polices sont préchargées dans le <head> (voir layout.tsx) — plus d'@import bloquant ici. */
 
+      * { -webkit-tap-highlight-color: transparent; }
+      html { scroll-behavior: smooth; }
       ::selection { background: #dfe7d3; color: #23281f; }
 
       /* ===== Entrées en cascade ===== */
@@ -26,7 +28,7 @@ export default function AnimStyles() {
       @keyframes csHeroZoom { from { transform: scale(1.12); } to { transform: scale(1); } }
 
       /* ===== Cartes premium ===== */
-      .cs-card { transition: transform .35s cubic-bezier(.22,.8,.35,1), box-shadow .35s ease, border-color .35s ease; }
+      .cs-card { transition: transform .35s cubic-bezier(.22,.8,.35,1), box-shadow .35s ease, border-color .35s ease; will-change: transform; }
       .cs-card:hover {
         transform: translateY(-6px);
         box-shadow: 0 22px 44px -14px rgba(46,52,43,.20) !important;
@@ -37,9 +39,13 @@ export default function AnimStyles() {
       .cs-btn {
         transition: transform .2s ease, box-shadow .25s ease, filter .2s ease;
         display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+        will-change: transform;
       }
       .cs-btn:hover { transform: translateY(-2px); box-shadow: 0 14px 28px -8px rgba(70,85,60,.5); filter: brightness(1.07); }
       .cs-btn:active { transform: translateY(0) scale(.98); }
+      /* Flèche qui glisse au survol du bouton */
+      .cs-btn svg { transition: transform .25s cubic-bezier(.22,.8,.35,1); }
+      .cs-btn:hover svg { transform: translateX(3px); }
 
       .cs-nav-link { transition: opacity .2s ease; }
       .cs-nav-link:hover { opacity: .72; }
@@ -77,7 +83,9 @@ export default function AnimStyles() {
       }
 
       @media (prefers-reduced-motion: reduce) {
-        .cs-fade, .cs-pop, .cs-heroimg { animation: none !important; opacity: 1 !important; }
+        html { scroll-behavior: auto; }
+        .cs-fade, .cs-pop, .cs-heroimg { animation: none !important; opacity: 1 !important; transform: none !important; }
+        .cs-card:hover, .cs-btn:hover, .cs-btn:hover svg, .cs-card:hover .cs-tile { transform: none !important; }
       }
     `}</style>
   )

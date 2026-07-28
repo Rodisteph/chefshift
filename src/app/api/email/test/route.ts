@@ -9,8 +9,10 @@ import {
 // GET /api/email/test?secret=<CRON_SECRET>&to=<email>[&mode=mix]
 // Diagnostic : envoi simple (défaut) ou série complète de démonstration (mode=mix)
 export async function GET(req: NextRequest) {
+  // Fermé par défaut : sans secret configuré, l'endpoint reste inaccessible
+  // (évite un relais d'envoi d'emails ouvert au public).
   const secret = (process.env.CRON_SECRET || '').trim()
-  if (secret && req.nextUrl.searchParams.get('secret') !== secret) {
+  if (!secret || req.nextUrl.searchParams.get('secret') !== secret) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 

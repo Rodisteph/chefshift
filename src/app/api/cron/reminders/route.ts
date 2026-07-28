@@ -30,10 +30,11 @@ type Sub = { endpoint: string; p256dh: string; auth: string }
 // Clé acceptée via header Authorization: Bearer <secret> OU via ?secret=<secret>
 export async function GET(req: NextRequest) {
   try {
+    // Fermé par défaut : sans CRON_SECRET configuré, l'endpoint reste inaccessible.
     const secret = (process.env.CRON_SECRET || '').trim()
     const headerOk = req.headers.get('authorization') === `Bearer ${secret}`
     const queryOk = req.nextUrl.searchParams.get('secret') === secret
-    if (secret && !headerOk && !queryOk) {
+    if (!secret || (!headerOk && !queryOk)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
