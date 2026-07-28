@@ -6,6 +6,8 @@ import AnimStyles from '@/components/AnimStyles'
 import { Ico, IcoStar } from '@/components/Icons'
 
 const FONT = '"Sora","Inter","Helvetica Neue",Arial,sans-serif'
+// Photo libre de droits (Unsplash, licence gratuite) — bannière de la page shift
+const BANNIERE = 'https://images.unsplash.com/photo-1556910103-1c02745aae4d?auto=format&fit=crop&w=1600&q=80'
 
 type Review = { id: string; rating: number; comment: string | null; isAnonymous: boolean }
 
@@ -324,7 +326,18 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
         </div>
       </nav>
 
-      <div className="cs-wrap" style={{ maxWidth: 860, margin: '0 auto', padding: '48px 24px' }}>
+      {/* ===== Bannière photo (libre de droits) ===== */}
+      <div className="cs-wrap" style={{ maxWidth: 860, margin: '0 auto', padding: '26px 24px 0' }}>
+        <img
+          src={BANNIERE}
+          alt="Professionele keuken"
+          className="cs-fade"
+          style={{ width: '100%', height: 170, objectFit: 'cover', borderRadius: 20, border: '1px solid #eceee3', display: 'block' }}
+          loading="lazy"
+        />
+      </div>
+
+      <div className="cs-wrap" style={{ maxWidth: 860, margin: '0 auto', padding: '26px 24px 48px' }}>
         {/* ===== Résumé du shift / Édition ===== */}
         {modif ? (
           <form onSubmit={sauvegarderModif} className="cs-pop" style={{ ...carte, marginBottom: 24 }}>
@@ -624,9 +637,11 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
             )}
           </div>
         )}
-        {estPaye && role === 'HORECA' && (
-          <p style={{ color: '#15803d', fontWeight: 700, marginBottom: 40, display: 'flex', alignItems: 'center', gap: 8 }}>
-            <Ico n="check" s={16} /> {t('pay_success')}
+        {estPaye && (
+          <p className="cs-fade cs-d2" style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 40 }}>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: '#dcfce7', color: '#15803d', fontSize: 13.5, fontWeight: 800, padding: '8px 16px', borderRadius: 999 }}>
+              <Ico n="card" s={14} /> {t('pay_paid_badge')} · €{shift.invoice ? shift.invoice.amountInclVat.toFixed(2) : ''}
+            </span>
           </p>
         )}
 
