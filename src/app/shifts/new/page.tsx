@@ -9,20 +9,42 @@ import { MIN_HOURLY_RATE } from '@/lib/constants'
 
 const FONT = '"Sora","Inter","Helvetica Neue",Arial,sans-serif'
 
-// Catégories prêtes à cliquer pour remplir rapidement titre & fonction
-const TITRES = ['Lunchdienst', 'Dinerdienst', 'Ontbijtdienst', 'Avonddienst', 'Weekenddienst', 'Banqueting', 'Evenement']
-const FONCTIES = ['Chef de partie', 'Sous-chef', 'Zelfstandig werkend kok', 'Commis', 'Keukenhulp', 'Afwas', 'Garde-manger', 'Saucier', 'Pâtisserie', 'Grillkok']
+// Catégories prêtes à cliquer pour remplir rapidement titre & fonction (NL / EN)
+type Cat = { nl: string; en: string }
+const TITRES: Cat[] = [
+  { nl: 'Ontbijtdienst', en: 'Breakfast' },
+  { nl: 'Lunchdienst', en: 'Lunch shift' },
+  { nl: 'Dinerdienst', en: 'Dinner shift' },
+  { nl: 'Avonddienst', en: 'Evening shift' },
+  { nl: 'Weekenddienst', en: 'Weekend shift' },
+  { nl: 'Banqueting', en: 'Banqueting' },
+  { nl: 'Evenement', en: 'Event' },
+]
+const FONCTIES: Cat[] = [
+  { nl: 'Chef de partie', en: 'Chef de partie' },
+  { nl: 'Sous-chef', en: 'Sous-chef' },
+  { nl: 'Zelfstandig werkend kok', en: 'Self-employed chef' },
+  { nl: 'Mise en place', en: 'Mise en place' },
+  { nl: 'Commis', en: 'Commis' },
+  { nl: 'Keukenhulp', en: 'Kitchen assistant' },
+  { nl: 'Afwas', en: 'Dishwashing' },
+  { nl: 'Garde-manger', en: 'Garde-manger' },
+  { nl: 'Saucier', en: 'Saucier' },
+  { nl: 'Pâtisserie', en: 'Pastry' },
+  { nl: 'Grillkok', en: 'Grill cook' },
+]
 
-function Chips({ options, current, onPick }: { options: string[]; current: string; onPick: (v: string) => void }) {
+function Chips({ options, current, onPick, lang }: { options: Cat[]; current: string; onPick: (v: string) => void; lang: 'nl' | 'en' }) {
   return (
     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7, marginTop: 8 }}>
       {options.map((o) => {
-        const actif = current.trim().toLowerCase() === o.toLowerCase()
+        const label = lang === 'en' ? o.en : o.nl
+        const actif = current.trim().toLowerCase() === label.toLowerCase()
         return (
           <button
-            key={o}
+            key={o.nl}
             type="button"
-            onClick={() => onPick(o)}
+            onClick={() => onPick(label)}
             style={{
               padding: '6px 13px', borderRadius: 999, fontSize: 12.5, fontWeight: 700, cursor: 'pointer', fontFamily: FONT,
               border: actif ? '1.5px solid #5f7052' : '1.5px solid #e2e6d7',
@@ -31,7 +53,7 @@ function Chips({ options, current, onPick }: { options: string[]; current: strin
               transition: 'border-color .15s ease, background .15s ease',
             }}
           >
-            {o}
+            {label}
           </button>
         )
       })}
@@ -40,7 +62,7 @@ function Chips({ options, current, onPick }: { options: string[]; current: strin
 }
 
 export default function NewShiftPage() {
-  const { t } = useT()
+  const { t, lang } = useT()
   const [title, setTitle] = useState('')
   const [func, setFunc] = useState('')
   const [date, setDate] = useState('')
@@ -152,13 +174,13 @@ export default function NewShiftPage() {
             <label style={etiquette}>{t('field_shift_title')}</label>
             <input value={title} onChange={(e) => setTitle(e.target.value)} required
               placeholder={t('shift_title_ph')} style={champ} />
-            <Chips options={TITRES} current={title} onPick={setTitle} />
+            <Chips options={TITRES} current={title} onPick={setTitle} lang={lang} />
           </div>
           <div style={{ marginBottom: 16 }}>
             <label style={etiquette}>{t('field_function')}</label>
             <input value={func} onChange={(e) => setFunc(e.target.value)}
               placeholder={t('shift_function_ph')} style={champ} />
-            <Chips options={FONCTIES} current={func} onPick={setFunc} />
+            <Chips options={FONCTIES} current={func} onPick={setFunc} lang={lang} />
           </div>
           <div style={{ marginBottom: 16 }}>
             <label style={etiquette}>{t('field_date')}</label>
