@@ -6,6 +6,7 @@ import AnimStyles from '@/components/AnimStyles'
 import { Ico, IcoStar } from '@/components/Icons'
 import RateStepper from '@/components/RateStepper'
 import { MIN_HOURLY_RATE } from '@/lib/constants'
+import { heureHHMM, versChamp, minutesUTC } from '@/lib/time'
 
 const FONT = '"Sora","Inter","Helvetica Neue",Arial,sans-serif'
 
@@ -87,19 +88,6 @@ function moyenne(reviews: Review[]): number {
   return reviews.reduce((s, r) => s + r.rating, 0) / reviews.length
 }
 
-// Construit l'instant de fin (ISO) à partir d'une saisie HH:MM, en l'ancrant sur le
-// fuseau local du navigateur — même encodage que les heures du shift, donc pas de décalage
-// à l'affichage ni au calcul du montant.
-function finInstant(shift: { date: string; startTime: string }, val: string): string | null {
-  if (!/^\d{2}:\d{2}$/.test(val)) return null
-  const jour = shift.date.slice(0, 10)
-  const startHHMM = new Date(shift.startTime).toTimeString().slice(0, 5)
-  const debut = new Date(`${jour}T${startHHMM}:00`)
-  let fin = new Date(`${jour}T${val}:00`)
-  if (fin.getTime() <= debut.getTime()) fin = new Date(fin.getTime() + 86400000)
-  return fin.toISOString()
-}
-
 function Etoiles({ n, taille = 13 }: { n: number; taille?: number }) {
   return (
     <span style={{ display: 'inline-flex', alignItems: 'center', gap: 2 }}>
@@ -151,7 +139,7 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
       // Préremplir le champ heure : heure déclarée par le chef si présente, sinon horaire prévu
       if (data.shift) {
         const source = data.shift.eind?.reportedEnd || data.shift.endTime
-        if (source) setEindInvoer(new Date(source).toTimeString().slice(0, 5))
+        if (source) setEindInvoer(versChamp(source))
       }
     }
     setChargement(false)
@@ -227,7 +215,7 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
     const res = await fetch(`/api/shifts/${id}/eindtijd`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ endTime: eindInvoer, endAt: finInstant(shift, eindInvoer) }),
+      body: JSON.stringify({ endTime: eindInvoer }),
     })
     if (res.ok) await charger()
     setEindEnvoi(false)
@@ -239,7 +227,7 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
     const res = await fetch(`/api/shifts/${id}/eindtijd/confirm`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ endTime: eindInvoer, endAt: finInstant(shift, eindInvoer) }),
+      body: JSON.stringify({ endTime: eindInvoer }),
     })
     if (res.ok) await charger()
     setBevestigEnvoi(false)
@@ -262,8 +250,8 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
     setETitle(shift.title)
     setEFunc(shift.function || '')
     setEDate(shift.date.slice(0, 10))
-    setEStart(new Date(shift.startTime).toTimeString().slice(0, 5))
-    setEEnd(new Date(shift.endTime).toTimeString().slice(0, 5))
+    setEStart(versChamp(shift.startTime))
+    setEEnd(versChamp(shift.endTime))
     setERate(String(shift.hourlyRate))
     setEStreet(shift.locationStreet || '')
     setEPostal(shift.locationPostal || '')
@@ -289,8 +277,6 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
         date: eDate,
         startTime: eStart,
         endTime: eEnd,
-        startAt: new Date(`${eDate}T${eStart}`).toISOString(),
-        endAt: new Date(`${eDate}T${eEnd}`).toISOString(),
         hourlyRate: parseFloat(eRate),
         locationStreet: eStreet,
         locationPostal: ePostal,
@@ -340,24 +326,27 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
     )
   }
 
-  const dateStr = new Date(shift.date).toLocaleDateString(locale, { weekday: 'long', day: 'numeric', month: 'long' })
-  const start = new Date(shift.startTime).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })
-  const end = new Date(shift.endTime).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })
+  const dateStr = new Date(shift.date).toLocaleDateString(locale, { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' })
+  const start = heureHHMM(shift.startTime, locale)
+  const end = heureHHMM(shift.endTime, locale)
   const estPaye = shift.invoice?.status === 'PAID'
   const peutModifier = role === 'HORECA' && shift.status === 'OPEN' && !shift.chosenKokId
   const aujourdhui = new Date(new Date().toDateString())
   const fini = new Date(shift.date) < aujourdhui
   const adresse = [shift.locationStreet, shift.locationPostal, shift.locationCity].filter(Boolean).join(', ')
 
-  // Le shift est-il réellement terminé (heure de fin dépassée) ? La confirmation n'est
-  // possible qu'après l'heure de fin.
-  const finPrevueISO = finInstant(shift, new Date(shift.endTime).toTimeString().slice(0, 5))
-  const shiftTermine = finPrevueISO ? Date.now() >= new Date(finPrevueISO).getTime() : fini
+  // Le shift est-il réellement terminé (heure de fin réellement dépassée) ? On construit
+  // l'instant réel à partir de la date + heure de fin dans le fuseau de l'appareil (proxy du
+  // fuseau de l'établissement, NL). La confirmation n'est possible qu'après l'heure de fin.
+  const jourStr = shift.date.slice(0, 10)
+  const debutReel = new Date(`${jourStr}T${versChamp(shift.startTime)}:00`)
+  let finReelle = new Date(`${jourStr}T${versChamp(shift.endTime)}:00`)
+  if (finReelle.getTime() <= debutReel.getTime()) finReelle.setDate(finReelle.getDate() + 1)
+  const shiftTermine = Date.now() >= finReelle.getTime()
 
   // Montant estimé affiché tant que la facture n'est pas créée :
   // heures réellement travaillées si l'heure de fin est déclarée, sinon horaire prévu, +9% btw.
-  const enMinutes = (iso: string) => { const d = new Date(iso); return d.getHours() * 60 + d.getMinutes() }
-  let dureeMin = (shift.eind ? enMinutes(shift.eind.reportedEnd) : enMinutes(shift.endTime)) - enMinutes(shift.startTime)
+  let dureeMin = (shift.eind ? minutesUTC(shift.eind.reportedEnd) : minutesUTC(shift.endTime)) - minutesUTC(shift.startTime)
   if (dureeMin <= 0) dureeMin += 1440
   const heuresEstimees = Math.max(1, dureeMin / 60 - 0.5)
   const montantEstime = shift.hourlyRate * heuresEstimees * 1.09
@@ -367,9 +356,7 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
   }
 
   const shiftActif = shift.status === 'CONFIRMED' || shift.status === 'COMPLETED'
-  const eindGemeld = shift.eind
-    ? new Date(shift.eind.reportedEnd).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })
-    : ''
+  const eindGemeld = shift.eind ? heureHHMM(shift.eind.reportedEnd, locale) : ''
   const eindBevestigd = !!(shift.eind && shift.eind.confirmedAt)
   const voirBlocEind = shiftActif && shift.chosenKokId
 

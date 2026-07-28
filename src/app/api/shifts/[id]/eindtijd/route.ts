@@ -31,24 +31,18 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
 
     const body = await req.json()
     const endTime = String(body.endTime || '')
-    const endAt = typeof body.endAt === 'string' ? body.endAt : ''
-    if (!/^\d{2}:\d{2}$/.test(endTime) && !endAt) {
+    if (!/^\d{2}:\d{2}$/.test(endTime)) {
       return NextResponse.json({ error: 'Invalid time' }, { status: 400 })
     }
 
-    // Instant fourni par le client (sans décalage de fuseau) sinon reconstruction depuis HH:MM
-    let fin: Date
-    const parsed = endAt ? new Date(endAt) : null
-    if (parsed && !isNaN(parsed.getTime())) {
-      fin = parsed
-    } else {
-      const jour = new Date(shift.date)
-      const [h, m] = endTime.split(':').map(Number)
-      fin = new Date(jour)
-      fin.setHours(h, m, 0, 0)
-      if (fin.getTime() < new Date(shift.startTime).getTime()) {
-        fin.setDate(fin.getDate() + 1)
-      }
+    // Heure "wall-clock" : instant UTC sur la date du shift (+1 jour si shift de nuit)
+    const dateStr = new Date(shift.date).toISOString().slice(0, 10)
+    const [h, m] = endTime.split(':').map(Number)
+    const st = new Date(shift.startTime)
+    const startMin = st.getUTCHours() * 60 + st.getUTCMinutes()
+    let fin = new Date(`${dateStr}T${endTime}:00.000Z`)
+    if (h * 60 + m < startMin) {
+      fin = new Date(fin.getTime() + 86400000)
     }
 
     await ensureTable()

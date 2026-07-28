@@ -48,33 +48,32 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
       return NextResponse.json({ error: 'Shift not finished yet' }, { status: 400 })
     }
 
-    // ===== Début réel : date du shift + heure de début =====
-    const jour = new Date(shift.date)
+    // ===== Heures "wall-clock" (composantes UTC), sans conversion de fuseau =====
     const st = new Date(shift.startTime)
-    const debut = new Date(jour)
-    debut.setHours(st.getHours(), st.getMinutes(), 0, 0)
+    const startMin = st.getUTCHours() * 60 + st.getUTCMinutes()
 
-    // ===== Fin réelle : heure déclarée par le chef si elle existe, sinon fin prévue =====
-    const et = new Date(shift.endTime)
-    let fin = new Date(jour)
-    fin.setHours(et.getHours(), et.getMinutes(), 0, 0)
-    if (fin.getTime() <= debut.getTime()) {
-      fin.setDate(fin.getDate() + 1)
-    }
+    // ===== Fin réelle : heure déclarée/confirmée si elle existe, sinon fin prévue =====
+    let endMin: number | null = null
     let finReelle = false
     try {
       const fins: { reported_end: Date }[] = await prisma.$queryRaw`
         SELECT reported_end FROM shift_end WHERE shift_id = ${shift.id} LIMIT 1
       `
       if (fins.length > 0) {
-        fin = new Date(fins[0].reported_end)
+        const r = new Date(fins[0].reported_end)
+        endMin = r.getUTCHours() * 60 + r.getUTCMinutes()
         finReelle = true
       }
     } catch {}
+    if (endMin == null) {
+      const et = new Date(shift.endTime)
+      endMin = et.getUTCHours() * 60 + et.getUTCMinutes()
+    }
 
     // ===== Calcul du montant sur les heures réellement travaillées =====
-    const dureeMs = fin.getTime() - debut.getTime()
-    const heures = Math.max(1, dureeMs / 3600000 - shift.breakMinutes / 60)
+    let dureeMin = endMin - startMin
+    if (dureeMin <= 0) dureeMin += 1440
+    const heures = Math.max(1, dureeMin / 60 - shift.breakMinutes / 60)
     const excl = Math.round(shift.hourlyRate * heures * 100) / 100
     const vat = Math.round(excl * shift.vatRate) / 100
     const incl = Math.round((excl + vat) * 100) / 100

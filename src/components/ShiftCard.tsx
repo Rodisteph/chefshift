@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useT } from '@/lib/i18n'
+import { heureHHMM } from '@/lib/time'
 import { Ico } from './Icons'
 
 const FONT = '"Sora","Inter","Helvetica Neue",Arial,sans-serif'
@@ -73,8 +74,8 @@ export default function ShiftCard({
   const dateStr = new Date(shift.date).toLocaleDateString(locale, {
     weekday: 'short', day: 'numeric', month: 'short',
   })
-  const start = new Date(shift.startTime).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })
-  const end = new Date(shift.endTime).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })
+  const start = heureHHMM(shift.startTime, locale)
+  const end = heureHHMM(shift.endTime, locale)
 
   const meta: React.CSSProperties = {
     display: 'inline-flex', alignItems: 'center', gap: 5,

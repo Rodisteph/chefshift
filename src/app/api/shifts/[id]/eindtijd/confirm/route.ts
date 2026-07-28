@@ -45,7 +45,6 @@ export async function POST(req: Request, { params }: { params: { id: string } })
 
     const body = await req.json().catch(() => ({}))
     const endTime = typeof body?.endTime === 'string' ? body.endTime : ''
-    const endAt = typeof body?.endAt === 'string' ? body.endAt : ''
 
     const lignes: { reported_end: Date; confirmed_at: Date | null }[] = await prisma.$queryRaw`
       SELECT reported_end, confirmed_at FROM shift_end WHERE shift_id = ${shift.id} LIMIT 1
@@ -55,25 +54,23 @@ export async function POST(req: Request, { params }: { params: { id: string } })
       return NextResponse.json({ error: 'Already confirmed' }, { status: 400 })
     }
 
-    // Heure de fin finale : instant fourni par le client (sans décalage) > heure déclarée > horaire prévu
-    const debut = new Date(shift.startTime)
-    const startMin = debut.getHours() * 60 + debut.getMinutes()
+    // Heure de fin finale (wall-clock, composantes UTC) : saisie > heure déclarée > horaire prévu
+    const dateStr = new Date(shift.date).toISOString().slice(0, 10)
+    const st = new Date(shift.startTime)
+    const startMin = st.getUTCHours() * 60 + st.getUTCMinutes()
     let fin: Date
-    const parsed = endAt ? new Date(endAt) : null
-    if (parsed && !isNaN(parsed.getTime())) {
-      fin = parsed
-    } else if (/^\d{2}:\d{2}$/.test(endTime)) {
+    if (/^\d{2}:\d{2}$/.test(endTime)) {
       const [h, m] = endTime.split(':').map(Number)
-      fin = new Date(shift.date)
-      fin.setHours(h, m, 0, 0)
-      if (h * 60 + m < startMin) fin.setDate(fin.getDate() + 1)
+      fin = new Date(`${dateStr}T${endTime}:00.000Z`)
+      if (h * 60 + m < startMin) fin = new Date(fin.getTime() + 86400000)
     } else if (lignes.length > 0) {
       fin = new Date(lignes[0].reported_end)
     } else {
       const et = new Date(shift.endTime)
-      fin = new Date(shift.date)
-      fin.setHours(et.getHours(), et.getMinutes(), 0, 0)
-      if (et.getHours() * 60 + et.getMinutes() <= startMin) fin.setDate(fin.getDate() + 1)
+      const eh = et.getUTCHours()
+      const em = et.getUTCMinutes()
+      fin = new Date(`${dateStr}T${String(eh).padStart(2, '0')}:${String(em).padStart(2, '0')}:00.000Z`)
+      if (eh * 60 + em <= startMin) fin = new Date(fin.getTime() + 86400000)
     }
 
     await prisma.$executeRaw`
@@ -82,7 +79,7 @@ export async function POST(req: Request, { params }: { params: { id: string } })
       ON CONFLICT (shift_id) DO UPDATE SET reported_end = ${fin}, confirmed_at = now()
     `
 
-    const eindtijd = new Date(fin).toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' })
+    const eindtijd = new Date(fin).toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' })
 
     // Email + push au chef
     const kok = await prisma.user.findUnique({ where: { id: shift.chosenKokId } })
