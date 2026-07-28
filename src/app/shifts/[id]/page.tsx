@@ -4,10 +4,12 @@ import { useEffect, useState } from 'react'
 import { useT, LangToggle, afficherPoste, afficherSpecialite } from '@/lib/i18n'
 import AnimStyles from '@/components/AnimStyles'
 import { Ico, IcoStar } from '@/components/Icons'
+import RateStepper from '@/components/RateStepper'
+import { MIN_HOURLY_RATE } from '@/lib/constants'
+import { heureHHMM, versChamp, minutesUTC } from '@/lib/time'
 
-const FONT = '"Sora","Inter","Helvetica Neue",Arial,sans-serif'
-// Photo libre de droits (Unsplash, licence gratuite) — bannière de la page shift
 const BANNIERE = 'https://images.unsplash.com/photo-1556910103-1c02745aae4d?auto=format&fit=crop&w=1600&q=80'
+const FONT = '"Sora","Inter","Helvetica Neue",Arial,sans-serif'
 
 type Review = { id: string; rating: number; comment: string | null; isAnonymous: boolean }
 
@@ -44,6 +46,8 @@ type Application = {
       description: string | null
       workExperience: WorkExp[]
       reviewsReceived: Review[]
+      averageScore?: number | null
+      reviewCount?: number | null
     } | null
   }
 }
@@ -72,6 +76,8 @@ type ShiftDetail = {
   invoice: { status: string; amountInclVat: number } | null
   applications: Application[]
   eind: Eind | null
+  horecaReviewed: boolean
+  kokReviewed: boolean
 }
 
 function age(date: string): number {
@@ -106,6 +112,7 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
   const [paiement, setPaiement] = useState(false)
   const [modif, setModif] = useState(false)
   const [envoiModif, setEnvoiModif] = useState(false)
+  const [msgModif, setMsgModif] = useState('')
   const [eTitle, setETitle] = useState('')
   const [eFunc, setEFunc] = useState('')
   const [eDate, setEDate] = useState('')
@@ -119,6 +126,9 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
   const [eindInvoer, setEindInvoer] = useState('')
   const [eindEnvoi, setEindEnvoi] = useState(false)
   const [bevestigEnvoi, setBevestigEnvoi] = useState(false)
+  const [note, setNote] = useState(0)
+  const [avis, setAvis] = useState('')
+  const [avisEnvoi, setAvisEnvoi] = useState(false)
   const locale = lang === 'en' ? 'en-GB' : 'nl-NL'
   const parHeure = lang === 'en' ? '/hr' : '/u'
 
@@ -127,8 +137,10 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
     if (res.ok) {
       const data = await res.json()
       setShift(data.shift)
-      if (data.shift && !data.shift.eind && data.shift.endTime) {
-        setEindInvoer(new Date(data.shift.endTime).toTimeString().slice(0, 5))
+      // Préremplir le champ heure : heure déclarée par le chef si présente, sinon horaire prévu
+      if (data.shift) {
+        const source = data.shift.eind?.reportedEnd || data.shift.endTime
+        if (source) setEindInvoer(versChamp(source))
       }
     }
     setChargement(false)
@@ -199,7 +211,7 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
   }
 
   async function rapporteerEind() {
-    if (!eindInvoer) return
+    if (!eindInvoer || !shift) return
     setEindEnvoi(true)
     const res = await fetch(`/api/shifts/${id}/eindtijd`, {
       method: 'POST',
@@ -211,10 +223,27 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
   }
 
   async function bevestigEind() {
+    if (!shift) return
     setBevestigEnvoi(true)
-    const res = await fetch(`/api/shifts/${id}/eindtijd/confirm`, { method: 'POST' })
+    const res = await fetch(`/api/shifts/${id}/eindtijd/confirm`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ endTime: eindInvoer }),
+    })
     if (res.ok) await charger()
     setBevestigEnvoi(false)
+  }
+
+  async function envoyerAvis() {
+    if (!note) return
+    setAvisEnvoi(true)
+    const res = await fetch(`/api/shifts/${id}/review`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ score: note, text: avis }),
+    })
+    if (res.ok) await charger()
+    setAvisEnvoi(false)
   }
 
   function demarrerModif() {
@@ -222,8 +251,8 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
     setETitle(shift.title)
     setEFunc(shift.function || '')
     setEDate(shift.date.slice(0, 10))
-    setEStart(new Date(shift.startTime).toTimeString().slice(0, 5))
-    setEEnd(new Date(shift.endTime).toTimeString().slice(0, 5))
+    setEStart(versChamp(shift.startTime))
+    setEEnd(versChamp(shift.endTime))
     setERate(String(shift.hourlyRate))
     setEStreet(shift.locationStreet || '')
     setEPostal(shift.locationPostal || '')
@@ -234,6 +263,11 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
 
   async function sauvegarderModif(e: React.FormEvent) {
     e.preventDefault()
+    setMsgModif('')
+    if (!(parseFloat(eRate) >= MIN_HOURLY_RATE)) {
+      setMsgModif(`${t('rate_too_low')} €${MIN_HOURLY_RATE.toFixed(2)}`)
+      return
+    }
     setEnvoiModif(true)
     const res = await fetch(`/api/shifts/${id}`, {
       method: 'PUT',
@@ -251,6 +285,12 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
         isUrgent: eUrgent,
       }),
     })
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}))
+      setMsgModif(data?.error === 'RATE_TOO_LOW' ? `${t('rate_too_low')} €${(data.min ?? MIN_HOURLY_RATE).toFixed(2)}` : t('shift_fail'))
+      setEnvoiModif(false)
+      return
+    }
     if (res.ok) {
       setModif(false)
       await charger()
@@ -261,7 +301,7 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
   const etiquette: React.CSSProperties = { display: 'block', fontSize: 13, fontWeight: 700, marginBottom: 6, color: '#3c4436' }
   const champ: React.CSSProperties = {
     width: '100%', padding: 11, border: '1.5px solid #e2e6d7', borderRadius: 12,
-    fontSize: 14.5, outline: 'none', boxSizing: 'border-box', background: '#fff', fontFamily: FONT,
+    fontSize: 14.5, outline: 'none', boxSizing: 'border-box', background: 'hsl(var(--card))', fontFamily: FONT,
   }
   const etiquetteSection: React.CSSProperties = {
     fontSize: 11, textTransform: 'uppercase', letterSpacing: 1.5, color: '#8a9a7b', fontWeight: 800, marginBottom: 10,
@@ -273,49 +313,65 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
 
   if (chargement) {
     return (
-      <main style={{ fontFamily: FONT, background: '#f6f7f2', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <p style={{ color: '#6b7268', fontWeight: 600 }}>{t('dash_loading')}</p>
+      <main style={{ fontFamily: FONT, background: 'hsl(var(--background))', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <p style={{ color: 'hsl(var(--muted-foreground))', fontWeight: 600 }}>{t('dash_loading')}</p>
       </main>
     )
   }
 
   if (!shift) {
     return (
-      <main style={{ fontFamily: FONT, background: '#f6f7f2', minHeight: '100vh', padding: 40 }}>
+      <main style={{ fontFamily: FONT, background: 'hsl(var(--background))', minHeight: '100vh', padding: 40 }}>
         <p>Shift niet gevonden.</p>
       </main>
     )
   }
 
-  const dateStr = new Date(shift.date).toLocaleDateString(locale, { weekday: 'long', day: 'numeric', month: 'long' })
-  const start = new Date(shift.startTime).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })
-  const end = new Date(shift.endTime).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })
+  const dateStr = new Date(shift.date).toLocaleDateString(locale, { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' })
+  const start = heureHHMM(shift.startTime, locale)
+  const end = heureHHMM(shift.endTime, locale)
   const estPaye = shift.invoice?.status === 'PAID'
   const peutModifier = role === 'HORECA' && shift.status === 'OPEN' && !shift.chosenKokId
   const aujourdhui = new Date(new Date().toDateString())
   const fini = new Date(shift.date) < aujourdhui
   const adresse = [shift.locationStreet, shift.locationPostal, shift.locationCity].filter(Boolean).join(', ')
+
+  // Le shift est-il réellement terminé (heure de fin réellement dépassée) ? On construit
+  // l'instant réel à partir de la date + heure de fin dans le fuseau de l'appareil (proxy du
+  // fuseau de l'établissement, NL). La confirmation n'est possible qu'après l'heure de fin.
+  const jourStr = shift.date.slice(0, 10)
+  const debutReel = new Date(`${jourStr}T${versChamp(shift.startTime)}:00`)
+  let finReelle = new Date(`${jourStr}T${versChamp(shift.endTime)}:00`)
+  if (finReelle.getTime() <= debutReel.getTime()) finReelle.setDate(finReelle.getDate() + 1)
+  const shiftTermine = Date.now() >= finReelle.getTime()
+  // On ne peut plus désélectionner le chef à moins de 24 h du début du shift
+  const deselectBloque = Date.now() >= debutReel.getTime() - 24 * 3600 * 1000
+
+  // Montant estimé affiché tant que la facture n'est pas créée :
+  // heures réellement travaillées si l'heure de fin est déclarée, sinon horaire prévu, +9% btw.
+  let dureeMin = (shift.eind ? minutesUTC(shift.eind.reportedEnd) : minutesUTC(shift.endTime)) - minutesUTC(shift.startTime)
+  if (dureeMin <= 0) dureeMin += 1440
+  const heuresEstimees = Math.max(1, dureeMin / 60 - 0.5)
+  const montantEstime = shift.hourlyRate * heuresEstimees * 1.09
   const carte: React.CSSProperties = {
-    background: '#fff', borderRadius: 20, border: '1px solid #eceee3',
+    background: 'hsl(var(--card))', borderRadius: 20, border: '1px solid #eceee3',
     boxShadow: '0 3px 12px rgba(46,52,43,0.05)', padding: 26,
   }
 
   const shiftActif = shift.status === 'CONFIRMED' || shift.status === 'COMPLETED'
-  const eindGemeld = shift.eind
-    ? new Date(shift.eind.reportedEnd).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })
-    : ''
+  const eindGemeld = shift.eind ? heureHHMM(shift.eind.reportedEnd, locale) : ''
   const eindBevestigd = !!(shift.eind && shift.eind.confirmedAt)
   const voirBlocEind = shiftActif && shift.chosenKokId
 
   return (
-    <main style={{ fontFamily: FONT, background: '#f6f7f2', color: '#23281f', minHeight: '100vh' }}>
+    <main style={{ fontFamily: FONT, background: 'hsl(var(--background))', color: 'hsl(var(--foreground))', minHeight: '100vh' }}>
       <AnimStyles />
       <nav className="cs-nav" style={{
         background: 'rgba(255,255,255,0.88)', backdropFilter: 'blur(12px)',
         borderBottom: '1px solid #e8ebe0',
         padding: '13px 28px', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
       }}>
-        <a href="/shifts" style={{ fontWeight: 800, fontSize: 20, color: '#23281f', textDecoration: 'none', letterSpacing: -0.5 }}>
+        <a href="/shifts" style={{ fontWeight: 800, fontSize: 20, color: 'hsl(var(--foreground))', textDecoration: 'none', letterSpacing: -0.5 }}>
           Chef<span style={{ color: '#5f7052' }}>Shift</span>
         </a>
         <div style={{ display: 'flex', gap: 18, alignItems: 'center' }}>
@@ -325,6 +381,7 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
           </a>
         </div>
       </nav>
+
 
       {/* ===== Bannière photo (libre de droits) ===== */}
       <div className="cs-wrap" style={{ maxWidth: 860, margin: '0 auto', padding: '26px 24px 0' }}>
@@ -337,7 +394,7 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
         />
       </div>
 
-      <div className="cs-wrap" style={{ maxWidth: 860, margin: '0 auto', padding: '26px 24px 48px' }}>
+      <div className="cs-wrap" style={{ maxWidth: 860, margin: '0 auto', padding: '48px 24px' }}>
         {/* ===== Résumé du shift / Édition ===== */}
         {modif ? (
           <form onSubmit={sauvegarderModif} className="cs-pop" style={{ ...carte, marginBottom: 24 }}>
@@ -367,7 +424,7 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
               </div>
               <div style={{ flex: 1, minWidth: 100 }}>
                 <label style={etiquette}>{t('field_rate')}</label>
-                <input type="number" min="1" step="0.5" value={eRate} onChange={(e) => setERate(e.target.value)} required style={champ} />
+                <RateStepper value={eRate} onChange={setERate} min={MIN_HOURLY_RATE} inputStyle={champ} />
               </div>
             </div>
             <div style={{ display: 'flex', gap: 12, marginBottom: 14, flexWrap: 'wrap' }}>
@@ -388,6 +445,9 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
               <input type="checkbox" checked={eUrgent} onChange={(e) => setEUrgent(e.target.checked)} style={{ width: 18, height: 18 }} />
               <Ico n="flame" s={15} c="#b91c1c" /> {t('field_urgent')}
             </label>
+            {msgModif && (
+              <p style={{ color: '#b91c1c', fontSize: 13.5, marginTop: 0, marginBottom: 14, background: '#fef2f2', padding: '10px 14px', borderRadius: 10, fontWeight: 600 }}>{msgModif}</p>
+            )}
             <div style={{ display: 'flex', gap: 12 }}>
               <button
                 type="submit"
@@ -406,7 +466,7 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
                 onClick={() => setModif(false)}
                 style={{
                   padding: '13px 24px', background: 'none', border: '1.5px solid #dfe4d4', borderRadius: 12,
-                  fontWeight: 700, fontSize: 14.5, cursor: 'pointer', color: '#23281f', fontFamily: FONT,
+                  fontWeight: 700, fontSize: 14.5, cursor: 'pointer', color: 'hsl(var(--foreground))', fontFamily: FONT,
                 }}
               >
                 {t('cancel')}
@@ -435,16 +495,13 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
                   )}
                 </div>
                 <p style={{ display: 'flex', gap: 16, flexWrap: 'wrap', margin: 0 }}>
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: '#6b7268', fontSize: 14.5 }}><Ico n="cal" s={15} c="#8a9a7b" /> {dateStr}</span>
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: '#6b7268', fontSize: 14.5 }}><Ico n="clock" s={15} c="#8a9a7b" /> {start} – {end}</span>
-                  {shift.locationCity && <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: '#6b7268', fontSize: 14.5 }}><Ico n="pin" s={15} c="#8a9a7b" /> {shift.locationCity}</span>}
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: 'hsl(var(--muted-foreground))', fontSize: 14.5 }}><Ico n="cal" s={15} c="#8a9a7b" /> {dateStr}</span>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: 'hsl(var(--muted-foreground))', fontSize: 14.5 }}><Ico n="clock" s={15} c="#8a9a7b" /> {start} – {end}</span>
+                  {shift.locationCity && <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: 'hsl(var(--muted-foreground))', fontSize: 14.5 }}><Ico n="pin" s={15} c="#8a9a7b" /> {shift.locationCity}</span>}
                 </p>
                 {shift.horeca.horecaProfile?.companyName && (
                   <p style={{ marginTop: 10, fontWeight: 700, fontSize: 15 }}>
                     {shift.horeca.horecaProfile.companyName}
-                    {shift.horeca.horecaProfile.kvkNumber && (
-                      <span style={{ color: '#6b7268', fontWeight: 500, fontSize: 13 }}> · KvK {shift.horeca.horecaProfile.kvkNumber}</span>
-                    )}
                   </p>
                 )}
               </div>
@@ -460,7 +517,7 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
                     <Ico n="card" s={13} /> {t('pay_paid_badge')}
                   </span>
                 )}
-                {role === 'KOK' && shift.status === 'OPEN' && (
+                {role === 'KOK' && shift.status === 'OPEN' && !fini && (
                   <div style={{ marginTop: 10 }}>
                     {dejaPostule ? (
                       <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: '#4c5e42', fontWeight: 700, fontSize: 13.5 }}>
@@ -484,6 +541,11 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
                     )}
                   </div>
                 )}
+                {role === 'KOK' && shift.status === 'OPEN' && fini && (
+                  <div style={{ marginTop: 10, color: 'hsl(var(--muted-foreground))', fontWeight: 700, fontSize: 13.5 }}>
+                    {t('shift_expired')}
+                  </div>
+                )}
                 {peutModifier && (
                   <div style={{ marginTop: 10 }}>
                     <button
@@ -492,7 +554,7 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
                       style={{
                         background: 'none', border: '1.5px solid #dfe4d4', borderRadius: 999,
                         padding: '9px 18px', fontWeight: 700, fontSize: 13, cursor: 'pointer',
-                        color: '#23281f', fontFamily: FONT,
+                        color: 'hsl(var(--foreground))', fontFamily: FONT,
                       }}
                     >
                       {t('edit_shift')}
@@ -531,9 +593,82 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
             </div>
 
             {eindBevestigd ? (
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: '#dcfce7', color: '#15803d', fontSize: 13.5, fontWeight: 800, padding: '8px 16px', borderRadius: 999 }}>
-                <Ico n="check" s={14} /> {t('end_confirmed')} · {eindGemeld}
-              </span>
+              <>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: '#dcfce7', color: '#15803d', fontSize: 13.5, fontWeight: 800, padding: '8px 16px', borderRadius: 999 }}>
+                  <Ico n="check" s={14} /> {t('end_confirmed')} · {eindGemeld}
+                </span>
+
+                {/* ===== Notation du chef par le restaurant ===== */}
+                {role === 'HORECA' && (
+                  shift.horecaReviewed ? (
+                    <p style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#15803d', fontWeight: 700, fontSize: 13.5, marginTop: 16, marginBottom: 0 }}>
+                      <Ico n="check" s={15} /> {t('review_done')}
+                    </p>
+                  ) : (
+                    <div style={{ marginTop: 20, borderTop: '1px solid hsl(var(--border))', paddingTop: 18 }}>
+                      <div style={{ fontWeight: 800, fontSize: 15.5, letterSpacing: -0.3, marginBottom: 3 }}>{t('review_title')}</div>
+                      <p style={{ color: 'hsl(var(--muted-foreground))', fontSize: 13.5, fontWeight: 600, marginTop: 0, marginBottom: 12 }}>{t('review_desc')}</p>
+                      <div style={{ display: 'flex', gap: 6, marginBottom: 14 }}>
+                        {[1, 2, 3, 4, 5].map((i) => (
+                          <button
+                            key={i}
+                            type="button"
+                            onClick={() => setNote(i)}
+                            aria-label={`${i} / 5`}
+                            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2, lineHeight: 0 }}
+                          >
+                            <IcoStar s={28} plein={i <= note} />
+                          </button>
+                        ))}
+                      </div>
+                      <textarea
+                        value={avis}
+                        onChange={(e) => setAvis(e.target.value)}
+                        placeholder={t('review_placeholder')}
+                        rows={3}
+                        style={{ ...champ, resize: 'vertical' }}
+                      />
+                      <div style={{ marginTop: 12 }}>
+                        <button
+                          onClick={envoyerAvis}
+                          disabled={avisEnvoi || !note}
+                          className="cs-btn"
+                          style={{
+                            background: 'linear-gradient(135deg,#647a55,#46553c)', color: '#fff', border: 'none',
+                            borderRadius: 12, padding: '11px 26px', fontWeight: 700, fontSize: 14, fontFamily: FONT,
+                            cursor: avisEnvoi || !note ? 'not-allowed' : 'pointer', opacity: avisEnvoi || !note ? 0.6 : 1,
+                            boxShadow: '0 8px 18px -8px rgba(70,85,60,.5)',
+                          }}
+                        >
+                          {avisEnvoi ? t('form_loading') : t('review_submit')}
+                        </button>
+                      </div>
+                    </div>
+                  )
+                )}
+
+                {/* Admin : peut corriger l'heure même après confirmation */}
+                {role === 'ADMIN' && (
+                  <div style={{ marginTop: 18, borderTop: '1px solid hsl(var(--border))', paddingTop: 16, display: 'flex', gap: 12, alignItems: 'flex-end', flexWrap: 'wrap' }}>
+                    <div style={{ minWidth: 130 }}>
+                      <label style={etiquette}>{t('end_admin_edit')}</label>
+                      <input type="time" value={eindInvoer} onChange={(e) => setEindInvoer(e.target.value)} style={champ} />
+                    </div>
+                    <button
+                      onClick={bevestigEind}
+                      disabled={bevestigEnvoi || !eindInvoer}
+                      className="cs-btn"
+                      style={{
+                        background: 'none', border: '1.5px solid #dfe4d4', borderRadius: 12, padding: '11px 22px',
+                        fontWeight: 700, fontSize: 13.5, color: 'hsl(var(--foreground))', fontFamily: FONT,
+                        cursor: bevestigEnvoi || !eindInvoer ? 'not-allowed' : 'pointer',
+                      }}
+                    >
+                      {bevestigEnvoi ? t('form_loading') : t('end_confirm_btn')}
+                    </button>
+                  </div>
+                )}
+              </>
             ) : role === 'KOK' ? (
               shift.eind ? (
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
@@ -543,7 +678,7 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
                 </div>
               ) : (
                 <>
-                  <p style={{ color: '#6b7268', fontSize: 14, fontWeight: 600, marginTop: 0, marginBottom: 16 }}>{t('end_desc')}</p>
+                  <p style={{ color: 'hsl(var(--muted-foreground))', fontSize: 14, fontWeight: 600, marginTop: 0, marginBottom: 16 }}>{t('end_desc')}</p>
                   <div style={{ display: 'flex', gap: 12, alignItems: 'flex-end', flexWrap: 'wrap' }}>
                     <div style={{ minWidth: 130 }}>
                       <label style={etiquette}>{t('field_end')}</label>
@@ -565,37 +700,46 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
                   </div>
                 </>
               )
+            ) : !shiftTermine && role !== 'ADMIN' ? (
+              // La confirmation n'est possible qu'après l'heure de fin du shift
+              <p style={{ color: 'hsl(var(--muted-foreground))', fontSize: 14, fontWeight: 600, margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
+                <Ico n="clock" s={15} /> {t('end_after_only')}
+              </p>
             ) : (
-              shift.eind ? (
-                <>
-                  <p style={{ color: '#6b7268', fontSize: 14, fontWeight: 600, marginTop: 0, marginBottom: 16 }}>{t('end_confirm_desc')}</p>
-                  <div style={{ display: 'flex', gap: 24, alignItems: 'center', flexWrap: 'wrap', marginBottom: 18 }}>
-                    <div>
-                      <div style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: 1.5, color: '#8a9a7b', fontWeight: 800, marginBottom: 4 }}>{t('end_planned')}</div>
-                      <div style={{ fontSize: 18, fontWeight: 800, color: '#6b7268' }}>{end}</div>
-                    </div>
+              // Restaurant (ou admin) : confirmer l'heure de fin — fonctionne même si le chef
+              // ne l'a pas déclarée (le restaurant la saisit / corrige lui-même).
+              <>
+                <p style={{ color: 'hsl(var(--muted-foreground))', fontSize: 14, fontWeight: 600, marginTop: 0, marginBottom: 16 }}>{t('end_confirm_self')}</p>
+                <div style={{ display: 'flex', gap: 24, alignItems: 'flex-end', flexWrap: 'wrap', marginBottom: 16 }}>
+                  <div>
+                    <div style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: 1.5, color: '#8a9a7b', fontWeight: 800, marginBottom: 4 }}>{t('end_planned')}</div>
+                    <div style={{ fontSize: 18, fontWeight: 800, color: 'hsl(var(--muted-foreground))' }}>{end}</div>
+                  </div>
+                  {shift.eind && (
                     <div>
                       <div style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: 1.5, color: '#8a9a7b', fontWeight: 800, marginBottom: 4 }}>{t('end_reported')}</div>
                       <div style={{ fontSize: 22, fontWeight: 800, color: '#4c5e42' }}>{eindGemeld}</div>
                     </div>
+                  )}
+                  <div style={{ minWidth: 130 }}>
+                    <label style={etiquette}>{t('end_final')}</label>
+                    <input type="time" value={eindInvoer} onChange={(e) => setEindInvoer(e.target.value)} required style={champ} />
                   </div>
-                  <button
-                    onClick={bevestigEind}
-                    disabled={bevestigEnvoi}
-                    className="cs-btn"
-                    style={{
-                      background: 'linear-gradient(135deg,#647a55,#46553c)', color: '#fff', border: 'none',
-                      borderRadius: 12, padding: '12px 24px', fontWeight: 700, fontSize: 14,
-                      cursor: bevestigEnvoi ? 'wait' : 'pointer', opacity: bevestigEnvoi ? 0.7 : 1, fontFamily: FONT,
-                      boxShadow: '0 8px 18px -8px rgba(70,85,60,.5)',
-                    }}
-                  >
-                    {bevestigEnvoi ? t('form_loading') : t('end_confirm_btn')}
-                  </button>
-                </>
-              ) : (
-                <p style={{ color: '#6b7268', fontSize: 14, fontWeight: 600, margin: 0 }}>{t('end_desc')}</p>
-              )
+                </div>
+                <button
+                  onClick={bevestigEind}
+                  disabled={bevestigEnvoi || !eindInvoer}
+                  className="cs-btn"
+                  style={{
+                    background: 'linear-gradient(135deg,#647a55,#46553c)', color: '#fff', border: 'none',
+                    borderRadius: 12, padding: '12px 24px', fontWeight: 700, fontSize: 14,
+                    cursor: bevestigEnvoi || !eindInvoer ? 'not-allowed' : 'pointer', opacity: bevestigEnvoi || !eindInvoer ? 0.7 : 1, fontFamily: FONT,
+                    boxShadow: '0 8px 18px -8px rgba(70,85,60,.5)',
+                  }}
+                >
+                  {bevestigEnvoi ? t('form_loading') : t('end_confirm_btn')}
+                </button>
+              </>
             )}
           </div>
         )}
@@ -604,22 +748,22 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
         {role === 'HORECA' && shift.chosenKokId && (shift.status === 'CONFIRMED' || shift.status === 'COMPLETED') && !estPaye && (
           <div className="cs-fade cs-d2" style={{ ...carte, marginBottom: 40, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 14 }}>
             <div>
-              {fini ? (
+              {eindBevestigd ? (
                 <>
-                  <div style={{ fontSize: 14, color: '#6b7268', fontWeight: 600 }}>{t('pay_to_pay')}</div>
+                  <div style={{ fontSize: 14, color: 'hsl(var(--muted-foreground))', fontWeight: 600 }}>{t('pay_to_pay')}</div>
                   <div style={{ fontSize: 22, fontWeight: 800 }}>
-                    €{shift.invoice ? shift.invoice.amountInclVat.toFixed(2) : '...'}{' '}
-                    <span style={{ fontSize: 13, color: '#6b7268', fontWeight: 600 }}>{t('pay_incl_vat')}</span>
+                    €{(shift.invoice ? shift.invoice.amountInclVat : montantEstime).toFixed(2)}{' '}
+                    <span style={{ fontSize: 13, color: 'hsl(var(--muted-foreground))', fontWeight: 600 }}>{t('pay_incl_vat')}</span>
                   </div>
                 </>
               ) : (
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 14, color: '#6b7268', fontWeight: 600 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 14, color: 'hsl(var(--muted-foreground))', fontWeight: 600 }}>
                   <Ico n="clock" s={15} /> {t('pay_after')}
                 </div>
               )}
               {msgPay && <div style={{ color: '#b91c1c', fontSize: 13, marginTop: 5, fontWeight: 600 }}>{msgPay}</div>}
             </div>
-            {fini && (
+            {eindBevestigd && (
               <button
                 onClick={payer}
                 disabled={paiement}
@@ -637,29 +781,28 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
             )}
           </div>
         )}
-        {estPaye && (
-          <p className="cs-fade cs-d2" style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 40 }}>
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: '#dcfce7', color: '#15803d', fontSize: 13.5, fontWeight: 800, padding: '8px 16px', borderRadius: 999 }}>
-              <Ico n="card" s={14} /> {t('pay_paid_badge')} · €{shift.invoice ? shift.invoice.amountInclVat.toFixed(2) : ''}
-            </span>
+        {estPaye && role === 'HORECA' && (
+          <p style={{ color: '#15803d', fontWeight: 700, marginBottom: 40, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <Ico n="check" s={16} /> {t('pay_success')}
           </p>
         )}
 
         {/* ===== Candidatures (horeca uniquement) ===== */}
-        {role === 'HORECA' && (<>
+        {(role === 'HORECA' || role === 'ADMIN') && (<>
         <h2 className="cs-fade cs-d2" style={{ fontSize: 22, fontWeight: 800, marginBottom: 18, letterSpacing: -0.6 }}>
           {t('applicants')} ({shift.applications.length})
         </h2>
         {shift.applications.length === 0 ? (
           <div className="cs-card" style={{ ...carte, textAlign: 'center', padding: 48 }}>
-            <p style={{ color: '#6b7268', fontWeight: 600 }}>{t('no_applicants')}</p>
+            <p style={{ color: 'hsl(var(--muted-foreground))', fontWeight: 600 }}>{t('no_applicants')}</p>
           </div>
         ) : (
           <div style={{ display: 'grid', gap: 16 }}>
             {shift.applications.map((app) => {
               const p = app.kok.kokProfile
-              const reviews = p?.reviewsReceived || []
-              const moy = moyenne(reviews)
+              // Moyenne réelle du profil (mise à jour à chaque avis), pas la liste non chargée
+              const nbAvis = p?.reviewCount || 0
+              const moy = p?.averageScore || 0
               return (
                 <div key={app.id} className="cs-card" style={carte}>
                   {/* En-tête du candidat */}
@@ -668,21 +811,21 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
                       <div style={{ fontSize: 18, fontWeight: 800, letterSpacing: -0.4 }}>
                         {p?.firstName} {p?.lastName}
                         {p?.dateOfBirth && (
-                          <span style={{ color: '#6b7268', fontWeight: 600, fontSize: 14 }}> · {age(p.dateOfBirth)} {t('years_old')}</span>
+                          <span style={{ color: 'hsl(var(--muted-foreground))', fontWeight: 600, fontSize: 14 }}> · {age(p.dateOfBirth)} {t('years_old')}</span>
                         )}
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 5 }}>
                         <Etoiles n={moy} />
-                        <span style={{ fontSize: 13, color: '#6b7268', fontWeight: 600 }}>
-                          {reviews.length > 0 ? `${moy.toFixed(1)} (${reviews.length} ${t('reviews')})` : t('no_reviews')}
+                        <span style={{ fontSize: 13, color: 'hsl(var(--muted-foreground))', fontWeight: 600 }}>
+                          {nbAvis > 0 ? `${moy.toFixed(1)} (${nbAvis} ${t('reviews')})` : t('no_reviews')}
                         </span>
                       </div>
                       <div style={{ display: 'flex', gap: 14, marginTop: 7, flexWrap: 'wrap' }}>
-                        {p?.city && <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 13.5, color: '#6b7268' }}><Ico n="pin" s={13} /> {p.city}</span>}
-                        {p?.yearsExperience != null && <span style={{ fontSize: 13.5, color: '#6b7268' }}>{p.yearsExperience} {t('experience_years')}</span>}
+                        {p?.city && <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 13.5, color: 'hsl(var(--muted-foreground))' }}><Ico n="pin" s={13} /> {p.city}</span>}
+                        {p?.yearsExperience != null && <span style={{ fontSize: 13.5, color: 'hsl(var(--muted-foreground))' }}>{p.yearsExperience} {t('experience_years')}</span>}
                       </div>
                     </div>
-                    {role === 'HORECA' && shift.status === 'OPEN' && app.status === 'PENDING' && (
+                    {(role === 'HORECA' || role === 'ADMIN') && shift.status === 'OPEN' && app.status === 'PENDING' && (
                       <button
                         onClick={() => choisir(app.id, (app as any).kokId || '')}
                         disabled={choix === app.id}
@@ -702,7 +845,7 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
                         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, ...badgeSauge }}>
                           <Ico n="check" s={13} /> {t('chosen')}
                         </span>
-                        {!estPaye && role === 'HORECA' && (
+                        {!estPaye && (!deselectBloque || role === 'ADMIN') && (
                           <button
                             onClick={deselect}
                             disabled={choix === 'deselect'}
@@ -710,7 +853,7 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
                             style={{
                               background: 'none', border: '1.5px solid #dfe4d4', borderRadius: 999,
                               padding: '7px 16px', fontWeight: 700, fontSize: 12.5, cursor: 'pointer',
-                              color: '#23281f', fontFamily: FONT,
+                              color: 'hsl(var(--foreground))', fontFamily: FONT,
                             }}
                           >
                             {choix === 'deselect' ? t('form_loading') : t('unchoose')}
@@ -766,7 +909,7 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
 
                   {/* Tarif souhaité */}
                   {p?.hourlyRateMin != null && (
-                    <div style={{ marginTop: 12, fontSize: 13.5, color: '#6b7268' }}>
+                    <div style={{ marginTop: 12, fontSize: 13.5, color: 'hsl(var(--muted-foreground))' }}>
                       {t('rate_range')} : €{p.hourlyRateMin} – €{p.hourlyRateMax}{parHeure}
                     </div>
                   )}
@@ -786,7 +929,7 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
                             <strong>{w.function}</strong>
                             {w.companyName && ` · ${w.companyName}`}
                             {w.location && ` · ${w.location}`}
-                            <div style={{ color: '#6b7268', fontSize: 12.5 }}>
+                            <div style={{ color: 'hsl(var(--muted-foreground))', fontSize: 12.5 }}>
                               {new Date(w.fromDate).toLocaleDateString(locale, { month: 'short', year: 'numeric' })}
                               {' – '}
                               {w.isCurrent
