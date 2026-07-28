@@ -2,11 +2,13 @@
 
 import { useEffect, useState } from 'react'
 import { useT } from '@/lib/i18n'
+import { heureHHMM } from '@/lib/time'
+
+// Photo libre de droits (Unsplash, licence gratuite)
+const PHOTO = 'https://images.unsplash.com/photo-1556910103-1c02745aae4d?auto=format&fit=crop&w=300&q=70'
 import { Ico } from './Icons'
 
 const FONT = '"Sora","Inter","Helvetica Neue",Arial,sans-serif'
-// Photo libre de droits (Unsplash, licence gratuite)
-const PHOTO = 'https://images.unsplash.com/photo-1556910103-1c02745aae4d?auto=format&fit=crop&w=300&q=70'
 
 export type ShiftData = {
   id: string
@@ -76,13 +78,13 @@ export default function ShiftCard({
   const dateStr = new Date(shift.date).toLocaleDateString(locale, {
     weekday: 'short', day: 'numeric', month: 'short',
   })
-  const start = new Date(shift.startTime).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })
-  const end = new Date(shift.endTime).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })
+  const start = heureHHMM(shift.startTime, locale)
+  const end = heureHHMM(shift.endTime, locale)
   const estPaye = shift.invoice?.status === 'PAID'
 
   const meta: React.CSSProperties = {
     display: 'inline-flex', alignItems: 'center', gap: 5,
-    fontSize: 13.5, color: '#6b7268', fontWeight: 500,
+    fontSize: 13.5, color: 'hsl(var(--muted-foreground))', fontWeight: 500,
   }
 
   const contenu = (
@@ -122,49 +124,47 @@ export default function ShiftCard({
           <span style={meta}><Ico n="clock" s={14} c="#8a9a7b" /> {start} – {end}</span>
           {shift.locationCity && <span style={meta}><Ico n="pin" s={14} c="#8a9a7b" /> {shift.locationCity}</span>}
           {shift.horeca?.horecaProfile?.companyName && (
-            <span style={{ ...meta, fontWeight: 700, color: '#23281f' }}>
+            <span style={{ ...meta, fontWeight: 700, color: 'hsl(var(--foreground))' }}>
               {shift.horeca.horecaProfile.companyName}
             </span>
           )}
         </p>
       </div>
-      <div className="cs-end" style={{ textAlign: 'right' }}>
-        <div style={{ fontSize: 20, fontWeight: 800, color: '#4c5e42', letterSpacing: -0.5 }}>€{shift.hourlyRate}{parHeure}</div>
-        {shift.totalAmount != null && (
-          <div style={{ fontSize: 12.5, color: '#6b7268', fontWeight: 600 }}>
-            {t('total')} : €{Math.round(shift.totalAmount)}
-          </div>
-        )}
+      <div className="cs-end" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 7 }}>
+        <div>
+          <div style={{ fontSize: 20, fontWeight: 800, color: '#4c5e42', letterSpacing: -0.5 }}>€{shift.hourlyRate}{parHeure}</div>
+          {shift.totalAmount != null && (
+            <div style={{ fontSize: 12.5, color: 'hsl(var(--muted-foreground))', fontWeight: 600 }}>
+              {t('total')} : €{Math.round(shift.totalAmount)}
+            </div>
+          )}
+        </div>
         {/* Mention payé : visible des deux côtés */}
         {estPaye && (
-          <div style={{ marginTop: 6 }}>
-            <span style={{
-              display: 'inline-flex', alignItems: 'center', gap: 5,
-              background: '#dcfce7', color: '#15803d', fontSize: 12, fontWeight: 800,
-              padding: '5px 13px', borderRadius: 999,
-            }}>
-              <Ico n="card" s={13} /> {t('pay_paid_badge')}
-            </span>
-          </div>
+          <span style={{
+            display: 'inline-flex', alignItems: 'center', gap: 5,
+            background: '#dcfce7', color: '#15803d', fontSize: 12, fontWeight: 800,
+            padding: '5px 13px', borderRadius: 999,
+          }}>
+            <Ico n="card" s={13} /> {t('pay_paid_badge')}
+          </span>
         )}
         {!estPaye && (shift.status === 'CONFIRMED' || shift.status === 'COMPLETED') && (
-          <div style={{ marginTop: 6 }}>
-            <span style={{
-              display: 'inline-flex', alignItems: 'center', gap: 5,
-              background: '#f0f4ea', color: '#4c5e42', fontSize: 12, fontWeight: 700,
-              padding: '5px 13px', borderRadius: 999,
-            }}>
-              <Ico n="check" s={13} /> {t('status_confirmed')}
-            </span>
-          </div>
+          <span style={{
+            display: 'inline-flex', alignItems: 'center', gap: 5,
+            background: '#f0f4ea', color: '#4c5e42', fontSize: 12, fontWeight: 700,
+            padding: '5px 13px', borderRadius: 999,
+          }}>
+            <Ico n="check" s={13} /> {t('status_confirmed')}
+          </span>
         )}
         {shift._count && (
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 12.5, color: '#6b7268', marginTop: 5 }}>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 12.5, color: 'hsl(var(--muted-foreground))' }}>
             <Ico n="users" s={13} /> {shift._count.applications} {t('applications')}
           </div>
         )}
         {showApply && (
-          <div style={{ marginTop: 9 }}>
+          <div>
             {etat === 'ok' ? (
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: '#4c5e42', fontWeight: 700, fontSize: 13.5 }}>
                 <Ico n="check" s={15} /> {t('applied')}
@@ -188,7 +188,7 @@ export default function ShiftCard({
           </div>
         )}
         {detailHref && (
-          <div style={{ marginTop: 8, display: 'inline-flex', alignItems: 'center', gap: 5, color: '#5f7052', fontWeight: 700, fontSize: 13 }}>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 5, color: '#5f7052', fontWeight: 700, fontSize: 13 }}>
             {showApply ? t('details') : shift.status === 'CONFIRMED' ? t('status_confirmed') : t('choose')} <Ico n="arrow" s={13} />
           </div>
         )}
@@ -197,7 +197,7 @@ export default function ShiftCard({
   )
 
   const styleCarte: React.CSSProperties = {
-    background: '#fff', borderRadius: 20, border: '1px solid #eceee3',
+    background: 'hsl(var(--card))', borderRadius: 20, border: '1px solid #eceee3',
     boxShadow: '0 3px 12px rgba(46,52,43,0.05)', padding: 24,
     display: 'flex', justifyContent: 'space-between', alignItems: 'center',
     gap: 18, flexWrap: 'wrap',
