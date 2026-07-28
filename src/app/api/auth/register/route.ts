@@ -5,7 +5,7 @@ import { prisma } from '@/lib/prisma'
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
-    const { email, password, role, name, kvkNumber, companyName, firstName, lastName } = body
+    const { email, password, role, name, kvkNumber, companyName, firstName, lastName, source } = body
 
     const existing = await prisma.user.findUnique({ where: { email } })
     if (existing) {
@@ -26,6 +26,24 @@ export async function POST(req: NextRequest) {
         })
       }
     })
+
+    // Canal d'acquisition (comment l'utilisateur a connu ChefShift)
+    if (source) {
+      try {
+        await prisma.$executeRaw`
+          CREATE TABLE IF NOT EXISTS user_source (
+            user_id TEXT PRIMARY KEY,
+            source TEXT NOT NULL,
+            created_at TIMESTAMP DEFAULT now()
+          )
+        `
+        await prisma.$executeRaw`
+          INSERT INTO user_source (user_id, source, created_at)
+          VALUES (${user.id}, ${String(source)}, now())
+          ON CONFLICT (user_id) DO UPDATE SET source = ${String(source)}
+        `
+      } catch {}
+    }
 
     return NextResponse.json({ message: 'User created', userId: user.id }, { status: 201 })
   } catch (error) {

@@ -15,6 +15,7 @@ export default function RegisterPage() {
   const [kvkNumber, setKvkNumber] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [source, setSource] = useState('')
   const [role, setRole] = useState<'HORECA' | 'KOK'>('KOK')
   const [akkoord, setAkkoord] = useState(false)
   const [error, setError] = useState('')
@@ -43,6 +44,7 @@ export default function RegisterPage() {
           role,
           firstName: name,
           kvkNumber: kvkNumber.trim(),
+          source: source || null,
           ...(role === 'HORECA' ? { companyName: companyName || name } : {}),
         }),
       })
@@ -69,6 +71,8 @@ export default function RegisterPage() {
     fontSize: 15, outline: 'none', boxSizing: 'border-box' as const, background: '#fff', fontFamily: FONT,
   }
   const etiquette = { display: 'block', fontSize: 13, fontWeight: 700, marginBottom: 6, color: '#3c4436' }
+
+  const sources = ['google', 'facebook', 'linkedin', 'doorverwezen', 'anders']
 
   return (
     <main style={{ fontFamily: FONT, background: '#f6f7f2', color: '#23281f', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
@@ -149,6 +153,17 @@ export default function RegisterPage() {
               <label style={etiquette}>{t('field_password')}</label>
               <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required
                 minLength={8} placeholder="Minimaal 8 tekens" style={champ} />
+            </div>
+
+            {/* Canal d'acquisition */}
+            <div style={{ marginBottom: 18 }}>
+              <label style={etiquette}>{t('source_label')}</label>
+              <select value={source} onChange={(e) => setSource(e.target.value)} style={{ ...champ, cursor: 'pointer' }}>
+                <option value="">{t('source_choose')}</option>
+                {sources.map((s) => (
+                  <option key={s} value={s}>{t(`source_${s}` as any)}</option>
+                ))}
+              </select>
             </div>
 
             {/* Acceptation des CGV */}
