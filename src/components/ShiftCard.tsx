@@ -5,6 +5,8 @@ import { useT } from '@/lib/i18n'
 import { Ico } from './Icons'
 
 const FONT = '"Sora","Inter","Helvetica Neue",Arial,sans-serif'
+// Photo libre de droits (Unsplash, licence gratuite)
+const PHOTO = 'https://images.unsplash.com/photo-1556910103-1c02745aae4d?auto=format&fit=crop&w=300&q=70'
 
 export type ShiftData = {
   id: string
@@ -85,7 +87,15 @@ export default function ShiftCard({
 
   const contenu = (
     <>
-      <div>
+      {/* Miniature photo (libre de droits) */}
+      <img
+        src={PHOTO}
+        alt=""
+        loading="lazy"
+        className="cs-hide-mob"
+        style={{ width: 74, height: 74, borderRadius: 16, objectFit: 'cover', flexShrink: 0, alignSelf: 'center' }}
+      />
+      <div style={{ flex: 1, minWidth: 220 }}>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
           <h3 style={{ fontSize: 17, fontWeight: 800, letterSpacing: -0.3 }}>{shift.title}</h3>
           {shift.function && (
