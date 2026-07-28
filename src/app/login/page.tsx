@@ -12,13 +12,17 @@ export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+    if (loading) return
     setError('')
+    setLoading(true)
     const res = await signIn('credentials', { email, password, redirect: false })
     if (res?.error) {
       setError(t('login_error'))
+      setLoading(false)
     } else {
       window.location.href = '/dashboard'
     }
@@ -75,12 +79,13 @@ export default function LoginPage() {
               </p>
             )}
 
-            <button type="submit" className="cs-btn" style={{
+            <button type="submit" disabled={loading} className="cs-btn" style={{
               width: '100%', padding: 14, background: 'linear-gradient(135deg,#647a55,#46553c)', color: '#fff',
-              border: 'none', borderRadius: 12, fontWeight: 700, fontSize: 15, cursor: 'pointer', fontFamily: FONT,
+              border: 'none', borderRadius: 12, fontWeight: 700, fontSize: 15, fontFamily: FONT,
+              cursor: loading ? 'wait' : 'pointer', opacity: loading ? 0.7 : 1,
               boxShadow: '0 10px 22px -8px rgba(70,85,60,.5)',
             }}>
-              {t('login_title')}
+              {loading ? t('form_loading') : t('login_title')}
             </button>
           </form>
 

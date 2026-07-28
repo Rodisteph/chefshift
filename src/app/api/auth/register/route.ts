@@ -1,9 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
 import bcrypt from 'bcryptjs'
 import { prisma } from '@/lib/prisma'
+import { estAutorise } from '@/lib/ratelimit'
 
 export async function POST(req: NextRequest) {
   try {
+    // Anti-abus : 10 inscriptions max par IP par heure
+    const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'inconnu'
+    if (!estAutorise(`register:${ip}`, 10, 3600_000)) {
+      return NextResponse.json({ error: 'Too many attempts' }, { status: 429 })
+    }
+
     const body = await req.json()
     const { email, password, role, name, kvkNumber, companyName, firstName, lastName } = body
 

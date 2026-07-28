@@ -3,9 +3,6 @@ const nextConfig = {
   experimental: {
     serverComponentsExternalPackages: ['@mollie/api-client', 'bull'],
   },
-  images: {
-    domains: ['localhost'],
-  },
   async headers() {
     const securite = [
       { key: 'X-Frame-Options', value: 'SAMEORIGIN' },

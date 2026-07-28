@@ -60,9 +60,19 @@ export default function AnimStyles() {
         to { opacity: 1; transform: scale(1) translateY(0); }
       }
 
-      /* ===== Hero : zoom lent façon Lovable ===== */
-      .cs-heroimg { animation: csHeroZoom 16s ease-out forwards; }
-      @keyframes csHeroZoom { from { transform: scale(1.12); } to { transform: scale(1); } }
+      /* ===== Hero : halos lumineux flottants (décor sans image) ===== */
+      .cs-halo {
+        position: absolute; border-radius: 50%; pointer-events: none;
+        filter: blur(70px); will-change: transform;
+        animation: csHalo 14s ease-in-out infinite alternate;
+      }
+      .cs-halo1 { width: 46vw; height: 46vw; min-width: 320px; min-height: 320px; top: -12%; right: -8%; background: rgba(207,220,186,0.16); }
+      .cs-halo2 { width: 34vw; height: 34vw; min-width: 240px; min-height: 240px; bottom: -14%; left: -6%; background: rgba(138,154,123,0.20); animation-delay: -5s; animation-duration: 18s; }
+      .cs-halo3 { width: 22vw; height: 22vw; min-width: 170px; min-height: 170px; top: 30%; left: 34%; background: rgba(100,122,85,0.22); animation-delay: -9s; animation-duration: 11s; }
+      @keyframes csHalo {
+        from { transform: translate3d(0, 0, 0) scale(1); }
+        to { transform: translate3d(4vw, 3vh, 0) scale(1.12); }
+      }
 
       /* ===== Cartes premium ===== */
       .cs-card { transition: transform .35s cubic-bezier(.22,.8,.35,1), box-shadow .35s ease, border-color .35s ease; will-change: transform; }
@@ -125,7 +135,8 @@ export default function AnimStyles() {
 
       @media (prefers-reduced-motion: reduce) {
         html { scroll-behavior: auto; }
-        .cs-fade, .cs-pop, .cs-heroimg { animation: none !important; opacity: 1 !important; transform: none !important; }
+        .cs-fade, .cs-pop { animation: none !important; opacity: 1 !important; transform: none !important; }
+        .cs-halo { animation: none !important; }
         .cs-reveal, .cs-reveal-in { opacity: 1 !important; transform: none !important; transition: none !important; }
         .cs-card:hover, .cs-btn:hover, .cs-btn:hover svg, .cs-card:hover .cs-tile { transform: none !important; }
       }
