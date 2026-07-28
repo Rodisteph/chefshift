@@ -13,6 +13,30 @@ const HERO_URL = 'https://www.kimi.com/apiv2-files/sign-obj/kimi-fs%2Ffiles%2Fbl
 // Visuel côté restaurants (salle élégante au crépuscule)
 const VIS_RESTO = 'https://www.kimi.com/apiv2-files/sign-obj/kimi-fs%2Ffiles%2Fblob%2F2f6ed5f2ed74d6208166b3aa37b3bd9985cb96e3da6419b597eb7cc1dd41c5f0?filename=visuel-restaurant.jpg&sig=eI33ikgivlnhi9vtuxsig4JwEivZADZ9Bc3_453kRpI=&t=o'
 
+// Données structurées schema.org : l'organisation et le site (rendu côté serveur, visible pour Google)
+const JSON_LD = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    {
+      '@type': 'Organization',
+      '@id': 'https://www.chefshift.nl/#org',
+      name: 'ChefShift',
+      url: 'https://www.chefshift.nl',
+      logo: 'https://www.chefshift.nl/icon.svg',
+      description: 'Platform voor zzp-koks en horeca in Nederland.',
+      email: CONTACT_EMAIL,
+    },
+    {
+      '@type': 'WebSite',
+      '@id': 'https://www.chefshift.nl/#site',
+      name: 'ChefShift',
+      url: 'https://www.chefshift.nl',
+      inLanguage: 'nl',
+      publisher: { '@id': 'https://www.chefshift.nl/#org' },
+    },
+  ],
+}
+
 // Décor du hero : halos lumineux animés sur dégradé olive (aucune image externe)
 function Halos() {
   return (
@@ -75,6 +99,7 @@ export default function HomePage() {
   return (
     <main style={{ fontFamily: FONT, background: '#f6f7f2', color: '#23281f', minHeight: '100vh' }}>
       <AnimStyles />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(JSON_LD) }} />
 
       {/* ===== Navigation flottante ===== */}
       <nav className="cs-nav" style={{
@@ -121,7 +146,7 @@ export default function HomePage() {
         position: 'relative', height: '100vh', minHeight: 640, display: 'flex', alignItems: 'flex-end', overflow: 'hidden',
         background: 'linear-gradient(160deg, #1c2317 0%, #2b3522 48%, #46553c 100%)',
       }}>
-        <PhotoFond alt="ChefShift" />
+        <PhotoFond alt="ZZP-kok aan het werk in een professionele horecakeuken" />
         <Halos />
         {/* Voile de lisibilité : garantit le contraste du texte blanc, avec ou sans photo */}
         <div aria-hidden="true" style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(24,30,21,0.80) 0%, rgba(24,30,21,0.28) 48%, rgba(24,30,21,0.42) 100%)' }} />
@@ -209,7 +234,7 @@ export default function HomePage() {
         }}>
           <img
             src={VIS_RESTO}
-            alt="Restaurant 's avonds, klaar voor service"
+            alt="Restaurantzaal 's avonds, klaar voor de dinerservice"
             loading="lazy"
             style={{ width: '100%', height: '100%', minHeight: 320, objectFit: 'cover', display: 'block' }}
           />
