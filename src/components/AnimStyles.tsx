@@ -60,6 +60,10 @@ export default function AnimStyles() {
         to { opacity: 1; transform: scale(1) translateY(0); }
       }
 
+      /* ===== Hero : photo locale optionnelle (public/hero.jpg), zoom lent ===== */
+      .cs-heroimg { animation: csHeroZoom 20s ease-out forwards; will-change: transform; }
+      @keyframes csHeroZoom { from { transform: scale(1.10); } to { transform: scale(1); } }
+
       /* ===== Hero : halos lumineux flottants (décor sans image) ===== */
       .cs-halo {
         position: absolute; border-radius: 50%; pointer-events: none;
@@ -135,7 +139,7 @@ export default function AnimStyles() {
 
       @media (prefers-reduced-motion: reduce) {
         html { scroll-behavior: auto; }
-        .cs-fade, .cs-pop { animation: none !important; opacity: 1 !important; transform: none !important; }
+        .cs-fade, .cs-pop, .cs-heroimg { animation: none !important; opacity: 1 !important; transform: none !important; }
         .cs-halo { animation: none !important; }
         .cs-reveal, .cs-reveal-in { opacity: 1 !important; transform: none !important; transition: none !important; }
         .cs-card:hover, .cs-btn:hover, .cs-btn:hover svg, .cs-card:hover .cs-tile { transform: none !important; }

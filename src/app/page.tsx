@@ -19,6 +19,24 @@ function Halos() {
   )
 }
 
+// Photo de fond optionnelle : déposer une image dans public/hero.jpg et elle s'affiche
+// automatiquement (fondu doux par-dessus le dégradé). Si le fichier n'existe pas,
+// l'image se retire d'elle-même et seul le décor CSS reste — rien ne casse.
+function PhotoFond({ alt = '' }: { alt?: string }) {
+  const [ok, setOk] = useState(true)
+  if (!ok) return null
+  return (
+    <img
+      src="/hero.jpg"
+      alt={alt}
+      aria-hidden={alt ? undefined : true}
+      onError={() => setOk(false)}
+      className="cs-heroimg"
+      style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
+    />
+  )
+}
+
 export default function HomePage() {
   const { t } = useT()
   const [user, setUser] = useState<any>(null)
@@ -82,11 +100,12 @@ export default function HomePage() {
         </div>
       </nav>
 
-      {/* ===== Hero (décor 100% CSS, aucune image externe) ===== */}
+      {/* ===== Hero : décor CSS + photo locale optionnelle (public/hero.jpg) ===== */}
       <header style={{
         position: 'relative', height: '100vh', minHeight: 640, display: 'flex', alignItems: 'flex-end', overflow: 'hidden',
         background: 'linear-gradient(160deg, #1c2317 0%, #2b3522 48%, #46553c 100%)',
       }}>
+        <PhotoFond alt="ChefShift" />
         <Halos />
         {/* Grille pointillée subtile */}
         <div aria-hidden="true" style={{
@@ -94,7 +113,8 @@ export default function HomePage() {
           backgroundImage: 'radial-gradient(rgba(207,220,186,0.13) 1px, transparent 1px)',
           backgroundSize: '34px 34px',
         }} />
-        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(24,30,21,0.55), transparent 55%)' }} />
+        {/* Voile de lisibilité : garantit le contraste du texte blanc, avec ou sans photo */}
+        <div aria-hidden="true" style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(24,30,21,0.80) 0%, rgba(24,30,21,0.28) 48%, rgba(24,30,21,0.42) 100%)' }} />
         <div className="cs-hero-pad" style={{ position: 'relative', zIndex: 2, width: '100%', maxWidth: 1200, margin: '0 auto', padding: '0 24px 92px', color: '#fff' }}>
           <span className="cs-fade" style={{
             display: 'inline-flex', alignItems: 'center', gap: 8,
@@ -202,6 +222,8 @@ export default function HomePage() {
           position: 'relative', borderRadius: 28, overflow: 'hidden', padding: '84px 40px', textAlign: 'center', color: '#fff',
           border: '1px solid #eceee3', background: 'linear-gradient(135deg, #242c1f 0%, #38452c 55%, #55684a 100%)',
         }}>
+          <PhotoFond />
+          <div aria-hidden="true" style={{ position: 'absolute', inset: 0, background: 'linear-gradient(135deg, rgba(36,44,31,0.78), rgba(70,85,60,0.68))' }} />
           <Halos />
           <div aria-hidden="true" style={{
             position: 'absolute', inset: 0, opacity: 0.45,
