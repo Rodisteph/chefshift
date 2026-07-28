@@ -10,6 +10,8 @@ const CONTACT_EMAIL = 'info@chefshift.nl'
 
 // Photo du hero générée pour ChefShift (hébergée en ligne)
 const HERO_URL = 'https://www.kimi.com/apiv2-files/sign-obj/kimi-fs%2Ffiles%2Fblob%2F27b665a925688f5be2e3e4a8cb9c3d9a2e7e646e33aa32d129d44e5cdd26d54e?filename=hero-chefshift.jpg&sig=1974T8mF3RlDIwOmP3yXKXTFq5DvJ5-l2Pt9nFGwyDQ=&t=o'
+// Visuel côté restaurants (salle élégante au crépuscule)
+const VIS_RESTO = 'https://www.kimi.com/apiv2-files/sign-obj/kimi-fs%2Ffiles%2Fblob%2F2f6ed5f2ed74d6208166b3aa37b3bd9985cb96e3da6419b597eb7cc1dd41c5f0?filename=visuel-restaurant.jpg&sig=eI33ikgivlnhi9vtuxsig4JwEivZADZ9Bc3_453kRpI=&t=o'
 
 // Décor du hero : halos lumineux animés sur dégradé olive (aucune image externe)
 function Halos() {
@@ -200,6 +202,42 @@ export default function HomePage() {
               <p style={{ color: '#6b7268', fontSize: 14.5, lineHeight: 1.6 }}>{c.d}</p>
             </div>
           ))}
+        </div>
+      </section>
+
+      {/* ===== Voor horeca : photo + arguments restaurants ===== */}
+      <section className="cs-sec2" style={{ padding: '0 24px 96px', maxWidth: 1200, margin: '0 auto' }}>
+        <div className="cs-card" style={{
+          background: '#fff', borderRadius: 24, border: '1px solid #eceee3',
+          boxShadow: '0 3px 12px rgba(46,52,43,0.05)', overflow: 'hidden',
+          display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+        }}>
+          <img
+            src={VIS_RESTO}
+            alt="Restaurant 's avonds, klaar voor service"
+            loading="lazy"
+            style={{ width: '100%', height: '100%', minHeight: 320, objectFit: 'cover', display: 'block' }}
+          />
+          <div style={{ padding: '46px 42px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+            <span style={{ color: '#5f7052', fontWeight: 800, fontSize: 12.5, letterSpacing: 2.5, textTransform: 'uppercase' }}>{t('hor_over')}</span>
+            <h2 style={{ fontSize: 'clamp(26px, 3.5vw, 38px)', fontWeight: 800, letterSpacing: -1.1, margin: '12px 0 12px' }}>{t('hor_title')}</h2>
+            <p style={{ color: '#6b7268', fontSize: 15.5, lineHeight: 1.65, marginBottom: 24 }}>{t('hor_sub')}</p>
+            <div style={{ display: 'grid', gap: 13, marginBottom: 30 }}>
+              {[t('hor_p1'), t('hor_p2'), t('hor_p3')].map((p) => (
+                <div key={p} style={{ display: 'flex', alignItems: 'center', gap: 11, fontSize: 14.5, fontWeight: 600, color: '#3c4436' }}>
+                  <span style={{ width: 27, height: 27, borderRadius: 9, background: '#eef2e6', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <Ico n="check" s={14} c="#4c5e42" />
+                  </span>
+                  {p}
+                </div>
+              ))}
+            </div>
+            <div>
+              <a href="/register" className="cs-btn" style={btnPrimaire}>
+                {t('hor_cta')} <Ico n="arrow" s={15} />
+              </a>
+            </div>
+          </div>
         </div>
       </section>
 
