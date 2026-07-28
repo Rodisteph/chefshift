@@ -20,6 +20,12 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
       return NextResponse.json({ error: 'Shift not available' }, { status: 400 })
     }
 
+    // On ne peut pas postuler à un shift dont la date est déjà passée
+    const aujourdhui = new Date(new Date().toDateString())
+    if (new Date(shift.date) < aujourdhui) {
+      return NextResponse.json({ error: 'Shift date has passed' }, { status: 400 })
+    }
+
     const existing = await prisma.application.findUnique({
       where: { shiftId_kokId: { shiftId, kokId: session.user.id } }
     })
