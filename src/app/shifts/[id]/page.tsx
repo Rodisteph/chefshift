@@ -744,7 +744,7 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
         )}
 
         {/* ===== Candidatures (horeca uniquement) ===== */}
-        {role === 'HORECA' && (<>
+        {(role === 'HORECA' || role === 'ADMIN') && (<>
         <h2 className="cs-fade cs-d2" style={{ fontSize: 22, fontWeight: 800, marginBottom: 18, letterSpacing: -0.6 }}>
           {t('applicants')} ({shift.applications.length})
         </h2>
@@ -780,7 +780,7 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
                         {p?.yearsExperience != null && <span style={{ fontSize: 13.5, color: 'hsl(var(--muted-foreground))' }}>{p.yearsExperience} {t('experience_years')}</span>}
                       </div>
                     </div>
-                    {role === 'HORECA' && shift.status === 'OPEN' && app.status === 'PENDING' && (
+                    {(role === 'HORECA' || role === 'ADMIN') && shift.status === 'OPEN' && app.status === 'PENDING' && (
                       <button
                         onClick={() => choisir(app.id, (app as any).kokId || '')}
                         disabled={choix === app.id}
@@ -800,7 +800,7 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
                         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, ...badgeSauge }}>
                           <Ico n="check" s={13} /> {t('chosen')}
                         </span>
-                        {!estPaye && !fini && (
+                        {!estPaye && (!fini || role === 'ADMIN') && (
                           <button
                             onClick={deselect}
                             disabled={choix === 'deselect'}

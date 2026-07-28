@@ -7,7 +7,8 @@ import { emailShiftBevestigd } from '@/lib/email'
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
   try {
     const session = await getServerSession(authOptions)
-    if (!session || session.user.role !== 'HORECA') {
+    const isAdmin = session?.user?.role === 'ADMIN'
+    if (!session || (session.user.role !== 'HORECA' && !isAdmin)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
@@ -15,7 +16,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     const { kokId } = await req.json()
 
     const shift = await prisma.shift.findUnique({ where: { id: shiftId } })
-    if (!shift || shift.horecaId !== session.user.id) {
+    if (!shift || (!isAdmin && shift.horecaId !== session.user.id)) {
       return NextResponse.json({ error: 'Not found' }, { status: 404 })
     }
 

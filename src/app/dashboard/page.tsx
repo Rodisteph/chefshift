@@ -175,6 +175,11 @@ export default function DashboardPage() {
               <Ico n="user" s={15} /> <span className="cs-nav-txt">{t('nav_profile')}</span>
             </a>
           )}
+          {user?.role === 'ADMIN' && (
+            <a href="/admin" className="cs-nav-link" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: '#5f7052', fontWeight: 700, fontSize: 14, textDecoration: 'none' }}>
+              <Ico n="brief" s={15} /> <span className="cs-nav-txt">Admin</span>
+            </a>
+          )}
           <a href="/instellingen" className="cs-nav-link" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: '#5f7052', fontWeight: 700, fontSize: 14, textDecoration: 'none' }}>
             <Ico n="gear" s={15} /> <span className="cs-nav-txt">{t('nav_settings')}</span>
           </a>
