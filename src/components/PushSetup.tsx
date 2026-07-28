@@ -75,27 +75,39 @@ export default function PushSetup() {
       .catch(() => setEtat('indisponible'))
   }, [])
 
+  // (Ré)abonne le navigateur et enregistre l'abonnement côté serveur.
+  // force = true : on jette l'abonnement local d'abord pour repartir d'un endpoint frais
+  // (utile quand l'abonnement stocké a expiré = erreur 410).
+  async function sabonner(force = false): Promise<boolean> {
+    const cle = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY as string | undefined
+    if (!cle) return false
+    const reg = await navigator.serviceWorker.ready
+    if (force) {
+      const existante = await reg.pushManager.getSubscription()
+      if (existante) {
+        try { await existante.unsubscribe() } catch {}
+      }
+    }
+    const permission = await Notification.requestPermission()
+    if (permission !== 'granted') return false
+    const sub = await reg.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array(cle),
+    })
+    const res = await fetch('/api/push/subscribe', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ subscription: sub.toJSON() }),
+    })
+    return res.ok
+  }
+
   async function activer() {
     setEnvoi(true)
     try {
-      const cle = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY as string
-      const reg = await navigator.serviceWorker.ready
-      const permission = await Notification.requestPermission()
-      if (permission !== 'granted') {
-        setEtat('refuse')
-        setEnvoi(false)
-        return
-      }
-      const sub = await reg.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(cle),
-      })
-      const res = await fetch('/api/push/subscribe', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ subscription: sub.toJSON() }),
-      })
-      setEtat(res.ok ? 'actif' : 'invite')
+      const ok = await sabonner(false)
+      if (ok) setEtat('actif')
+      else setEtat(Notification.permission === 'denied' ? 'refuse' : 'invite')
     } catch {
       setEtat('invite')
     }
@@ -125,13 +137,20 @@ export default function PushSetup() {
     setTestEnvoi(true)
     setTestMsg('')
     try {
-      const res = await fetch('/api/push/test', { method: 'POST' })
-      const data = await res.json()
-      if (data.ok) {
-        setTestMsg(t('push_test_sent'))
-      } else {
-        setTestMsg(data.erreur || data.error || t('push_test_none'))
+      let res = await fetch('/api/push/test', { method: 'POST' })
+      let data = await res.json()
+
+      // Abonnement périmé/absent côté serveur (ex. erreur 410) :
+      // on se réabonne silencieusement avec un endpoint frais, puis on réessaie une fois.
+      if (!data.ok && (data.code === 'stale' || data.code === 'no_subscription')) {
+        const ok = await sabonner(true)
+        if (ok) {
+          res = await fetch('/api/push/test', { method: 'POST' })
+          data = await res.json()
+        }
       }
+
+      setTestMsg(data.ok ? t('push_test_sent') : t('push_test_none'))
     } catch {
       setTestMsg(t('push_test_none'))
     }
