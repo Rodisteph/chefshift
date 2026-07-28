@@ -68,6 +68,13 @@ export default function PushSetup() {
         const sub = await reg.pushManager.getSubscription()
         if (sub) {
           setEtat('actif')
+          // Resynchronise l'abonnement du navigateur avec le serveur :
+          // évite un « no subscription » si la base ne connaît pas (ou plus) cet endpoint.
+          fetch('/api/push/subscribe', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ subscription: sub.toJSON() }),
+          }).catch(() => {})
           return
         }
         setEtat(Notification.permission === 'denied' ? 'refuse' : 'invite')

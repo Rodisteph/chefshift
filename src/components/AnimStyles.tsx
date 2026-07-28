@@ -1,4 +1,41 @@
+'use client'
+
+import { useEffect } from 'react'
+
 export default function AnimStyles() {
+  // Scroll-reveal : révèle les cartes au fil du défilement, sans modifier le markup.
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+
+    const cartes = Array.from(document.querySelectorAll<HTMLElement>('.cs-card'))
+    const aReveler: HTMLElement[] = []
+    const marge = window.innerHeight - 80
+
+    for (const el of cartes) {
+      // On ne masque que ce qui est sous la ligne de flottaison (évite tout flash au chargement)
+      if (el.getBoundingClientRect().top > marge) {
+        el.classList.add('cs-reveal')
+        aReveler.push(el)
+      }
+    }
+    if (aReveler.length === 0) return
+
+    const obs = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) {
+          if (e.isIntersecting) {
+            e.target.classList.add('cs-reveal-in')
+            obs.unobserve(e.target)
+          }
+        }
+      },
+      { threshold: 0.12, rootMargin: '0px 0px -8% 0px' }
+    )
+    aReveler.forEach((el) => obs.observe(el))
+    return () => obs.disconnect()
+  }, [])
+
   return (
     <style>{`
       /* Les polices sont préchargées dans le <head> (voir layout.tsx) — plus d'@import bloquant ici. */
@@ -47,6 +84,10 @@ export default function AnimStyles() {
       .cs-btn svg { transition: transform .25s cubic-bezier(.22,.8,.35,1); }
       .cs-btn:hover svg { transform: translateX(3px); }
 
+      /* ===== Révélation au défilement (scroll-reveal) ===== */
+      .cs-reveal { opacity: 0; transform: translateY(26px); transition: opacity .7s cubic-bezier(.22,.8,.35,1), transform .7s cubic-bezier(.22,.8,.35,1); }
+      .cs-reveal-in { opacity: 1; transform: translateY(0); }
+
       .cs-nav-link { transition: opacity .2s ease; }
       .cs-nav-link:hover { opacity: .72; }
 
@@ -85,6 +126,7 @@ export default function AnimStyles() {
       @media (prefers-reduced-motion: reduce) {
         html { scroll-behavior: auto; }
         .cs-fade, .cs-pop, .cs-heroimg { animation: none !important; opacity: 1 !important; transform: none !important; }
+        .cs-reveal, .cs-reveal-in { opacity: 1 !important; transform: none !important; transition: none !important; }
         .cs-card:hover, .cs-btn:hover, .cs-btn:hover svg, .cs-card:hover .cs-tile { transform: none !important; }
       }
     `}</style>

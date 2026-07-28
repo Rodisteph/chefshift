@@ -1,0 +1,75 @@
+/* ============================================================
+   Design tokens ChefShift
+   Ces variables alimentent tailwind.config.ts (hsl(var(--x))).
+   Volontairement SANS @tailwind base (Preflight) pour ne pas
+   réinitialiser les styles inline existants.
+   Palette : vert olive « cuisine » sur fond crème.
+   ============================================================ */
+
+:root {
+  --background: 72 20% 96%;   /* #f6f7f2 */
+  --foreground: 96 13% 14%;   /* #23281f */
+
+  --card: 0 0% 100%;
+  --card-foreground: 96 13% 14%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 96 13% 14%;
+
+  --primary: 96 17% 28%;      /* #46553c */
+  --primary-foreground: 0 0% 100%;
+
+  --secondary: 78 24% 92%;
+  --secondary-foreground: 96 17% 22%;
+
+  --muted: 78 14% 92%;
+  --muted-foreground: 100 7% 43%;
+
+  --accent: 84 30% 87%;       /* #cfdcba-ish */
+  --accent-foreground: 96 17% 22%;
+
+  --destructive: 0 72% 42%;   /* #b91c1c */
+  --destructive-foreground: 0 0% 100%;
+
+  --border: 80 16% 90%;       /* #e2e6d7 */
+  --input: 80 16% 90%;
+  --ring: 96 17% 40%;
+
+  --radius: 0.9rem;
+
+  color-scheme: light;
+}
+
+/* Thème sombre — activable via <html class="dark"> ou data-theme="dark".
+   Groundwork : opérationnel dès qu'un composant utilise les tokens
+   (bg-background, text-foreground, bg-primary, border-border, …). */
+:root.dark,
+:root[data-theme="dark"] {
+  --background: 96 14% 9%;
+  --foreground: 72 18% 92%;
+
+  --card: 96 12% 12%;
+  --card-foreground: 72 18% 92%;
+  --popover: 96 12% 12%;
+  --popover-foreground: 72 18% 92%;
+
+  --primary: 92 22% 62%;
+  --primary-foreground: 96 20% 10%;
+
+  --secondary: 96 8% 18%;
+  --secondary-foreground: 72 18% 92%;
+
+  --muted: 96 8% 18%;
+  --muted-foreground: 90 8% 62%;
+
+  --accent: 96 10% 22%;
+  --accent-foreground: 72 18% 92%;
+
+  --destructive: 0 62% 48%;
+  --destructive-foreground: 0 0% 100%;
+
+  --border: 96 8% 22%;
+  --input: 96 8% 22%;
+  --ring: 92 22% 55%;
+
+  color-scheme: dark;
+}
