@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import bcrypt from 'bcryptjs'
 import { prisma } from '@/lib/prisma'
 import { estAutorise } from '@/lib/ratelimit'
+import { emailBienvenueChef, emailBienvenueHoreca } from '@/lib/email'
 
 export async function POST(req: NextRequest) {
   try {
@@ -64,6 +65,15 @@ export async function POST(req: NextRequest) {
         `
       } catch {}
     }
+
+    // E-mail de bienvenue adapté au rôle (sans bloquer la réponse si l'envoi échoue)
+    try {
+      if (roleSecurise === 'HORECA') {
+        await emailBienvenueHoreca(emailPropre)
+      } else {
+        await emailBienvenueChef(emailPropre)
+      }
+    } catch {}
 
     return NextResponse.json({ message: 'User created', userId: user.id }, { status: 201 })
   } catch (error) {
