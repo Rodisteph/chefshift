@@ -26,7 +26,7 @@ function Halos() {
 
 // Photo de fond : la version en ligne (HERO_URL) est affichée en priorité ;
 // si elle ne charge pas, on essaie une éventuelle image locale public/hero.jpg ;
-// sinon seul le décor CSS reste — rien ne casse.
+// sinon seul le décor CSS reste, rien ne casse.
 function PhotoFond({ alt = '' }: { alt?: string }) {
   const [src, setSrc] = useState(HERO_URL)
   if (!src) return null
@@ -42,20 +42,10 @@ function PhotoFond({ alt = '' }: { alt?: string }) {
   )
 }
 
-type Avis = {
-  id: string
-  score: number
-  text: string
-  auteur: string
-  rol: string
-  datum: string
-}
-
 export default function HomePage() {
-  const { t, lang } = useT()
+  const { t } = useT()
   const [user, setUser] = useState<any>(null)
   const [charge, setCharge] = useState(false)
-  const [avis, setAvis] = useState<Avis[]>([])
 
   useEffect(() => {
     fetch('/api/auth/session')
@@ -63,19 +53,20 @@ export default function HomePage() {
       .then((s) => setUser(s?.user || null))
       .catch(() => {})
       .finally(() => setCharge(true))
-    fetch('/api/reviews/recent')
-      .then((r) => r.json())
-      .then((d) => setAvis(d.reviews || []))
-      .catch(() => {})
   }, [])
-
-  const locale = lang === 'en' ? 'en-GB' : 'nl-NL'
 
   const btnPrimaire: React.CSSProperties = {
     background: 'linear-gradient(135deg,#647a55,#46553c)', color: '#fff',
     padding: '15px 32px', borderRadius: 999, fontWeight: 700, fontSize: 15,
     textDecoration: 'none', boxShadow: '0 10px 24px -8px rgba(70,85,60,.55)',
   }
+
+  // Témoignages (restaurant, hôtel, chef) affichés dans la section "Wat gebruikers zeggen"
+  const temoignages = [
+    { q: t('testi1_q'), a: t('testi1_a'), r: t('testi1_r'), score: 5 },
+    { q: t('testi2_q'), a: t('testi2_a'), r: t('testi2_r'), score: 5 },
+    { q: t('testi3_q'), a: t('testi3_a'), r: t('testi3_r'), score: 4 },
+  ]
 
   return (
     <main style={{ fontFamily: FONT, background: '#f6f7f2', color: '#23281f', minHeight: '100vh' }}>
@@ -241,46 +232,42 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ===== Avis des utilisateurs (vrais avis de la plateforme) ===== */}
-      {avis.length > 0 && (
-        <section className="cs-sec2" style={{ padding: '0 24px 96px', maxWidth: 1200, margin: '0 auto' }}>
-          <div style={{ textAlign: 'center', maxWidth: 640, margin: '0 auto 58px' }}>
-            <span style={{ color: '#5f7052', fontWeight: 800, fontSize: 12.5, letterSpacing: 2.5, textTransform: 'uppercase' }}>{t('rev_over')}</span>
-            <h2 style={{ fontSize: 'clamp(30px, 4vw, 46px)', fontWeight: 800, letterSpacing: -1.4, margin: '12px 0 14px' }}>{t('rev_title')}</h2>
-            <p style={{ color: '#6b7268', fontSize: 16.5, lineHeight: 1.6 }}>{t('rev_sub')}</p>
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 26 }}>
-            {avis.map((a) => (
-              <div key={a.id} className="cs-card" style={{ background: '#fff', borderRadius: 20, border: '1px solid #eceee3', boxShadow: '0 3px 12px rgba(46,52,43,0.05)', padding: '30px 28px', display: 'flex', flexDirection: 'column', gap: 14 }}>
-                <span style={{ display: 'inline-flex', gap: 2 }}>
-                  {[1, 2, 3, 4, 5].map((i) => (
-                    <IcoStar key={i} s={15} plein={i <= a.score} />
-                  ))}
+      {/* ===== Wat gebruikers zeggen (témoignages) ===== */}
+      <section className="cs-sec2" style={{ padding: '0 24px 96px', maxWidth: 1200, margin: '0 auto' }}>
+        <div style={{ textAlign: 'center', maxWidth: 640, margin: '0 auto 58px' }}>
+          <span style={{ color: '#5f7052', fontWeight: 800, fontSize: 12.5, letterSpacing: 2.5, textTransform: 'uppercase' }}>{t('rev_over')}</span>
+          <h2 style={{ fontSize: 'clamp(30px, 4vw, 46px)', fontWeight: 800, letterSpacing: -1.4, margin: '12px 0 14px' }}>{t('rev_title')}</h2>
+          <p style={{ color: '#6b7268', fontSize: 16.5, lineHeight: 1.6 }}>{t('rev_sub')}</p>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 26 }}>
+          {temoignages.map((a) => (
+            <div key={a.a} className="cs-card" style={{ background: '#fff', borderRadius: 20, border: '1px solid #eceee3', boxShadow: '0 3px 12px rgba(46,52,43,0.05)', padding: '30px 28px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+              <span style={{ display: 'inline-flex', gap: 2 }}>
+                {[1, 2, 3, 4, 5].map((i) => (
+                  <IcoStar key={i} s={15} plein={i <= a.score} />
+                ))}
+              </span>
+              <p style={{ color: '#3c4436', fontSize: 15, lineHeight: 1.65, margin: 0, flex: 1 }}>
+                &ldquo;{a.q}&rdquo;
+              </p>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <span style={{
+                  width: 38, height: 38, borderRadius: 12, flexShrink: 0,
+                  background: 'linear-gradient(135deg, #eef2e6, #dfe7d1)',
+                  color: '#4c5e42', display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                  fontWeight: 800, fontSize: 15,
+                }}>
+                  {a.a.charAt(0).toUpperCase()}
                 </span>
-                <p style={{ color: '#3c4436', fontSize: 15, lineHeight: 1.65, margin: 0, flex: 1 }}>
-                  &ldquo;{a.text}&rdquo;
-                </p>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <span style={{
-                    width: 38, height: 38, borderRadius: 12, flexShrink: 0,
-                    background: 'linear-gradient(135deg, #eef2e6, #dfe7d1)',
-                    color: '#4c5e42', display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                    fontWeight: 800, fontSize: 15,
-                  }}>
-                    {a.auteur.charAt(0).toUpperCase()}
-                  </span>
-                  <div>
-                    <div style={{ fontWeight: 800, fontSize: 14, letterSpacing: -0.2 }}>{a.auteur}</div>
-                    <div style={{ color: '#9aa39b', fontSize: 12.5 }}>
-                      {new Date(a.datum).toLocaleDateString(locale, { month: 'long', year: 'numeric' })}
-                    </div>
-                  </div>
+                <div>
+                  <div style={{ fontWeight: 800, fontSize: 14, letterSpacing: -0.2 }}>{a.a}</div>
+                  <div style={{ color: '#9aa39b', fontSize: 12.5 }}>{a.r}</div>
                 </div>
               </div>
-            ))}
-          </div>
-        </section>
-      )}
+            </div>
+          ))}
+        </div>
+      </section>
 
       {/* ===== Bannière CTA ===== */}
       <section className="cs-sec2" style={{ padding: '0 24px 96px', maxWidth: 1200, margin: '0 auto' }}>
