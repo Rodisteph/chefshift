@@ -130,8 +130,10 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
     if (res.ok) {
       const data = await res.json()
       setShift(data.shift)
-      if (data.shift && !data.shift.eind && data.shift.endTime) {
-        setEindInvoer(new Date(data.shift.endTime).toTimeString().slice(0, 5))
+      // Préremplir le champ heure : heure déclarée par le chef si présente, sinon horaire prévu
+      if (data.shift) {
+        const source = data.shift.eind?.reportedEnd || data.shift.endTime
+        if (source) setEindInvoer(new Date(source).toTimeString().slice(0, 5))
       }
     }
     setChargement(false)
@@ -215,7 +217,11 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
 
   async function bevestigEind() {
     setBevestigEnvoi(true)
-    const res = await fetch(`/api/shifts/${id}/eindtijd/confirm`, { method: 'POST' })
+    const res = await fetch(`/api/shifts/${id}/eindtijd/confirm`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ endTime: eindInvoer }),
+    })
     if (res.ok) await charger()
     setBevestigEnvoi(false)
   }
@@ -601,6 +607,28 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
                     </div>
                   )
                 )}
+
+                {/* Admin : peut corriger l'heure même après confirmation */}
+                {role === 'ADMIN' && (
+                  <div style={{ marginTop: 18, borderTop: '1px solid hsl(var(--border))', paddingTop: 16, display: 'flex', gap: 12, alignItems: 'flex-end', flexWrap: 'wrap' }}>
+                    <div style={{ minWidth: 130 }}>
+                      <label style={etiquette}>{t('end_admin_edit')}</label>
+                      <input type="time" value={eindInvoer} onChange={(e) => setEindInvoer(e.target.value)} style={champ} />
+                    </div>
+                    <button
+                      onClick={bevestigEind}
+                      disabled={bevestigEnvoi || !eindInvoer}
+                      className="cs-btn"
+                      style={{
+                        background: 'none', border: '1.5px solid #dfe4d4', borderRadius: 12, padding: '11px 22px',
+                        fontWeight: 700, fontSize: 13.5, color: 'hsl(var(--foreground))', fontFamily: FONT,
+                        cursor: bevestigEnvoi || !eindInvoer ? 'not-allowed' : 'pointer',
+                      }}
+                    >
+                      {bevestigEnvoi ? t('form_loading') : t('end_confirm_btn')}
+                    </button>
+                  </div>
+                )}
               </>
             ) : role === 'KOK' ? (
               shift.eind ? (
@@ -634,36 +662,40 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
                 </>
               )
             ) : (
-              shift.eind ? (
-                <>
-                  <p style={{ color: 'hsl(var(--muted-foreground))', fontSize: 14, fontWeight: 600, marginTop: 0, marginBottom: 16 }}>{t('end_confirm_desc')}</p>
-                  <div style={{ display: 'flex', gap: 24, alignItems: 'center', flexWrap: 'wrap', marginBottom: 18 }}>
-                    <div>
-                      <div style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: 1.5, color: '#8a9a7b', fontWeight: 800, marginBottom: 4 }}>{t('end_planned')}</div>
-                      <div style={{ fontSize: 18, fontWeight: 800, color: 'hsl(var(--muted-foreground))' }}>{end}</div>
-                    </div>
+              // Restaurant (ou admin) : confirmer l'heure de fin — fonctionne même si le chef
+              // ne l'a pas déclarée (le restaurant la saisit / corrige lui-même).
+              <>
+                <p style={{ color: 'hsl(var(--muted-foreground))', fontSize: 14, fontWeight: 600, marginTop: 0, marginBottom: 16 }}>{t('end_confirm_self')}</p>
+                <div style={{ display: 'flex', gap: 24, alignItems: 'flex-end', flexWrap: 'wrap', marginBottom: 16 }}>
+                  <div>
+                    <div style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: 1.5, color: '#8a9a7b', fontWeight: 800, marginBottom: 4 }}>{t('end_planned')}</div>
+                    <div style={{ fontSize: 18, fontWeight: 800, color: 'hsl(var(--muted-foreground))' }}>{end}</div>
+                  </div>
+                  {shift.eind && (
                     <div>
                       <div style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: 1.5, color: '#8a9a7b', fontWeight: 800, marginBottom: 4 }}>{t('end_reported')}</div>
                       <div style={{ fontSize: 22, fontWeight: 800, color: '#4c5e42' }}>{eindGemeld}</div>
                     </div>
+                  )}
+                  <div style={{ minWidth: 130 }}>
+                    <label style={etiquette}>{t('end_final')}</label>
+                    <input type="time" value={eindInvoer} onChange={(e) => setEindInvoer(e.target.value)} required style={champ} />
                   </div>
-                  <button
-                    onClick={bevestigEind}
-                    disabled={bevestigEnvoi}
-                    className="cs-btn"
-                    style={{
-                      background: 'linear-gradient(135deg,#647a55,#46553c)', color: '#fff', border: 'none',
-                      borderRadius: 12, padding: '12px 24px', fontWeight: 700, fontSize: 14,
-                      cursor: bevestigEnvoi ? 'wait' : 'pointer', opacity: bevestigEnvoi ? 0.7 : 1, fontFamily: FONT,
-                      boxShadow: '0 8px 18px -8px rgba(70,85,60,.5)',
-                    }}
-                  >
-                    {bevestigEnvoi ? t('form_loading') : t('end_confirm_btn')}
-                  </button>
-                </>
-              ) : (
-                <p style={{ color: 'hsl(var(--muted-foreground))', fontSize: 14, fontWeight: 600, margin: 0 }}>{t('end_desc')}</p>
-              )
+                </div>
+                <button
+                  onClick={bevestigEind}
+                  disabled={bevestigEnvoi || !eindInvoer}
+                  className="cs-btn"
+                  style={{
+                    background: 'linear-gradient(135deg,#647a55,#46553c)', color: '#fff', border: 'none',
+                    borderRadius: 12, padding: '12px 24px', fontWeight: 700, fontSize: 14,
+                    cursor: bevestigEnvoi || !eindInvoer ? 'not-allowed' : 'pointer', opacity: bevestigEnvoi || !eindInvoer ? 0.7 : 1, fontFamily: FONT,
+                    boxShadow: '0 8px 18px -8px rgba(70,85,60,.5)',
+                  }}
+                >
+                  {bevestigEnvoi ? t('form_loading') : t('end_confirm_btn')}
+                </button>
+              </>
             )}
           </div>
         )}
@@ -768,7 +800,7 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
                         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, ...badgeSauge }}>
                           <Ico n="check" s={13} /> {t('chosen')}
                         </span>
-                        {!estPaye && role === 'HORECA' && (
+                        {!estPaye && !fini && (
                           <button
                             onClick={deselect}
                             disabled={choix === 'deselect'}

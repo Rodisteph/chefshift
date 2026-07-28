@@ -7,7 +7,8 @@ import { prisma } from '@/lib/prisma'
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
   try {
     const session = await getServerSession(authOptions)
-    if (!session || session.user.role !== 'HORECA') {
+    const isAdmin = session?.user?.role === 'ADMIN'
+    if (!session || (session.user.role !== 'HORECA' && !isAdmin)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
@@ -15,11 +16,16 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
       where: { id: params.id },
       include: { invoice: true },
     })
-    if (!shift || shift.horecaId !== session.user.id) {
+    if (!shift || (!isAdmin && shift.horecaId !== session.user.id)) {
       return NextResponse.json({ error: 'Not found' }, { status: 404 })
     }
     if (shift.invoice?.status === 'PAID') {
       return NextResponse.json({ error: 'Already paid' }, { status: 400 })
+    }
+    // On ne peut plus désélectionner le chef d'un shift passé (sauf admin)
+    const aujourdhui = new Date(new Date().toDateString())
+    if (!isAdmin && new Date(shift.date) < aujourdhui) {
+      return NextResponse.json({ error: 'Shift already passed' }, { status: 400 })
     }
 
     const updated = await prisma.shift.update({
