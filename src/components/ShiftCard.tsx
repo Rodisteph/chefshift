@@ -116,20 +116,22 @@ export default function ShiftCard({
           )}
         </p>
       </div>
-      <div className="cs-end" style={{ textAlign: 'right' }}>
-        <div style={{ fontSize: 20, fontWeight: 800, color: '#4c5e42', letterSpacing: -0.5 }}>€{shift.hourlyRate}{parHeure}</div>
-        {shift.totalAmount != null && (
-          <div style={{ fontSize: 12.5, color: 'hsl(var(--muted-foreground))', fontWeight: 600 }}>
-            {t('total')} : €{Math.round(shift.totalAmount)}
-          </div>
-        )}
+      <div className="cs-end" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 7 }}>
+        <div>
+          <div style={{ fontSize: 20, fontWeight: 800, color: '#4c5e42', letterSpacing: -0.5 }}>€{shift.hourlyRate}{parHeure}</div>
+          {shift.totalAmount != null && (
+            <div style={{ fontSize: 12.5, color: 'hsl(var(--muted-foreground))', fontWeight: 600 }}>
+              {t('total')} : €{Math.round(shift.totalAmount)}
+            </div>
+          )}
+        </div>
         {shift._count && (
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 12.5, color: 'hsl(var(--muted-foreground))', marginTop: 5 }}>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 12.5, color: 'hsl(var(--muted-foreground))' }}>
             <Ico n="users" s={13} /> {shift._count.applications} {t('applications')}
           </div>
         )}
         {showApply && (
-          <div style={{ marginTop: 9 }}>
+          <div>
             {etat === 'ok' ? (
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: '#4c5e42', fontWeight: 700, fontSize: 13.5 }}>
                 <Ico n="check" s={15} /> {t('applied')}
@@ -153,7 +155,7 @@ export default function ShiftCard({
           </div>
         )}
         {detailHref && (
-          <div style={{ marginTop: 8, display: 'inline-flex', alignItems: 'center', gap: 5, color: '#5f7052', fontWeight: 700, fontSize: 13 }}>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 5, color: '#5f7052', fontWeight: 700, fontSize: 13 }}>
             {showApply ? t('details') : shift.status === 'CONFIRMED' ? t('status_confirmed') : t('choose')} <Ico n="arrow" s={13} />
           </div>
         )}

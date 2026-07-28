@@ -70,6 +70,8 @@ type ShiftDetail = {
   invoice: { status: string; amountInclVat: number } | null
   applications: Application[]
   eind: Eind | null
+  horecaReviewed: boolean
+  kokReviewed: boolean
 }
 
 function age(date: string): number {
@@ -117,6 +119,9 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
   const [eindInvoer, setEindInvoer] = useState('')
   const [eindEnvoi, setEindEnvoi] = useState(false)
   const [bevestigEnvoi, setBevestigEnvoi] = useState(false)
+  const [note, setNote] = useState(0)
+  const [avis, setAvis] = useState('')
+  const [avisEnvoi, setAvisEnvoi] = useState(false)
   const locale = lang === 'en' ? 'en-GB' : 'nl-NL'
   const parHeure = lang === 'en' ? '/hr' : '/u'
 
@@ -215,6 +220,18 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
     setBevestigEnvoi(false)
   }
 
+  async function envoyerAvis() {
+    if (!note) return
+    setAvisEnvoi(true)
+    const res = await fetch(`/api/shifts/${id}/review`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ score: note, text: avis }),
+    })
+    if (res.ok) await charger()
+    setAvisEnvoi(false)
+  }
+
   function demarrerModif() {
     if (!shift) return
     setETitle(shift.title)
@@ -293,6 +310,14 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
   const aujourdhui = new Date(new Date().toDateString())
   const fini = new Date(shift.date) < aujourdhui
   const adresse = [shift.locationStreet, shift.locationPostal, shift.locationCity].filter(Boolean).join(', ')
+
+  // Montant estimé affiché tant que la facture n'est pas créée :
+  // heures réellement travaillées si l'heure de fin est déclarée, sinon horaire prévu, +9% btw.
+  const enMinutes = (iso: string) => { const d = new Date(iso); return d.getHours() * 60 + d.getMinutes() }
+  let dureeMin = (shift.eind ? enMinutes(shift.eind.reportedEnd) : enMinutes(shift.endTime)) - enMinutes(shift.startTime)
+  if (dureeMin <= 0) dureeMin += 1440
+  const heuresEstimees = Math.max(1, dureeMin / 60 - 0.5)
+  const montantEstime = shift.hourlyRate * heuresEstimees * 1.09
   const carte: React.CSSProperties = {
     background: 'hsl(var(--card))', borderRadius: 20, border: '1px solid #eceee3',
     boxShadow: '0 3px 12px rgba(46,52,43,0.05)', padding: 26,
@@ -518,9 +543,60 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
             </div>
 
             {eindBevestigd ? (
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: '#dcfce7', color: '#15803d', fontSize: 13.5, fontWeight: 800, padding: '8px 16px', borderRadius: 999 }}>
-                <Ico n="check" s={14} /> {t('end_confirmed')} · {eindGemeld}
-              </span>
+              <>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: '#dcfce7', color: '#15803d', fontSize: 13.5, fontWeight: 800, padding: '8px 16px', borderRadius: 999 }}>
+                  <Ico n="check" s={14} /> {t('end_confirmed')} · {eindGemeld}
+                </span>
+
+                {/* ===== Notation du chef par le restaurant ===== */}
+                {role === 'HORECA' && (
+                  shift.horecaReviewed ? (
+                    <p style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#15803d', fontWeight: 700, fontSize: 13.5, marginTop: 16, marginBottom: 0 }}>
+                      <Ico n="check" s={15} /> {t('review_done')}
+                    </p>
+                  ) : (
+                    <div style={{ marginTop: 20, borderTop: '1px solid hsl(var(--border))', paddingTop: 18 }}>
+                      <div style={{ fontWeight: 800, fontSize: 15.5, letterSpacing: -0.3, marginBottom: 3 }}>{t('review_title')}</div>
+                      <p style={{ color: 'hsl(var(--muted-foreground))', fontSize: 13.5, fontWeight: 600, marginTop: 0, marginBottom: 12 }}>{t('review_desc')}</p>
+                      <div style={{ display: 'flex', gap: 6, marginBottom: 14 }}>
+                        {[1, 2, 3, 4, 5].map((i) => (
+                          <button
+                            key={i}
+                            type="button"
+                            onClick={() => setNote(i)}
+                            aria-label={`${i} / 5`}
+                            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2, lineHeight: 0 }}
+                          >
+                            <IcoStar s={28} plein={i <= note} />
+                          </button>
+                        ))}
+                      </div>
+                      <textarea
+                        value={avis}
+                        onChange={(e) => setAvis(e.target.value)}
+                        placeholder={t('review_placeholder')}
+                        rows={3}
+                        style={{ ...champ, resize: 'vertical' }}
+                      />
+                      <div style={{ marginTop: 12 }}>
+                        <button
+                          onClick={envoyerAvis}
+                          disabled={avisEnvoi || !note}
+                          className="cs-btn"
+                          style={{
+                            background: 'linear-gradient(135deg,#647a55,#46553c)', color: '#fff', border: 'none',
+                            borderRadius: 12, padding: '11px 26px', fontWeight: 700, fontSize: 14, fontFamily: FONT,
+                            cursor: avisEnvoi || !note ? 'not-allowed' : 'pointer', opacity: avisEnvoi || !note ? 0.6 : 1,
+                            boxShadow: '0 8px 18px -8px rgba(70,85,60,.5)',
+                          }}
+                        >
+                          {avisEnvoi ? t('form_loading') : t('review_submit')}
+                        </button>
+                      </div>
+                    </div>
+                  )
+                )}
+              </>
             ) : role === 'KOK' ? (
               shift.eind ? (
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
@@ -595,7 +671,7 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
                 <>
                   <div style={{ fontSize: 14, color: 'hsl(var(--muted-foreground))', fontWeight: 600 }}>{t('pay_to_pay')}</div>
                   <div style={{ fontSize: 22, fontWeight: 800 }}>
-                    €{shift.invoice ? shift.invoice.amountInclVat.toFixed(2) : '...'}{' '}
+                    €{(shift.invoice ? shift.invoice.amountInclVat : montantEstime).toFixed(2)}{' '}
                     <span style={{ fontSize: 13, color: 'hsl(var(--muted-foreground))', fontWeight: 600 }}>{t('pay_incl_vat')}</span>
                   </div>
                 </>
