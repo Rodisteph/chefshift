@@ -25,11 +25,11 @@ export async function POST() {
       SELECT endpoint, p256dh, auth FROM kok_push WHERE user_id = ${session.user.id}
     `
     if (subs.length === 0) {
-      return NextResponse.json({ ok: false, error: 'no_subscription' })
+      return NextResponse.json({ ok: false, code: 'no_subscription' })
     }
 
     let envoyes = 0
-    const erreurs: string[] = []
+    let perimes = 0
     for (const s of subs) {
       try {
         await webpush.sendNotification(
@@ -42,14 +42,20 @@ export async function POST() {
         )
         envoyes++
       } catch (e: any) {
-        erreurs.push(`[${e?.statusCode || '?'}] ${e?.message || 'push error'}`)
+        // 404 / 410 = abonnement périmé côté service push : on le retire de la base
         if (e?.statusCode === 404 || e?.statusCode === 410) {
+          perimes++
           await prisma.$executeRaw`DELETE FROM kok_push WHERE endpoint = ${s.endpoint}`
         }
       }
     }
 
-    return NextResponse.json({ ok: envoyes > 0, envoyes, abonnements: subs.length, erreur: erreurs[0] || null })
+    if (envoyes > 0) {
+      return NextResponse.json({ ok: true, code: 'ok', envoyes })
+    }
+    // Tous les abonnements de cet appareil ont expiré → le client doit se réabonner
+    const code = perimes > 0 ? 'stale' : 'error'
+    return NextResponse.json({ ok: false, code })
   } catch (error: any) {
     return NextResponse.json(
       { ok: false, error: error?.message || 'Internal server error' },
