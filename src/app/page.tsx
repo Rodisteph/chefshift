@@ -6,8 +6,36 @@ import AnimStyles from '@/components/AnimStyles'
 import { Ico, IcoTile, IcoStar } from '@/components/Icons'
 
 const FONT = '"Sora","Inter","Helvetica Neue",Arial,sans-serif'
-const hero = 'https://kimi-web-img.moonshot.cn/img/plus.unsplash.com/035b02474f33aabd5af6cf4d2ff2a0971fc1b816'
-const CONTACT_EMAIL = 'rdrgbouabida@gmail.com'
+const CONTACT_EMAIL = 'info@chefshift.nl'
+
+// Décor du hero : halos lumineux animés sur dégradé olive (aucune image externe)
+function Halos() {
+  return (
+    <>
+      <span className="cs-halo cs-halo1" aria-hidden="true" />
+      <span className="cs-halo cs-halo2" aria-hidden="true" />
+      <span className="cs-halo cs-halo3" aria-hidden="true" />
+    </>
+  )
+}
+
+// Photo de fond optionnelle : déposer une image dans public/hero.jpg et elle s'affiche
+// automatiquement (fondu doux par-dessus le dégradé). Si le fichier n'existe pas,
+// l'image se retire d'elle-même et seul le décor CSS reste — rien ne casse.
+function PhotoFond({ alt = '' }: { alt?: string }) {
+  const [ok, setOk] = useState(true)
+  if (!ok) return null
+  return (
+    <img
+      src="/hero.jpg"
+      alt={alt}
+      aria-hidden={alt ? undefined : true}
+      onError={() => setOk(false)}
+      className="cs-heroimg"
+      style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
+    />
+  )
+}
 
 type Avis = {
   id: string
@@ -36,12 +64,13 @@ export default function HomePage() {
       .catch(() => {})
   }, [])
 
+  const locale = lang === 'en' ? 'en-GB' : 'nl-NL'
+
   const btnPrimaire: React.CSSProperties = {
     background: 'linear-gradient(135deg,#647a55,#46553c)', color: '#fff',
     padding: '15px 32px', borderRadius: 999, fontWeight: 700, fontSize: 15,
     textDecoration: 'none', boxShadow: '0 10px 24px -8px rgba(70,85,60,.55)',
   }
-  const locale = lang === 'en' ? 'en-GB' : 'nl-NL'
 
   return (
     <main style={{ fontFamily: FONT, background: '#f6f7f2', color: '#23281f', minHeight: '100vh' }}>
@@ -87,11 +116,21 @@ export default function HomePage() {
         </div>
       </nav>
 
-      {/* ===== Hero ===== */}
-      <header style={{ position: 'relative', height: '100vh', minHeight: 640, display: 'flex', alignItems: 'flex-end', overflow: 'hidden' }}>
-        <img src={hero} alt="Chef aan het werk in een professionele keuken" className="cs-heroimg"
-          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
-        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(24,30,21,0.72), rgba(24,30,21,0.10) 55%)' }} />
+      {/* ===== Hero : décor CSS + photo locale optionnelle (public/hero.jpg) ===== */}
+      <header style={{
+        position: 'relative', height: '100vh', minHeight: 640, display: 'flex', alignItems: 'flex-end', overflow: 'hidden',
+        background: 'linear-gradient(160deg, #1c2317 0%, #2b3522 48%, #46553c 100%)',
+      }}>
+        <PhotoFond alt="ChefShift" />
+        <Halos />
+        {/* Grille pointillée subtile */}
+        <div aria-hidden="true" style={{
+          position: 'absolute', inset: 0, opacity: 0.5,
+          backgroundImage: 'radial-gradient(rgba(207,220,186,0.13) 1px, transparent 1px)',
+          backgroundSize: '34px 34px',
+        }} />
+        {/* Voile de lisibilité : garantit le contraste du texte blanc, avec ou sans photo */}
+        <div aria-hidden="true" style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(24,30,21,0.80) 0%, rgba(24,30,21,0.28) 48%, rgba(24,30,21,0.42) 100%)' }} />
         <div className="cs-hero-pad" style={{ position: 'relative', zIndex: 2, width: '100%', maxWidth: 1200, margin: '0 auto', padding: '0 24px 92px', color: '#fff' }}>
           <span className="cs-fade" style={{
             display: 'inline-flex', alignItems: 'center', gap: 8,
@@ -210,9 +249,18 @@ export default function HomePage() {
 
       {/* ===== Bannière CTA ===== */}
       <section className="cs-sec2" style={{ padding: '0 24px 96px', maxWidth: 1200, margin: '0 auto' }}>
-        <div className="cs-card" style={{ position: 'relative', borderRadius: 28, overflow: 'hidden', padding: '84px 40px', textAlign: 'center', color: '#fff', border: '1px solid #eceee3' }}>
-          <img src={hero} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
-          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(135deg, rgba(36,44,31,0.82), rgba(70,85,60,0.72))' }} />
+        <div className="cs-card" style={{
+          position: 'relative', borderRadius: 28, overflow: 'hidden', padding: '84px 40px', textAlign: 'center', color: '#fff',
+          border: '1px solid #eceee3', background: 'linear-gradient(135deg, #242c1f 0%, #38452c 55%, #55684a 100%)',
+        }}>
+          <PhotoFond />
+          <div aria-hidden="true" style={{ position: 'absolute', inset: 0, background: 'linear-gradient(135deg, rgba(36,44,31,0.78), rgba(70,85,60,0.68))' }} />
+          <Halos />
+          <div aria-hidden="true" style={{
+            position: 'absolute', inset: 0, opacity: 0.45,
+            backgroundImage: 'radial-gradient(rgba(207,220,186,0.14) 1px, transparent 1px)',
+            backgroundSize: '30px 30px',
+          }} />
           <div style={{ position: 'relative', zIndex: 2 }}>
             <h2 style={{ fontSize: 'clamp(28px, 4vw, 44px)', fontWeight: 800, letterSpacing: -1.2, marginBottom: 14 }}>{t('banner_title')}</h2>
             <p style={{ opacity: 0.9, marginBottom: 30, fontSize: 16.5 }}>{t('banner_sub')}</p>
