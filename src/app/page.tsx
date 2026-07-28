@@ -3,11 +3,11 @@
 import { useEffect, useState } from 'react'
 import { useT, LangToggle } from '@/lib/i18n'
 import AnimStyles from '@/components/AnimStyles'
-import { Ico, IcoTile } from '@/components/Icons'
+import { Ico, IcoTile, IcoStar } from '@/components/Icons'
 
 const FONT = '"Sora","Inter","Helvetica Neue",Arial,sans-serif'
 const hero = 'https://kimi-web-img.moonshot.cn/img/plus.unsplash.com/035b02474f33aabd5af6cf4d2ff2a0971fc1b816'
-const CONTACT_EMAIL = process.env.NEXT_PUBLIC_CONTACT_EMAIL || 'info@chefshift.nl'
+const CONTACT_EMAIL = 'info@chefshift.nl'
 
 export default function HomePage() {
   const { t } = useT()
@@ -147,6 +147,32 @@ export default function HomePage() {
               <div style={{ marginBottom: 18 }}><IcoTile n={c.icon} s={21} /></div>
               <h3 style={{ fontSize: 18.5, fontWeight: 800, marginBottom: 9, letterSpacing: -0.3 }}>{c.t}</h3>
               <p style={{ color: '#6b7268', fontSize: 14.5, lineHeight: 1.6 }}>{c.d}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ===== Témoignages (avis sur la plateforme) ===== */}
+      <section className="cs-sec2" style={{ padding: '0 24px 96px', maxWidth: 1200, margin: '0 auto' }}>
+        <div style={{ textAlign: 'center', maxWidth: 640, margin: '0 auto 58px' }}>
+          <span style={{ color: '#5f7052', fontWeight: 800, fontSize: 12.5, letterSpacing: 2.5, textTransform: 'uppercase' }}>{t('testi_over')}</span>
+          <h2 style={{ fontSize: 'clamp(30px, 4vw, 46px)', fontWeight: 800, letterSpacing: -1.4, margin: '12px 0 14px' }}>{t('testi_title')}</h2>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 26 }}>
+          {[
+            { q: t('testi1_q'), a: t('testi1_a'), r: t('testi1_r') },
+            { q: t('testi2_q'), a: t('testi2_a'), r: t('testi2_r') },
+            { q: t('testi3_q'), a: t('testi3_a'), r: t('testi3_r') },
+          ].map((c, i) => (
+            <div key={i} className="cs-card" style={{ background: '#fff', borderRadius: 20, border: '1px solid #eceee3', boxShadow: '0 3px 12px rgba(46,52,43,0.05)', padding: '30px 28px', display: 'flex', flexDirection: 'column' }}>
+              <span style={{ display: 'inline-flex', gap: 2, marginBottom: 14 }}>
+                {[1, 2, 3, 4, 5].map((s) => <IcoStar key={s} s={16} plein />)}
+              </span>
+              <p style={{ color: '#3c4436', fontSize: 15.5, lineHeight: 1.6, fontWeight: 500, marginBottom: 20, flex: 1 }}>“{c.q}”</p>
+              <div>
+                <div style={{ fontWeight: 800, fontSize: 14.5, letterSpacing: -0.2 }}>{c.a}</div>
+                <div style={{ color: '#6b7268', fontSize: 13 }}>{c.r}</div>
+              </div>
             </div>
           ))}
         </div>
