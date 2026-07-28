@@ -454,7 +454,7 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
                 {shift.horeca.horecaProfile?.companyName && (
                   <p style={{ marginTop: 10, fontWeight: 700, fontSize: 15 }}>
                     {shift.horeca.horecaProfile.companyName}
-                    {shift.horeca.horecaProfile.kvkNumber && (
+                    {shift.horeca.horecaProfile.kvkNumber && !fini && (
                       <span style={{ color: 'hsl(var(--muted-foreground))', fontWeight: 500, fontSize: 13 }}> · KvK {shift.horeca.horecaProfile.kvkNumber}</span>
                     )}
                   </p>
@@ -472,7 +472,7 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
                     <Ico n="card" s={13} /> {t('pay_paid_badge')}
                   </span>
                 )}
-                {role === 'KOK' && shift.status === 'OPEN' && (
+                {role === 'KOK' && shift.status === 'OPEN' && !fini && (
                   <div style={{ marginTop: 10 }}>
                     {dejaPostule ? (
                       <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: '#4c5e42', fontWeight: 700, fontSize: 13.5 }}>
@@ -494,6 +494,11 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
                         {postulation ? t('apply_sending') : t('apply_btn')}
                       </button>
                     )}
+                  </div>
+                )}
+                {role === 'KOK' && shift.status === 'OPEN' && fini && (
+                  <div style={{ marginTop: 10, color: 'hsl(var(--muted-foreground))', fontWeight: 700, fontSize: 13.5 }}>
+                    {t('shift_expired')}
                   </div>
                 )}
                 {peutModifier && (

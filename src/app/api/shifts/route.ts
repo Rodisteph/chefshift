@@ -30,7 +30,11 @@ export async function GET(req: NextRequest) {
     }
 
     if (session.user.role === 'HORECA') where.horecaId = session.user.id
-    if (session.user.role === 'KOK') where.status = 'OPEN'
+    if (session.user.role === 'KOK') {
+      // Shifts disponibles : ouverts ET dont la date n'est pas passée
+      where.status = 'OPEN'
+      where.date = { gte: new Date(new Date().toDateString()) }
+    }
     if (searchParams.get('status')) where.status = searchParams.get('status')?.toUpperCase()
 
     const shifts = await prisma.shift.findMany({
