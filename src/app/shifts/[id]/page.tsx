@@ -253,7 +253,7 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
     setEDate(shift.date.slice(0, 10))
     setEStart(versChamp(shift.startTime))
     setEEnd(versChamp(shift.endTime))
-    setERate(String(shift.hourlyRate))
+    setERate(String(shift.hourlyRate / 100)) // stocké en centimes
     setEStreet(shift.locationStreet || '')
     setEPostal(shift.locationPostal || '')
     setECity(shift.locationCity || '')
@@ -352,7 +352,7 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
   let dureeMin = (shift.eind ? minutesUTC(shift.eind.reportedEnd) : minutesUTC(shift.endTime)) - minutesUTC(shift.startTime)
   if (dureeMin <= 0) dureeMin += 1440
   const heuresEstimees = Math.max(1, dureeMin / 60 - 0.5)
-  const montantEstime = shift.hourlyRate * heuresEstimees * 1.21
+  const montantEstime = (shift.hourlyRate / 100) * heuresEstimees * 1.21 // tarif en centimes
   const carte: React.CSSProperties = {
     background: 'hsl(var(--card))', borderRadius: 20, border: '1px solid #eceee3',
     boxShadow: '0 3px 12px rgba(46,52,43,0.05)', padding: 26,
@@ -506,7 +506,7 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
                 )}
               </div>
               <div className="cs-end" style={{ textAlign: 'right' }}>
-                <div style={{ fontSize: 27, fontWeight: 800, color: '#4c5e42', letterSpacing: -1 }}>€{shift.hourlyRate}{parHeure}</div>
+                <div style={{ fontSize: 27, fontWeight: 800, color: '#4c5e42', letterSpacing: -1 }}>€{shift.hourlyRate / 100}{parHeure}</div>
                 {(shift.status === 'CONFIRMED' || shift.status === 'COMPLETED') && (
                   <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, ...badgeSauge }}>
                     <Ico n="check" s={13} /> {t('shift_confirmed')}
@@ -752,7 +752,7 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
                 <>
                   <div style={{ fontSize: 14, color: 'hsl(var(--muted-foreground))', fontWeight: 600 }}>{t('pay_to_pay')}</div>
                   <div style={{ fontSize: 22, fontWeight: 800 }}>
-                    €{(shift.invoice ? shift.invoice.amountInclVat : montantEstime).toFixed(2)}{' '}
+                    €{(shift.invoice ? shift.invoice.amountInclVat / 100 : montantEstime).toFixed(2)}{' '}
                     <span style={{ fontSize: 13, color: 'hsl(var(--muted-foreground))', fontWeight: 600 }}>{t('pay_incl_vat')}</span>
                   </div>
                 </>
