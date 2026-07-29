@@ -1,4 +1,6 @@
 import type { Metadata } from 'next'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 
 // Métadonnées uniques par shift (titre + description avec ville et tarif)
@@ -22,6 +24,7 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
 }
 
 // Layout serveur : injecte le schema JobPosting (Google for Jobs) dans le HTML
+// et affiche un bandeau de téléchargement de facture quand la shift est payée
 export default async function ShiftLayout({
   children,
   params,
@@ -30,6 +33,8 @@ export default async function ShiftLayout({
   params: { id: string }
 }) {
   let jsonLd: Record<string, any> | null = null
+  let factuurId: string | null = null
+
   try {
     const s = await prisma.shift.findUnique({
       where: { id: params.id },
@@ -76,9 +81,39 @@ export default async function ShiftLayout({
       }
     }
   } catch {}
+
+  // Bandeau facture : visible pour la horecazaak propriétaire ou l'admin, quand la facture est payée
+  try {
+    const session = await getServerSession(authOptions)
+    if (session && (session.user.role === 'HORECA' || session.user.role === 'ADMIN')) {
+      const inv = await prisma.invoice.findUnique({
+        where: { shiftId: params.id },
+        select: { id: true, status: true, horecaId: true },
+      })
+      if (inv && inv.status === 'PAID' && (inv.horecaId === session.user.id || session.user.role === 'ADMIN')) {
+        factuurId = inv.id
+      }
+    }
+  } catch {}
+
   return (
     <>
       {jsonLd && <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />}
+      {factuurId && (
+        <a
+          href={`/api/invoices/${factuurId}/pdf`}
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+            background: '#eef2e6', color: '#3f5a34', textDecoration: 'none',
+            fontFamily: '"Sora","Inter",Arial,sans-serif', fontWeight: 700, fontSize: 14,
+            padding: '12px 20px', borderBottom: '1px solid #dfe4d4',
+          }}
+        >
+          ✓ Betaald · Factuur downloaden (PDF)
+        </a>
+      )}
       {children}
     </>
   )
