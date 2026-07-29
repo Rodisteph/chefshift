@@ -1,7 +1,31 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { emailBetalingOntvangen } from '@/lib/email'
+import { factuurNummer, commissieNummer } from '@/lib/factuur'
 import Stripe from 'stripe'
+
+// Tables de numérotation : séries continues, sans trou, attribuées en transaction
+async function ensureNummerTables() {
+  await prisma.$executeRaw`
+    CREATE TABLE IF NOT EXISTS kok_factuur_seq (
+      kok_id TEXT NOT NULL,
+      jaar INT NOT NULL,
+      laatste_seq INT NOT NULL DEFAULT 0,
+      PRIMARY KEY (kok_id, jaar)
+    )`
+  await prisma.$executeRaw`
+    CREATE TABLE IF NOT EXISTS platform_factuur_seq (
+      jaar INT PRIMARY KEY,
+      laatste_seq INT NOT NULL DEFAULT 0
+    )`
+  await prisma.$executeRaw`
+    CREATE TABLE IF NOT EXISTS commissie_factuur (
+      invoice_id TEXT PRIMARY KEY,
+      nummer TEXT NOT NULL,
+      jaar INT NOT NULL,
+      seq INT NOT NULL
+    )`
+}
 
 // Stripe appelle cette route après un paiement réussi
 export async function POST(req: NextRequest) {
@@ -27,20 +51,50 @@ export async function POST(req: NextRequest) {
     const invoiceId = s.metadata?.invoiceId
     if (invoiceId) {
       try {
-        // Numéro de facture officiel séquentiel : CS-2026-0001, CS-2026-0002...
+        await ensureNummerTables()
         const jaar = new Date().getFullYear()
-        const bestaand = await prisma.invoice.findUnique({ where: { id: invoiceId }, select: { invoiceNumber: true } })
-        let invoiceNumber = bestaand?.invoiceNumber || null
-        if (!invoiceNumber) {
-          const aantal = await prisma.invoice.count({ where: { invoiceNumber: { not: null } } })
-          invoiceNumber = `CS-${jaar}-${String(aantal + 1).padStart(4, '0')}`
-        }
 
-        const invoice = await prisma.invoice.update({
-          where: { id: invoiceId },
-          data: { status: 'PAID', paidAt: new Date(), invoiceNumber },
-          include: { shift: true },
+        // Transaction : passage en PAID + attribution des deux numéros de façon atomique
+        const invoice = await prisma.$transaction(async (tx) => {
+          const inv = await tx.invoice.update({
+            where: { id: invoiceId },
+            data: { status: 'PAID', paidAt: new Date() },
+            include: { shift: true },
+          })
+
+          // Document A : série continue PAR CHEF, sans trou (CS-{année}-{chefId}-{seq:04d})
+          if (!inv.invoiceNumber && inv.shift.chosenKokId) {
+            const kokId = inv.shift.chosenKokId
+            const rows: { laatste_seq: number }[] = await tx.$queryRaw`
+              INSERT INTO kok_factuur_seq (kok_id, jaar, laatste_seq)
+              VALUES (${kokId}, ${jaar}, 1)
+              ON CONFLICT (kok_id, jaar)
+              DO UPDATE SET laatste_seq = kok_factuur_seq.laatste_seq + 1
+              RETURNING laatste_seq`
+            const nummer = factuurNummer(jaar, kokId, rows[0].laatste_seq)
+            await tx.invoice.update({ where: { id: inv.id }, data: { invoiceNumber: nummer } })
+            inv.invoiceNumber = nummer
+          }
+
+          // Document B : série plateforme distincte (CM-{année}-{seq:04d})
+          const bestaandB: { nummer: string }[] = await tx.$queryRaw`
+            SELECT nummer FROM commissie_factuur WHERE invoice_id = ${inv.id} LIMIT 1`
+          if (bestaandB.length === 0) {
+            const rowsB: { laatste_seq: number }[] = await tx.$queryRaw`
+              INSERT INTO platform_factuur_seq (jaar, laatste_seq)
+              VALUES (${jaar}, 1)
+              ON CONFLICT (jaar)
+              DO UPDATE SET laatste_seq = platform_factuur_seq.laatste_seq + 1
+              RETURNING laatste_seq`
+            await tx.$executeRaw`
+              INSERT INTO commissie_factuur (invoice_id, nummer, jaar, seq)
+              VALUES (${inv.id}, ${commissieNummer(jaar, rowsB[0].laatste_seq)}, ${jaar}, ${rowsB[0].laatste_seq})
+              ON CONFLICT (invoice_id) DO NOTHING`
+          }
+
+          return inv
         })
+
         if (invoice.shift.chosenKokId) {
           await prisma.notification.create({
             data: {

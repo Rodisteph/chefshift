@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import {
+  berekenUrenMinuten, berekenBedragen,
+  euroNaarCenten, centenNaarEuro, minutenVanTijd,
+} from '@/lib/factuur'
 
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
   try {
@@ -21,24 +25,40 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
       data: { status: 'COMPLETED' }
     })
 
-    // Commission plateforme : 15% du montant TTC
-    const platformFee = (shift.totalAmount || 0) * 0.15
-    const kokPayout = (shift.totalAmount || 0) - platformFee
-    const vatAmount = (shift.totalAmount || 0) * (shift.vatRate / 100)
-    const count = await prisma.invoice.count()
+    // ===== Calcul en centimes entiers : heures dérivées des horaires (fin réelle si connue) =====
+    const startMin = minutenVanTijd(shift.startTime)
+    let endMin = minutenVanTijd(shift.endTime)
+    try {
+      const fins: { reported_end: Date }[] = await prisma.$queryRaw`
+        SELECT reported_end FROM shift_end WHERE shift_id = ${shiftId} LIMIT 1
+      `
+      if (fins.length > 0) endMin = minutenVanTijd(fins[0].reported_end)
+    } catch {}
 
-    await prisma.invoice.create({
-      data: {
+    const urenMinuten = berekenUrenMinuten(startMin, endMin, shift.breakMinutes)
+    const b = berekenBedragen(urenMinuten, euroNaarCenten(shift.hourlyRate))
+
+    // Le numéro de facture n'est PAS attribué ici : il l'est au paiement (webhook Stripe),
+    // de façon transactionnelle, sans trou dans la série.
+    await prisma.invoice.upsert({
+      where: { shiftId },
+      create: {
         shiftId,
         horecaId: shift.horecaId,
-        amountExclVat: shift.totalAmount || 0,
-        vatAmount,
-        amountInclVat: (shift.totalAmount || 0) + vatAmount,
-        platformFee,
-        kokPayout,
+        amountExclVat: centenNaarEuro(b.exclCenten),
+        vatAmount: centenNaarEuro(b.btwCenten),
+        amountInclVat: centenNaarEuro(b.inclCenten),
+        platformFee: centenNaarEuro(b.commissieCenten),
+        kokPayout: centenNaarEuro(b.payoutCenten),
         status: 'PENDING',
-        invoiceNumber: `CHEF-${new Date().getFullYear()}-${String(count + 1).padStart(5, '0')}`,
-      }
+      },
+      update: {
+        amountExclVat: centenNaarEuro(b.exclCenten),
+        vatAmount: centenNaarEuro(b.btwCenten),
+        amountInclVat: centenNaarEuro(b.inclCenten),
+        platformFee: centenNaarEuro(b.commissieCenten),
+        kokPayout: centenNaarEuro(b.payoutCenten),
+      },
     })
 
     if (shift.chosenKokId) {

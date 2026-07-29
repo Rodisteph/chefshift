@@ -2,6 +2,11 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import {
+  CHEF_VAT_RATE,
+  berekenUrenMinuten, berekenBedragen,
+  euroNaarCenten, centenNaarEuro, minutenVanTijd,
+} from '@/lib/factuur'
 import Stripe from 'stripe'
 
 async function ensureStripeTable() {
@@ -59,11 +64,8 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
       return NextResponse.json({ error: 'End time not confirmed yet' }, { status: 400 })
     }
 
-    // ===== Heures "wall-clock" (composantes UTC), sans conversion de fuseau =====
-    const st = new Date(shift.startTime)
-    const startMin = st.getUTCHours() * 60 + st.getUTCMinutes()
-
-    // ===== Fin réelle : heure déclarée/confirmée si elle existe, sinon fin prévue =====
+    // ===== Heures dérivées des horaires (wall-clock UTC), fin réelle confirmée =====
+    const startMin = minutenVanTijd(shift.startTime)
     let endMin: number | null = null
     let finReelle = false
     try {
@@ -71,28 +73,25 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
         SELECT reported_end FROM shift_end WHERE shift_id = ${shift.id} LIMIT 1
       `
       if (fins.length > 0) {
-        const r = new Date(fins[0].reported_end)
-        endMin = r.getUTCHours() * 60 + r.getUTCMinutes()
+        endMin = minutenVanTijd(fins[0].reported_end)
         finReelle = true
       }
     } catch {}
     if (endMin == null) {
-      const et = new Date(shift.endTime)
-      endMin = et.getUTCHours() * 60 + et.getUTCMinutes()
+      endMin = minutenVanTijd(shift.endTime)
     }
 
-    // ===== Calcul du montant sur les heures réellement travaillées =====
-    let dureeMin = endMin - startMin
-    if (dureeMin <= 0) dureeMin += 1440
-    const heures = Math.max(1, dureeMin / 60 - shift.breakMinutes / 60)
-    const excl = Math.round(shift.hourlyRate * heures * 100) / 100
-    const vat = Math.round(excl * shift.vatRate) / 100
-    const incl = Math.round((excl + vat) * 100) / 100
-    // Commission plateforme : 15% du montant TTC
-    const fee = Math.round(incl * 0.15 * 100) / 100
-    const payout = Math.round((incl - fee) * 100) / 100
+    // ===== Calcul en centimes entiers (TVA 21%, commission 15% du HT) =====
+    const urenMinuten = berekenUrenMinuten(startMin, endMin, shift.breakMinutes)
+    const b = berekenBedragen(urenMinuten, euroNaarCenten(shift.hourlyRate))
+    const excl = centenNaarEuro(b.exclCenten)
+    const vat = centenNaarEuro(b.btwCenten)
+    const incl = centenNaarEuro(b.inclCenten)
+    const fee = centenNaarEuro(b.commissieCenten)
+    const payout = centenNaarEuro(b.payoutCenten)
+    const heures = urenMinuten / 60
 
-    // ===== Facture (une par shift) =====
+    // ===== Facture (une par shift) — le numéro est attribué au paiement (webhook) =====
     const invoice = await prisma.invoice.upsert({
       where: { shiftId: shift.id },
       create: {
@@ -137,10 +136,10 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
             quantity: 1,
             price_data: {
               currency: 'eur',
-              unit_amount: Math.round(incl * 100),
+              unit_amount: b.inclCenten,
               product_data: {
                 name: `ChefShift: ${shift.title}`,
-                description: `${heures.toFixed(1)}u × €${shift.hourlyRate.toFixed(2)} + ${shift.vatRate}% btw${finReelle ? ' (werkelijke eindtijd)' : ''}`,
+                description: `${heures.toFixed(1)}u × €${shift.hourlyRate.toFixed(2)} + ${CHEF_VAT_RATE}% btw${finReelle ? ' (werkelijke eindtijd)' : ''}`,
               },
             },
           },
@@ -149,7 +148,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
         ...(destination
           ? {
               payment_intent_data: {
-                application_fee_amount: Math.round(fee * 100),
+                application_fee_amount: b.commissieCenten,
                 transfer_data: { destination },
               },
             }
