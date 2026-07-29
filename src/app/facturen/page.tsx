@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
 import { LangToggle } from '@/lib/i18n'
 
 const FONT = '"Sora","Inter","Helvetica Neue",Arial,sans-serif'
@@ -63,7 +62,6 @@ function datumNL(d: string, lang: Lang): string {
 export default function FacturenPage() {
   const lang = useLang()
   const t = T[lang]
-  const router = useRouter()
   const [facturen, setFacturen] = useState<any[] | null>(null)
   const [fout, setFout] = useState(false)
 
@@ -81,12 +79,13 @@ export default function FacturenPage() {
   }, [])
 
   const badge = (status: string) => {
-    const map: Record<string, { bg: string; fg: string; label: string }> = {
-      PAID: { bg: '#e3efdc', fg: '#3f5a34', label: t.paid },
-      OPEN: { bg: '#fdf0dc', fg: '#8a5b1e', label: t.open },
-      CANCELLED: { bg: '#f3e2e0', fg: '#8a3226', label: t.cancelled },
-    }
-    const s = map[status] || map.OPEN
+    const isPaid = status === 'PAID'
+    const isCancelled = status === 'REFUNDED' || status === 'FAILED'
+    const s = isPaid
+      ? { bg: '#e3efdc', fg: '#3f5a34', label: t.paid }
+      : isCancelled
+        ? { bg: '#f3e2e0', fg: '#8a3226', label: t.cancelled }
+        : { bg: '#fdf0dc', fg: '#8a5b1e', label: t.open }
     return (
       <span style={{ background: s.bg, color: s.fg, fontWeight: 800, fontSize: 11.5, padding: '5px 12px', borderRadius: 999, letterSpacing: 0.4 }}>
         {s.label}
@@ -136,7 +135,7 @@ export default function FacturenPage() {
                   </div>
                 </div>
                 <div style={{ textAlign: 'right' }}>
-                  <div style={{ fontWeight: 800, fontSize: 17, letterSpacing: -0.3 }}>{eur(f.amount)}</div>
+                  <div style={{ fontWeight: 800, fontSize: 17, letterSpacing: -0.3 }}>{eur(f.amountInclVat)}</div>
                   <div style={{ color: '#9aa39b', fontSize: 12 }}>{t.kok_part}: {eur(f.kokPayout)}</div>
                   <div style={{ marginTop: 6 }}>{badge(f.status)}</div>
                 </div>

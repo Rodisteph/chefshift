@@ -42,10 +42,11 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
 
   const jaar = new Date(inv.paidAt || inv.createdAt).getFullYear()
   const nummer = inv.invoiceNumber || `CS-${jaar}-${inv.id.slice(0, 6).toUpperCase()}`
-  const totaal = inv.amount
-  const excl = totaal / 1.09
-  const btw = totaal - excl
-  const uren = inv.shift.hourlyRate > 0 ? inv.shift.totalAmount / inv.shift.hourlyRate : 0
+  const totaal = inv.amountInclVat
+  const excl = inv.amountExclVat
+  const btw = inv.vatAmount
+  const uurBasis = inv.shift.totalAmount ?? inv.amountInclVat
+  const uren = inv.shift.hourlyRate > 0 ? uurBasis / inv.shift.hourlyRate : 0
   const hp = inv.shift.horeca.horecaProfile
   const kp = inv.shift.chosenKok?.kokProfile
   const kokNaam = kp ? `${kp.firstName || ''} ${kp.lastName || ''}`.trim() || 'Kok' : 'Kok'
