@@ -344,9 +344,13 @@ export default function HomePage() {
         <div style={{ maxWidth: 1200, margin: '0 auto' }}>
           <div style={{ color: '#fff', fontWeight: 800, fontSize: 22, marginBottom: 12, letterSpacing: -0.5 }}>Chef<span style={{ color: '#8a9a7b' }}>Shift</span></div>
           <p style={{ maxWidth: 360, marginBottom: 40, lineHeight: 1.6 }}>{t('footer_tag')}</p>
+          {/* Maillage interne SEO : pages piliers + pages légales */}
           <div style={{ borderTop: '1px solid rgba(255,255,255,0.12)', paddingTop: 24, fontSize: 13.5, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 14 }}>
             <span>{t('footer_rights')}</span>
             <span style={{ display: 'flex', gap: 22, flexWrap: 'wrap' }}>
+              <a href="/kok-inhuren" style={{ color: 'rgba(255,255,255,0.72)', textDecoration: 'none', fontWeight: 600 }}>Kok inhuren</a>
+              <a href="/zzp-kok-worden" style={{ color: 'rgba(255,255,255,0.72)', textDecoration: 'none', fontWeight: 600 }}>ZZP-kok worden</a>
+              <a href="/shifts" style={{ color: 'rgba(255,255,255,0.72)', textDecoration: 'none', fontWeight: 600 }}>Shifts</a>
               <a href={`mailto:${CONTACT_EMAIL}`} style={{ color: 'rgba(255,255,255,0.72)', textDecoration: 'none', fontWeight: 600 }}>{t('contact')}</a>
               <a href="/voorwaarden" style={{ color: 'rgba(255,255,255,0.72)', textDecoration: 'none', fontWeight: 600 }}>{t('terms_of')}</a>
               <a href="/privacy" style={{ color: 'rgba(255,255,255,0.72)', textDecoration: 'none', fontWeight: 600 }}>{t('privacy_of')}</a>
