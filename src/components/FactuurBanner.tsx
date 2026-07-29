@@ -15,7 +15,7 @@ export default function FactuurBanner({ id }: { id: string }) {
 
   return (
     <a
-      href={`/api/invoices/${id}/pdf`}
+      href={`/api/invoices/${id}/pdf${en ? '?lang=en' : ''}`}
       target="_blank"
       rel="noopener noreferrer"
       style={{

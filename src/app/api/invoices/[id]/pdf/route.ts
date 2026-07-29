@@ -11,16 +11,21 @@ function eur(n: number): string {
   return `€ ${n.toFixed(2).replace('.', ',')}`
 }
 
-function datumNL(d: Date | string): string {
-  return new Date(d).toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' })
+function datum(d: Date | string, lang: 'nl' | 'en'): string {
+  return new Date(d).toLocaleDateString(lang === 'en' ? 'en-GB' : 'nl-NL', {
+    day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC',
+  })
 }
 
-// GET /api/invoices/[id]/pdf : facture au format page imprimable (Ctrl+P → PDF)
+// GET /api/invoices/[id]/pdf[?lang=en] : facture au format page imprimable (Ctrl+P → PDF)
 // Émise par ChefShift AU NOM ET POUR LE COMPTE du chef (zelf-facturatie, art. 6 AV)
+// ChefShift est sous le régime KOR : pas de TVA sur la commission.
 // Accès : la horecazaak de la facture, le kok choisi, ou un admin
-export async function GET(_req: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
   const session = await getServerSession(authOptions)
   if (!session) return new NextResponse('Unauthorized', { status: 401 })
+
+  const lang: 'nl' | 'en' = req.nextUrl.searchParams.get('lang') === 'en' ? 'en' : 'nl'
 
   const inv = await prisma.invoice.findUnique({
     where: { id: params.id },
@@ -41,6 +46,59 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
     session.user.role === 'ADMIN'
   if (!toegang) return new NextResponse('Geen toegang', { status: 403 })
 
+  const T = {
+    nl: {
+      titel: 'FACTUUR',
+      nummer: 'Nummer',
+      factuurdatum: 'Factuurdatum',
+      betaald: (d: string) => `Betaald op ${d} via iDEAL`,
+      namens: 'Deze factuur wordt door ChefShift uitgereikt <strong>namens en voor rekening van de zelfstandige kok</strong> (zelf-facturatie, artikel 6 van de algemene voorwaarden). De prestatie is geleverd door de kok aan de opdrachtgever; ChefShift is uitsluitend bemiddelaar.',
+      van: 'VAN (ZELFSTANDIGE)',
+      aan: 'AAN (OPDRACHTGEVER)',
+      kvk: 'KvK',
+      btw_nr: 'Btw-nummer',
+      omschrijving: 'OMSCHRIJVING',
+      uren: 'UREN',
+      tarief: 'TARIEF',
+      bedrag: 'BEDRAG',
+      subtotaal: 'Subtotaal excl. btw',
+      btw: (r: number) => `${r}% btw`,
+      totaal: 'Totaal',
+      commissie: 'Bemiddelingscommissie ChefShift (15% · btw-vrijgesteld, KOR)',
+      uitbetaling: 'Uitbetaling aan de kok',
+      notitie: 'De betaling van deze factuur is via het platform verlopen. De commissie van ChefShift is verrekend bij de uitbetaling; de kok ontvangt het restbedrag op zijn opgegeven rekeningnummer. ChefShift is vrijgesteld van btw op grond van de kleineondernemersregeling (KOR); over de commissie is geen btw berekend.',
+      voet_1: 'ChefShift · Bemiddelingsplatform voor zzp-koks en horeca · www.chefshift.nl',
+      voet_2: 'KvK 91547261 · btw-vrijgesteld (KOR) · Fred. Roeskestraat 90, 1076 ED Amsterdam',
+      voet_3: 'Vragen over deze factuur? Mail info@chefshift.nl',
+      knop: 'Opslaan als PDF / Afdrukken',
+    },
+    en: {
+      titel: 'INVOICE',
+      nummer: 'Number',
+      factuurdatum: 'Invoice date',
+      betaald: (d: string) => `Paid on ${d} via iDEAL`,
+      namens: 'This invoice is issued by ChefShift <strong>in the name and on behalf of the freelance chef</strong> (self-billing, article 6 of the terms &amp; conditions). The service was provided by the chef to the client; ChefShift acts solely as intermediary.',
+      van: 'FROM (FREELANCER)',
+      aan: 'TO (CLIENT)',
+      kvk: 'Chamber of Commerce',
+      btw_nr: 'VAT number',
+      omschrijving: 'DESCRIPTION',
+      uren: 'HOURS',
+      tarief: 'RATE',
+      bedrag: 'AMOUNT',
+      subtotaal: 'Subtotal excl. VAT',
+      btw: (r: number) => `${r}% VAT`,
+      totaal: 'Total',
+      commissie: 'ChefShift intermediation commission (15% · VAT-exempt, KOR)',
+      uitbetaling: 'Payout to the chef',
+      notitie: 'Payment of this invoice was processed via the platform. The ChefShift commission was deducted at payout; the chef receives the remaining amount in their registered bank account. ChefShift is exempt from VAT under the Dutch small businesses scheme (KOR); no VAT was charged on the commission.',
+      voet_1: 'ChefShift · Intermediation platform for freelance chefs and hospitality · www.chefshift.nl',
+      voet_2: 'Chamber of Commerce 91547261 · VAT-exempt (KOR) · Fred. Roeskestraat 90, 1076 ED Amsterdam, the Netherlands',
+      voet_3: 'Questions about this invoice? Email info@chefshift.nl',
+      knop: 'Save as PDF / Print',
+    },
+  }[lang]
+
   const jaar = new Date(inv.paidAt || inv.createdAt).getFullYear()
   const nummer = inv.invoiceNumber || `CS-${jaar}-${inv.id.slice(0, 6).toUpperCase()}`
   const totaal = inv.amountInclVat
@@ -58,11 +116,11 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
   const adresKok = [kp?.postalCode, kp?.city].filter(Boolean).join(' ')
 
   const html = `<!doctype html>
-<html lang="nl">
+<html lang="${lang}">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Factuur ${esc(nummer)} · ChefShift</title>
+<title>${lang === 'en' ? 'Invoice' : 'Factuur'} ${esc(nummer)} · ChefShift</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body { font-family: 'Helvetica Neue', Arial, sans-serif; background: #e9ece4; color: #23281f; padding: 32px 16px; }
@@ -91,8 +149,8 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
   .totalen { margin-left: auto; width: 280px; margin-top: 20px; font-size: 13.5px; }
   .totalen div { display: flex; justify-content: space-between; padding: 5px 0; color: #4a5044; }
   .totalen .tt { border-top: 1px solid #dfe4d4; margin-top: 8px; padding-top: 12px; font-weight: 800; font-size: 16px; color: #23281f; }
-  .commissie { margin-left: auto; width: 280px; margin-top: 14px; font-size: 12.5px; color: #6b7268; border-top: 1px dashed #dfe4d4; padding-top: 10px; }
-  .commissie div { display: flex; justify-content: space-between; padding: 3px 0; }
+  .commissie { margin-left: auto; width: 300px; margin-top: 14px; font-size: 12.5px; color: #6b7268; border-top: 1px dashed #dfe4d4; padding-top: 10px; }
+  .commissie div { display: flex; justify-content: space-between; gap: 12px; padding: 3px 0; }
   .notitie { margin-top: 30px; background: #f6f7f2; border-radius: 10px; padding: 14px 16px; font-size: 12px; color: #6b7268; line-height: 1.6; }
   .voet { text-align: center; color: #9aa39b; font-size: 11px; margin-top: 40px; line-height: 1.7; }
   .acties { max-width: 760px; margin: 18px auto 0; text-align: center; }
@@ -115,31 +173,31 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
         </div>
       </div>
       <div class="fact-titel">
-        <h1>FACTUUR</h1>
-        <p>Nummer: <strong>${esc(nummer)}</strong></p>
-        <p>Factuurdatum: ${datumNL(inv.paidAt || inv.createdAt)}</p>
-        ${inv.paidAt ? `<p>Betaald op ${datumNL(inv.paidAt)} via iDEAL</p>` : ''}
+        <h1>${T.titel}</h1>
+        <p>${T.nummer}: <strong>${esc(nummer)}</strong></p>
+        <p>${T.factuurdatum}: ${datum(inv.paidAt || inv.createdAt, lang)}</p>
+        ${inv.paidAt ? `<p>${T.betaald(datum(inv.paidAt, lang))}</p>` : ''}
       </div>
     </div>
 
     <div class="namens">
-      Deze factuur wordt door ChefShift uitgereikt <strong>namens en voor rekening van de zelfstandige kok</strong> (zelf-facturatie, artikel 6 van de algemene voorwaarden). De prestatie is geleverd door de kok aan de opdrachtgever; ChefShift is uitsluitend bemiddelaar.
+      ${T.namens}
     </div>
 
     <hr>
 
     <div class="blokken">
       <div class="blok">
-        <h3>VAN (ZELFSTANDIGE)</h3>
+        <h3>${T.van}</h3>
         <p><strong>${esc(kokNaam)}</strong>
-        ${kp?.kvkNumber ? `<br>KvK: ${esc(kp.kvkNumber)}` : ''}
-        ${kp?.vatNumber ? `<br>Btw-nummer: ${esc(kp.vatNumber)}` : ''}
+        ${kp?.kvkNumber ? `<br>${T.kvk}: ${esc(kp.kvkNumber)}` : ''}
+        ${kp?.vatNumber ? `<br>${T.btw_nr}: ${esc(kp.vatNumber)}` : ''}
         ${adresKok ? `<br>${esc(adresKok)}` : ''}</p>
       </div>
       <div class="blok">
-        <h3>AAN (OPDRACHTGEVER)</h3>
+        <h3>${T.aan}</h3>
         <p><strong>${esc(hp?.companyName || 'Horecazaak')}</strong>
-        ${hp?.kvkNumber ? `<br>KvK: ${esc(hp.kvkNumber)}` : ''}
+        ${hp?.kvkNumber ? `<br>${T.kvk}: ${esc(hp.kvkNumber)}` : ''}
         ${adresHoreca ? `<br>${esc(adresHoreca)}` : ''}</p>
       </div>
     </div>
@@ -147,17 +205,17 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
     <table>
       <thead>
         <tr>
-          <td>OMSCHRIJVING</td>
-          <td class="r">UREN</td>
-          <td class="r">TARIEF</td>
-          <td class="r">BEDRAG</td>
+          <td>${T.omschrijving}</td>
+          <td class="r">${T.uren}</td>
+          <td class="r">${T.tarief}</td>
+          <td class="r">${T.bedrag}</td>
         </tr>
       </thead>
       <tbody>
         <tr>
           <td>
             <strong>${esc(inv.shift.title)}</strong>
-            <div class="klein">${datumNL(inv.shift.date)} · ${start} - ${eind} · via ChefShift</div>
+            <div class="klein">${datum(inv.shift.date, lang)} · ${start} - ${eind} · via ChefShift</div>
           </td>
           <td class="r">${uren.toFixed(1).replace('.', ',')}</td>
           <td class="r">${eur(inv.shift.hourlyRate)}</td>
@@ -167,29 +225,29 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
     </table>
 
     <div class="totalen">
-      <div><span>Subtotaal excl. btw</span><span>${eur(excl)}</span></div>
-      <div><span>${inv.shift.vatRate}% btw</span><span>${eur(btw)}</span></div>
-      <div class="tt"><span>Totaal</span><span>${eur(totaal)}</span></div>
+      <div><span>${T.subtotaal}</span><span>${eur(excl)}</span></div>
+      <div><span>${T.btw(inv.shift.vatRate)}</span><span>${eur(btw)}</span></div>
+      <div class="tt"><span>${T.totaal}</span><span>${eur(totaal)}</span></div>
     </div>
 
     <div class="commissie">
-      <div><span>Bemiddelingscommissie ChefShift (15%, btw inbegrepen)</span><span>- ${eur(fee)}</span></div>
-      <div><span><strong>Uitbetaling aan de kok</strong></span><span><strong>${eur(inv.kokPayout)}</strong></span></div>
+      <div><span>${T.commissie}</span><span>- ${eur(fee)}</span></div>
+      <div><span><strong>${T.uitbetaling}</strong></span><span><strong>${eur(inv.kokPayout)}</strong></span></div>
     </div>
 
     <div class="notitie">
-      De betaling van deze factuur is via het platform verlopen. De commissie van ChefShift is verrekend bij de uitbetaling; de kok ontvangt het restbedrag op zijn opgegeven rekeningnummer.
+      ${T.notitie}
     </div>
 
     <div class="voet">
-      ChefShift · Bemiddelingsplatform voor zzp-koks en horeca · www.chefshift.nl<br>
-      KvK 91547261 · btw NL004899617B11 · Fred. Roeskestraat 90, 1076 ED Amsterdam<br>
-      Vragen over deze factuur? Mail info@chefshift.nl
+      ${T.voet_1}<br>
+      ${T.voet_2}<br>
+      ${T.voet_3}
     </div>
   </div>
 
   <div class="acties">
-    <button class="knop" onclick="window.print()">Opslaan als PDF / Afdrukken</button>
+    <button class="knop" onclick="window.print()">${T.knop}</button>
   </div>
 </body>
 </html>`
