@@ -48,6 +48,9 @@ export default function ProfielPage() {
   const [hourlyRateMax, setHourlyRateMax] = useState('')
   const [description, setDescription] = useState('')
   const [iban, setIban] = useState('')
+  const [straat, setStraat] = useState('')
+  const [huisnummer, setHuisnummer] = useState('')
+  const [postcode, setPostcode] = useState('')
   const [connectStatus, setConnectStatus] = useState<'none' | 'pending' | 'ok'>('none')
   const [connectEnvoi, setConnectEnvoi] = useState(false)
   const [connectFout, setConnectFout] = useState('')
@@ -71,6 +74,9 @@ export default function ProfielPage() {
       if (res.ok) {
         const data = await res.json()
         setIban(data.iban || '')
+        setStraat(data.adres?.straat || '')
+        setHuisnummer(data.adres?.huisnummer || '')
+        setPostcode(data.adres?.postcode || '')
         const p = data.profile
         if (p) {
           setAvgScore(p.averageScore || 0)
@@ -140,7 +146,7 @@ export default function ProfielPage() {
           firstName, lastName, dateOfBirth, city, yearsExperience,
           functions, specialties, description,
           haccpCertified, svhCertified, svhLevel,
-          hourlyRateMin, hourlyRateMax, iban,
+          hourlyRateMin, hourlyRateMax, iban, straat, huisnummer, postcode,
           workExperience: exps.map((w) => ({
             ...w,
             fromDate: w.fromDate ? w.fromDate + '-01' : '',
@@ -245,6 +251,29 @@ export default function ProfielPage() {
             <div style={{ flex: 1, minWidth: 110 }}>
               <label style={etiquette}>{t('field_years')}</label>
               <input type="number" min="0" max="60" value={yearsExperience} onChange={(e) => setYearsExperience(e.target.value)} placeholder="8" style={champ} />
+            </div>
+          </div>
+        </div>
+
+        {/* ===== Factuuradres (op de factuur) ===== */}
+        <div className="cs-card" style={section}>
+          <div style={enteteSection}>
+            <IcoTile n="pin" s={18} taille={40} />
+            <h2 style={titreSection}>{t('addr_title')}</h2>
+          </div>
+          <p style={{ color: 'hsl(var(--muted-foreground))', fontSize: 13.5, marginTop: -8, marginBottom: 14 }}>{t('addr_desc')}</p>
+          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+            <div style={{ flex: 2, minWidth: 180 }}>
+              <label style={etiquette}>{t('field_street2')}</label>
+              <input value={straat} onChange={(e) => setStraat(e.target.value)} placeholder="Herengracht" style={champ} />
+            </div>
+            <div style={{ flex: 1, minWidth: 100 }}>
+              <label style={etiquette}>{t('field_housenr')}</label>
+              <input value={huisnummer} onChange={(e) => setHuisnummer(e.target.value)} placeholder="42" style={champ} />
+            </div>
+            <div style={{ flex: 1, minWidth: 120 }}>
+              <label style={etiquette}>{t('field_postal')}</label>
+              <input value={postcode} onChange={(e) => setPostcode(e.target.value)} placeholder="1015 BA" style={champ} />
             </div>
           </div>
         </div>
