@@ -13,7 +13,7 @@ const FAQ_NL = [
   ['Zijn de koks op ChefShift geverifieerd?', 'Ja. Elke kok wordt gecontroleerd op KvK-inschrijving en kan zijn HACCP-certificering uploaden. Daarnaast zie je bij elke sollicitatie de ervaring en de beoordelingen van andere horecazaken.'],
   ['Wat kost het inhuren van een kok via ChefShift?', 'Je betaalt alleen de gewerkte uren tegen het afgesproken uurtarief, plus een kleine platformfee. Aanmelden en shifts plaatsen is gratis. Geen match, geen kosten: no cure, no pay.'],
   ['Wat als de kok niet komt opdagen?', 'Omdat de betaling pas na de shift plaatsvindt, betaal je niets als er niet gewerkt is. Je kunt direct een nieuwe urgent-shift plaatsen. Koks die niet komen opdagen krijgen een negatieve beoordeling en verdwijnen van het platform.'],
-  ['Hoe zit het met de administratie en facturatie?', 'Alle afspraken, uren en betalingen lopen via het platform. Na elke shift vind je een overzicht met gewerkte uren en bedrag inclusief 9% btw in je dashboard. Dat scheelt uren administratie.'],
+  ['Hoe zit het met de administratie en facturatie?', 'Alle afspraken, uren en betalingen lopen via het platform. Na elke shift vind je een overzicht met gewerkte uren en bedrag inclusief 21% btw in je dashboard. Dat scheelt uren administratie.'],
 ]
 
 const jsonLd = {
