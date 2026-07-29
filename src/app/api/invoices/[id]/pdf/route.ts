@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { CHEF_VAT_RATE, berekenUrenMinuten, minutenVanTijd } from '@/lib/factuur'
+import { berekenUrenMinuten, minutenVanTijd } from '@/lib/factuur'
 
 function esc(t: string): string {
   return t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
@@ -64,8 +64,8 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
   const excl = inv.amountExclVat
   const btw = inv.vatAmount
   const totaal = inv.amountInclVat
-  // Taux affiché : dérivé des montants stockés (21% pour les nouvelles factures)
-  const btwTarief = excl > 0 ? Math.round((btw / excl) * 100) : CHEF_VAT_RATE
+  // Taux affiché : lu depuis le taux stocké sur le shift (9% pour les anciens, 21% pour les nouveaux)
+  const btwTarief = inv.shift.vatRate ?? 21
 
   const hp = inv.shift.horeca.horecaProfile
   const kp = inv.shift.chosenKok?.kokProfile

@@ -213,7 +213,7 @@ model Shift {
   requiredCerts   String?     @map("required_certs")
 
   hourlyRate      Float       @map("hourly_rate")
-  vatRate         Float       @default(9) @map("vat_rate")
+  vatRate         Float       @default(21) @map("vat_rate")
   totalAmount     Float?      @map("total_amount")
 
   status          ShiftStatus @default(OPEN)
