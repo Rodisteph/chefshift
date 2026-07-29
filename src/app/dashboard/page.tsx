@@ -184,8 +184,8 @@ export default function DashboardPage() {
         <div style={{ display: 'flex', gap: 14, alignItems: 'center' }}>
           <LangToggle />
           <ThemeToggle />
-          {estKok && (
-            <a href="/profiel" className="cs-nav-link" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: '#5f7052', fontWeight: 700, fontSize: 14, textDecoration: 'none' }}>
+          {(estKok || user?.role === 'HORECA') && (
+            <a href={estKok ? '/profiel' : '/profiel-horeca'} className="cs-nav-link" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: '#5f7052', fontWeight: 700, fontSize: 14, textDecoration: 'none' }}>
               <Ico n="user" s={15} /> <span className="cs-nav-txt">{t('nav_profile')}</span>
             </a>
           )}

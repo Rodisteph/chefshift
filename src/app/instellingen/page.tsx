@@ -143,9 +143,9 @@ export default function InstellingenPage() {
             </div>
           </div>
           <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-            {estKok && (
+            {(estKok || user?.role === 'HORECA') && (
               <a
-                href="/profiel"
+                href={estKok ? '/profiel' : '/profiel-horeca'}
                 className="cs-btn"
                 style={{
                   background: 'none', border: '1.5px solid #dfe4d4', borderRadius: 999,
