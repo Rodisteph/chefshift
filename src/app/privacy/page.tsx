@@ -3,7 +3,7 @@ import { useT } from '../../lib/i18n'
 
 const artikelen: Record<'nl' | 'en', { titre: string; tekst: string }[]> = {
   nl: [
-    { titre: 'Artikel 1. Wie zijn wij', tekst: 'ChefShift is het platform voor freelance keukenpersoneel in Nederland. Voor de verwerking van persoonsgegevens is ChefShift de verwerkingsverantwoordelijke in de zin van de Algemene Verordening Gegevensbescherming (AVG/GDPR).' },
+    { titre: 'Artikel 1. Wie zijn wij', tekst: 'ChefShift is het platform voor freelance keukenpersoneel in Nederland. Voor de verwerking van persoonsgegevens is ChefShift de verwerkingsverantwoordelijke in de zin van de Algemene Verordening Gegevensbescherming (AVG/GDPR). ChefShift is gevestigd aan de Fred. Roeskestraat 90, 1076 ED Amsterdam, Nederland, ingeschreven bij de Kamer van Koophandel onder nummer 91547261, btw-identificatienummer NL004899617B11. Contact: info@chefshift.nl.' },
     { titre: 'Artikel 2. Welke gegevens wij verzamelen', tekst: 'Wij verzamelen: accountgegevens (naam, e-mailadres, wachtwoord, rol); profielgegevens (specialiteiten, ervaring, tarief, KvK-nummer, btw-nummer, IBAN); bedrijfsgegevens (bedrijfsnaam, adres); shift- en sollicitatiegegevens; factuur- en betalingsgegevens; beoordelingen en berichten via het Platform.' },
     { titre: 'Artikel 3. Doeleinden van de verwerking', tekst: 'Wij gebruiken je gegevens voor: het aanmaken en beheren van je account; het bemiddelen tussen Opdrachtgevers en Zelfstandigen; het verwerken van betalingen en facturen; het versturen van meldingen over shifts en sollicitaties; het verbeteren en beveiligen van het Platform; het voldoen aan wettelijke verplichtingen (o.a. fiscale bewaarplicht).' },
     { titre: 'Artikel 4. Rechtsgronden', tekst: 'Wij verwerken persoonsgegevens op grond van: uitvoering van de overeenkomst (account, bemiddeling, betalingen); wettelijke verplichting (fiscale bewaartermijnen); gerechtvaardigd belang (veiligheid, fraudepreventie, platformverbetering); en waar nodig jouw toestemming.' },
@@ -13,10 +13,10 @@ const artikelen: Record<'nl' | 'en', { titre: string; tekst: string }[]> = {
     { titre: 'Artikel 8. Jouw rechten', tekst: 'Op grond van de AVG heb je recht op: inzage in je persoonsgegevens; rectificatie of verwijdering; beperking van de verwerking; dataportabiliteit; en bezwaar tegen verwerking. Verzoeken kun je indienen via je accountinstellingen of per e-mail; wij reageren binnen 30 dagen.' },
     { titre: 'Artikel 9. Cookies', tekst: 'Het Platform gebruikt uitsluitend functionele cookies en vergelijkbare technieken die noodzakelijk zijn voor het functioneren van de website (zoals inlogsessie en taalvoorkeur). Wij gebruiken geen tracking- of advertentiecookies.' },
     { titre: 'Artikel 10. Klachten', tekst: 'Heb je een klacht over de verwerking van je gegevens, neem dan eerst contact met ons op. Je hebt daarnaast het recht een klacht in te dienen bij de Autoriteit Persoonsgegevens (autoriteitpersoonsgegevens.nl).' },
-    { titre: 'Artikel 11. Wijzigingen', tekst: 'Wij kunnen dit privacybeleid wijzigen. De meest recente versie staat altijd op deze pagina. Bij ingrijpende wijzigingen informeren wij actieve gebruikers per e-mail. Versie 1.0, juli 2026.' }
+    { titre: 'Artikel 11. Wijzigingen', tekst: 'Wij kunnen dit privacybeleid wijzigen. De meest recente versie staat altijd op deze pagina. Bij ingrijpende wijzigingen informeren wij actieve gebruikers per e-mail. Versie 1.1, 29 juli 2026.' }
   ],
   en: [
-    { titre: 'Article 1. Who we are', tekst: 'ChefShift is the marketplace for freelance kitchen staff in the Netherlands. For the processing of personal data, ChefShift is the data controller within the meaning of the General Data Protection Regulation (GDPR).' },
+    { titre: 'Article 1. Who we are', tekst: 'ChefShift is the marketplace for freelance kitchen staff in the Netherlands. For the processing of personal data, ChefShift is the data controller within the meaning of the General Data Protection Regulation (GDPR). ChefShift is located at Fred. Roeskestraat 90, 1076 ED Amsterdam, the Netherlands, registered with the Dutch Chamber of Commerce under number 91547261, VAT identification number NL004899617B11. Contact: info@chefshift.nl.' },
     { titre: 'Article 2. What data we collect', tekst: 'We collect: account data (name, email address, password, role); profile data (specialties, experience, rate, KvK number, VAT number, IBAN); business data (company name, address); shift and application data; invoice and payment data; reviews and messages sent via the Platform.' },
     { titre: 'Article 3. Purposes of processing', tekst: 'We use your data for: creating and managing your account; intermediation between Clients and Freelancers; processing payments and invoices; sending notifications about shifts and applications; improving and securing the Platform; and complying with legal obligations (including tax retention requirements).' },
     { titre: 'Article 4. Legal bases', tekst: 'We process personal data on the basis of: performance of the contract (account, intermediation, payments); legal obligation (tax retention periods); legitimate interest (security, fraud prevention, platform improvement); and, where required, your consent.' },
@@ -26,13 +26,13 @@ const artikelen: Record<'nl' | 'en', { titre: string; tekst: string }[]> = {
     { titre: 'Article 8. Your rights', tekst: 'Under the GDPR you have the right to: access your personal data; rectification or deletion; restriction of processing; data portability; and objection to processing. You can submit requests via your account settings or by email; we respond within 30 days.' },
     { titre: 'Article 9. Cookies', tekst: 'The Platform only uses functional cookies and similar techniques that are necessary for the website to function (such as login session and language preference). We do not use tracking or advertising cookies.' },
     { titre: 'Article 10. Complaints', tekst: 'If you have a complaint about the processing of your data, please contact us first. You also have the right to file a complaint with the Dutch Data Protection Authority (Autoriteit Persoonsgegevens, autoriteitpersoonsgegevens.nl).' },
-    { titre: 'Article 11. Changes', tekst: 'We may amend this privacy policy. The most recent version is always available on this page. In case of significant changes, we will inform active users by email. Version 1.0, July 2026.' }
+    { titre: 'Article 11. Changes', tekst: 'We may amend this privacy policy. The most recent version is always available on this page. In case of significant changes, we will inform active users by email. Version 1.1, July 29, 2026.' }
   ]
 }
 
 const titres = {
-  nl: { h1: 'Privacybeleid', sub: 'ChefShift, hoe wij met je gegevens omgaan. Versie 1.0, juli 2026.', disclaimer: 'Conceptversie: laat dit privacybeleid valideren door een jurist voordat je het definitief publiceert.' },
-  en: { h1: 'Privacy Policy', sub: 'ChefShift, how we handle your data. Version 1.0, July 2026.', disclaimer: 'Draft version: have this privacy policy validated by a lawyer before publishing it definitively.' }
+  nl: { h1: 'Privacybeleid', sub: 'ChefShift, hoe wij met je gegevens omgaan. Versie 1.1, 29 juli 2026.', disclaimer: 'Conceptversie: laat dit privacybeleid valideren door een jurist voordat je het definitief publiceert.' },
+  en: { h1: 'Privacy Policy', sub: 'ChefShift, how we handle your data. Version 1.1, July 29, 2026.', disclaimer: 'Draft version: have this privacy policy validated by a lawyer before publishing it definitively.' }
 }
 
 const FONT = '"Sora","Inter","Helvetica Neue",Arial,sans-serif'
