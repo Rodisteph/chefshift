@@ -348,11 +348,11 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
   const deselectBloque = Date.now() >= debutReel.getTime() - 24 * 3600 * 1000
 
   // Montant estimé affiché tant que la facture n'est pas créée :
-  // heures réellement travaillées si l'heure de fin est déclarée, sinon horaire prévu, +9% btw.
+  // heures réellement travaillées si l'heure de fin est déclarée, sinon horaire prévu, +21% btw.
   let dureeMin = (shift.eind ? minutesUTC(shift.eind.reportedEnd) : minutesUTC(shift.endTime)) - minutesUTC(shift.startTime)
   if (dureeMin <= 0) dureeMin += 1440
   const heuresEstimees = Math.max(1, dureeMin / 60 - 0.5)
-  const montantEstime = shift.hourlyRate * heuresEstimees * 1.09
+  const montantEstime = shift.hourlyRate * heuresEstimees * 1.21
   const carte: React.CSSProperties = {
     background: 'hsl(var(--card))', borderRadius: 20, border: '1px solid #eceee3',
     boxShadow: '0 3px 12px rgba(46,52,43,0.05)', padding: 26,
