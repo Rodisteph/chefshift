@@ -88,7 +88,8 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     const excl = Math.round(shift.hourlyRate * heures * 100) / 100
     const vat = Math.round(excl * shift.vatRate) / 100
     const incl = Math.round((excl + vat) * 100) / 100
-    const fee = Math.round(incl * 0.12 * 100) / 100
+    // Commission plateforme : 15% du montant TTC
+    const fee = Math.round(incl * 0.15 * 100) / 100
     const payout = Math.round((incl - fee) * 100) / 100
 
     // ===== Facture (une par shift) =====

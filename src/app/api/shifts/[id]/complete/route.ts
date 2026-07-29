@@ -21,7 +21,8 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
       data: { status: 'COMPLETED' }
     })
 
-    const platformFee = (shift.totalAmount || 0) * 0.12
+    // Commission plateforme : 15% du montant TTC
+    const platformFee = (shift.totalAmount || 0) * 0.15
     const kokPayout = (shift.totalAmount || 0) - platformFee
     const vatAmount = (shift.totalAmount || 0) * (shift.vatRate / 100)
     const count = await prisma.invoice.count()
