@@ -27,9 +27,18 @@ export async function POST(req: NextRequest) {
     const invoiceId = s.metadata?.invoiceId
     if (invoiceId) {
       try {
+        // Numéro de facture officiel séquentiel : CS-2026-0001, CS-2026-0002...
+        const jaar = new Date().getFullYear()
+        const bestaand = await prisma.invoice.findUnique({ where: { id: invoiceId }, select: { invoiceNumber: true } })
+        let invoiceNumber = bestaand?.invoiceNumber || null
+        if (!invoiceNumber) {
+          const aantal = await prisma.invoice.count({ where: { invoiceNumber: { not: null } } })
+          invoiceNumber = `CS-${jaar}-${String(aantal + 1).padStart(4, '0')}`
+        }
+
         const invoice = await prisma.invoice.update({
           where: { id: invoiceId },
-          data: { status: 'PAID', paidAt: new Date() },
+          data: { status: 'PAID', paidAt: new Date(), invoiceNumber },
           include: { shift: true },
         })
         if (invoice.shift.chosenKokId) {
