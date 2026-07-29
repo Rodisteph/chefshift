@@ -27,7 +27,8 @@ const T = {
     paid: 'Betaald',
     open: 'Te betalen',
     cancelled: 'Geannuleerd',
-    download: 'PDF openen',
+    download: 'Factuur (PDF)',
+    commissie: 'Commissie (PDF)',
     shift_on: 'Shift op',
     back: '← Terug naar dashboard',
     login: 'Log in om je facturen te bekijken.',
@@ -41,7 +42,8 @@ const T = {
     paid: 'Paid',
     open: 'Due',
     cancelled: 'Cancelled',
-    download: 'Open PDF',
+    download: 'Invoice (PDF)',
+    commissie: 'Commission (PDF)',
     shift_on: 'Shift on',
     back: '← Back to dashboard',
     login: 'Log in to view your invoices.',
@@ -64,6 +66,14 @@ export default function FacturenPage() {
   const t = T[lang]
   const [facturen, setFacturen] = useState<any[] | null>(null)
   const [fout, setFout] = useState(false)
+  const [user, setUser] = useState<any>(null)
+
+  useEffect(() => {
+    fetch('/api/auth/session')
+      .then((r) => r.json())
+      .then((s) => setUser(s?.user || null))
+      .catch(() => {})
+  }, [])
 
   useEffect(() => {
     fetch('/api/invoices')
@@ -120,6 +130,7 @@ export default function FacturenPage() {
             const jaar = new Date(f.paidAt || f.createdAt).getFullYear()
             const nummer = f.invoiceNumber || `CS-${jaar}-${f.id.slice(0, 6).toUpperCase()}`
             const bedrijf = f.shift?.horeca?.horecaProfile?.companyName || ''
+            const isKok = !!user && (f.shift?.chosenKokId === user.id || user.role === 'ADMIN')
             return (
               <div key={f.id} style={{ background: '#fff', border: '1px solid #eceee3', borderRadius: 18, padding: '20px 22px', display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
                 <span style={{ width: 44, height: 44, borderRadius: 13, background: '#eef2e6', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, color: '#4c5e42', fontSize: 15, flexShrink: 0 }}>
@@ -140,14 +151,26 @@ export default function FacturenPage() {
                   <div style={{ marginTop: 6 }}>{badge(f.status)}</div>
                 </div>
                 {f.status === 'PAID' && (
-                  <a
-                    href={`/api/invoices/${f.id}/pdf${lang === 'en' ? '?lang=en' : ''}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={{ background: 'linear-gradient(135deg,#647a55,#46553c)', color: '#fff', padding: '11px 20px', borderRadius: 999, fontWeight: 700, fontSize: 13.5, textDecoration: 'none', flexShrink: 0 }}
-                  >
-                    {t.download}
-                  </a>
+                  <span style={{ display: 'flex', gap: 10, flexWrap: 'wrap', flexShrink: 0 }}>
+                    <a
+                      href={`/api/invoices/${f.id}/pdf`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{ background: 'linear-gradient(135deg,#647a55,#46553c)', color: '#fff', padding: '11px 20px', borderRadius: 999, fontWeight: 700, fontSize: 13.5, textDecoration: 'none' }}
+                    >
+                      {t.download}
+                    </a>
+                    {isKok && (
+                      <a
+                        href={`/api/invoices/${f.id}/commissie`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{ background: '#fff', color: '#46553c', border: '1.5px solid #cfd8c0', padding: '10px 20px', borderRadius: 999, fontWeight: 700, fontSize: 13.5, textDecoration: 'none' }}
+                      >
+                        {t.commissie}
+                      </a>
+                    )}
+                  </span>
                 )}
               </div>
             )
