@@ -405,3 +405,68 @@ model AuditLog {
 
   @@map("audit_logs")
 }
+
+// ===== Tables de service (historiquement créées à l'exécution) =====
+// Désormais gérées par les migrations Prisma. La numérotation gapless reste
+// assurée par les requêtes transactionnelles INSERT ... ON CONFLICT ... RETURNING.
+
+model ShiftEnd {
+  shiftId     String    @id @map("shift_id")
+  reportedEnd DateTime  @map("reported_end")
+  reportedAt  DateTime  @default(now()) @map("reported_at")
+  confirmedAt DateTime? @map("confirmed_at")
+
+  @@map("shift_end")
+}
+
+model KokPush {
+  endpoint  String   @id
+  userId    String   @map("user_id")
+  p256dh    String
+  auth      String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("kok_push")
+}
+
+model KokReminder {
+  shiftId String   @map("shift_id")
+  kind    String
+  sentAt  DateTime @default(now()) @map("sent_at")
+
+  @@id([shiftId, kind])
+  @@map("kok_reminder")
+}
+
+model UserSource {
+  userId    String   @id @map("user_id")
+  source    String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("user_source")
+}
+
+model KokFactuurSeq {
+  kokId      String @map("kok_id")
+  jaar       Int
+  laatsteSeq Int    @default(0) @map("laatste_seq")
+
+  @@id([kokId, jaar])
+  @@map("kok_factuur_seq")
+}
+
+model PlatformFactuurSeq {
+  jaar       Int @id
+  laatsteSeq Int @default(0) @map("laatste_seq")
+
+  @@map("platform_factuur_seq")
+}
+
+model CommissieFactuur {
+  invoiceId String @id @map("invoice_id")
+  nummer    String
+  jaar      Int
+  seq       Int
+
+  @@map("commissie_factuur")
+}
