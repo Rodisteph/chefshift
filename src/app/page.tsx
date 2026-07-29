@@ -347,7 +347,7 @@ export default function HomePage() {
           <p style={{ maxWidth: 360, marginBottom: 40, lineHeight: 1.6 }}>{t('footer_tag')}</p>
           {/* Maillage interne SEO : pages piliers + pages légales */}
           <div style={{ borderTop: '1px solid rgba(255,255,255,0.12)', paddingTop: 24, fontSize: 13.5, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 14 }}>
-            <span>{t('footer_rights')}</span>
+            <span>{t('footer_rights')}<br /><span style={{ fontSize: 12, color: 'rgba(255,255,255,0.45)' }}>{t('footer_legal')}</span></span>
             <span style={{ display: 'flex', gap: 22, flexWrap: 'wrap' }}>
               <a href="/kok-inhuren" style={{ color: 'rgba(255,255,255,0.72)', textDecoration: 'none', fontWeight: 600 }}>Kok inhuren</a>
               <a href="/zzp-kok-worden" style={{ color: 'rgba(255,255,255,0.72)', textDecoration: 'none', fontWeight: 600 }}>ZZP-kok worden</a>
