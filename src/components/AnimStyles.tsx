@@ -38,7 +38,7 @@ export default function AnimStyles() {
 
   return (
     <style>{`
-      /* Les polices sont préchargées dans le <head> (voir layout.tsx) — plus d'@import bloquant ici. */
+      /* Les polices sont préchargées dans le <head> (voir layout.tsx), plus d'@import bloquant ici. */
 
       * { -webkit-tap-highlight-color: transparent; }
       html { scroll-behavior: smooth; }
