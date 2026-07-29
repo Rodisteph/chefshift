@@ -51,6 +51,7 @@ export default function ProfielPage() {
   const [straat, setStraat] = useState('')
   const [huisnummer, setHuisnummer] = useState('')
   const [postcode, setPostcode] = useState('')
+  const [vatNumber, setVatNumber] = useState('')
   const [connectStatus, setConnectStatus] = useState<'none' | 'pending' | 'ok'>('none')
   const [connectEnvoi, setConnectEnvoi] = useState(false)
   const [connectFout, setConnectFout] = useState('')
@@ -85,6 +86,12 @@ export default function ProfielPage() {
           setLastName(p.lastName || '')
           setDateOfBirth(p.dateOfBirth ? p.dateOfBirth.slice(0, 10) : '')
           setCity(p.city || '')
+          setVatNumber(p.vatNumber || '')
+          if (!data.adres) {
+            setStraat(p.street || '')
+            setHuisnummer(p.houseNumber || '')
+            setPostcode(p.postalCode || '')
+          }
           setYearsExperience(p.yearsExperience != null ? String(p.yearsExperience) : '')
           setFunctions(p.functions || [])
           setSpecialties(p.specialties || [])
@@ -146,7 +153,7 @@ export default function ProfielPage() {
           firstName, lastName, dateOfBirth, city, yearsExperience,
           functions, specialties, description,
           haccpCertified, svhCertified, svhLevel,
-          hourlyRateMin, hourlyRateMax, iban, straat, huisnummer, postcode,
+          hourlyRateMin, hourlyRateMax, iban, straat, huisnummer, postcode, vatNumber,
           workExperience: exps.map((w) => ({
             ...w,
             fromDate: w.fromDate ? w.fromDate + '-01' : '',
@@ -246,7 +253,7 @@ export default function ProfielPage() {
             </div>
             <div style={{ flex: 1, minWidth: 120 }}>
               <label style={etiquette}>{t('field_city')}</label>
-              <input value={city} onChange={(e) => setCity(e.target.value)} placeholder="Amsterdam" style={champ} />
+              <input required value={city} onChange={(e) => setCity(e.target.value)} placeholder="Amsterdam" style={champ} />
             </div>
             <div style={{ flex: 1, minWidth: 110 }}>
               <label style={etiquette}>{t('field_years')}</label>
@@ -265,15 +272,19 @@ export default function ProfielPage() {
           <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
             <div style={{ flex: 2, minWidth: 180 }}>
               <label style={etiquette}>{t('field_street2')}</label>
-              <input value={straat} onChange={(e) => setStraat(e.target.value)} placeholder="Herengracht" style={champ} />
+              <input required value={straat} onChange={(e) => setStraat(e.target.value)} placeholder="Herengracht" style={champ} />
             </div>
             <div style={{ flex: 1, minWidth: 100 }}>
               <label style={etiquette}>{t('field_housenr')}</label>
-              <input value={huisnummer} onChange={(e) => setHuisnummer(e.target.value)} placeholder="42" style={champ} />
+              <input required value={huisnummer} onChange={(e) => setHuisnummer(e.target.value)} placeholder="42" style={champ} />
             </div>
             <div style={{ flex: 1, minWidth: 120 }}>
               <label style={etiquette}>{t('field_postal')}</label>
-              <input value={postcode} onChange={(e) => setPostcode(e.target.value)} placeholder="1015 BA" style={champ} />
+              <input required value={postcode} onChange={(e) => setPostcode(e.target.value)} placeholder="1015 BA" style={champ} />
+            </div>
+            <div style={{ flex: 1, minWidth: 170 }}>
+              <label style={etiquette}>{t('field_vat')}</label>
+              <input required value={vatNumber} onChange={(e) => setVatNumber(e.target.value)} placeholder="NL123456789B01" style={champ} />
             </div>
           </div>
         </div>
