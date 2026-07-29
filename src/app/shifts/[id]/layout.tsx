@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import FactuurBanner from '@/components/FactuurBanner'
 
 // Métadonnées uniques par shift (titre + description avec ville et tarif)
 export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
@@ -99,21 +100,7 @@ export default async function ShiftLayout({
   return (
     <>
       {jsonLd && <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />}
-      {factuurId && (
-        <a
-          href={`/api/invoices/${factuurId}/pdf`}
-          target="_blank"
-          rel="noopener noreferrer"
-          style={{
-            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-            background: '#eef2e6', color: '#3f5a34', textDecoration: 'none',
-            fontFamily: '"Sora","Inter",Arial,sans-serif', fontWeight: 700, fontSize: 14,
-            padding: '12px 20px', borderBottom: '1px solid #dfe4d4',
-          }}
-        >
-          ✓ Betaald · Factuur downloaden (PDF)
-        </a>
-      )}
+      {factuurId && <FactuurBanner id={factuurId} />}
       {children}
     </>
   )
