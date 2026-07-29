@@ -141,7 +141,7 @@ export default function FacturenPage() {
                 </div>
                 {f.status === 'PAID' && (
                   <a
-                    href={`/api/invoices/${f.id}/pdf`}
+                    href={`/api/invoices/${f.id}/pdf${lang === 'en' ? '?lang=en' : ''}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     style={{ background: 'linear-gradient(135deg,#647a55,#46553c)', color: '#fff', padding: '11px 20px', borderRadius: 999, fontWeight: 700, fontSize: 13.5, textDecoration: 'none', flexShrink: 0 }}
