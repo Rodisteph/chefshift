@@ -72,7 +72,18 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
   const kokNaam = kp ? `${kp.firstName || ''} ${kp.lastName || ''}`.trim() || 'Kok' : 'Kok'
   const start = new Date(inv.shift.startTime).toISOString().slice(11, 16)
   const eind = new Date(inv.shift.endTime).toISOString().slice(11, 16)
-  const adresKok = [kp?.postalCode, kp?.city].filter(Boolean).join(' ')
+  let adrKok: { straat: string | null; huisnummer: string | null; postcode: string | null } | null = null
+  if (kp) {
+    try {
+      await prisma.$executeRaw`CREATE TABLE IF NOT EXISTS kok_adres (kok_id TEXT PRIMARY KEY, straat TEXT, huisnummer TEXT, postcode TEXT, updated_at TIMESTAMP DEFAULT now())`
+      const rowsA: { straat: string | null; huisnummer: string | null; postcode: string | null }[] = await prisma.$queryRaw`SELECT straat, huisnummer, postcode FROM kok_adres WHERE kok_id = ${kp.id} LIMIT 1`
+      adrKok = rowsA[0] || null
+    } catch {}
+  }
+  const adresKok = [
+    [adrKok?.straat, adrKok?.huisnummer].filter(Boolean).join(' '),
+    [adrKok?.postcode || kp?.postalCode, kp?.city].filter(Boolean).join(' '),
+  ].filter(Boolean).join(', ')
   const adresHoreca = [
     [hp?.street, hp?.houseNumber].filter(Boolean).join(' '),
     [hp?.postalCode, hp?.city].filter(Boolean).join(' '),

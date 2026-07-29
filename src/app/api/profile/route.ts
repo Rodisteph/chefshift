@@ -14,6 +14,19 @@ async function ensureBankTable() {
   `
 }
 
+// Table adresse facturation auto-créée (pas de migration nécessaire)
+async function ensureAdresTable() {
+  await prisma.$executeRaw`
+    CREATE TABLE IF NOT EXISTS kok_adres (
+      kok_id TEXT PRIMARY KEY,
+      straat TEXT,
+      huisnummer TEXT,
+      postcode TEXT,
+      updated_at TIMESTAMP DEFAULT now()
+    )
+  `
+}
+
 export async function GET() {
   try {
     const session = await getServerSession(authOptions)
@@ -33,7 +46,16 @@ export async function GET() {
       iban = rows[0]?.iban || ''
     }
 
-    return NextResponse.json({ profile, iban })
+    let adres = null
+    if (profile) {
+      await ensureAdresTable()
+      const rowsA: { straat: string | null; huisnummer: string | null; postcode: string | null }[] = await prisma.$queryRaw`
+        SELECT straat, huisnummer, postcode FROM kok_adres WHERE kok_id = ${profile.id}
+      `
+      adres = rowsA[0] || null
+    }
+
+    return NextResponse.json({ profile, iban, adres })
   } catch (error) {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
@@ -50,7 +72,7 @@ export async function PUT(req: NextRequest) {
       functions, specialties, description,
       haccpCertified, svhCertified, svhLevel,
       hourlyRateMin, hourlyRateMax,
-      workExperience, iban,
+      workExperience, iban, straat, huisnummer, postcode,
     } = body
 
     const data = {
@@ -106,6 +128,17 @@ export async function PUT(req: NextRequest) {
       INSERT INTO kok_bank (kok_id, iban, updated_at)
       VALUES (${profile.id}, ${ibanPropre}, now())
       ON CONFLICT (kok_id) DO UPDATE SET iban = ${ibanPropre}, updated_at = now()
+    `
+
+    // ===== Adresse de facturation (table auto-créée) =====
+    await ensureAdresTable()
+    const straatPropre = (straat || '').trim()
+    const huisnrPropre = (huisnummer || '').trim()
+    const postcodePropre = (postcode || '').trim()
+    await prisma.$executeRaw`
+      INSERT INTO kok_adres (kok_id, straat, huisnummer, postcode, updated_at)
+      VALUES (${profile.id}, ${straatPropre}, ${huisnrPropre}, ${postcodePropre}, now())
+      ON CONFLICT (kok_id) DO UPDATE SET straat = ${straatPropre}, huisnummer = ${huisnrPropre}, postcode = ${postcodePropre}, updated_at = now()
     `
 
     const updated = await prisma.kokProfile.findUnique({
