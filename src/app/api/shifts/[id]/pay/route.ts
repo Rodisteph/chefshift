@@ -4,8 +4,7 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import {
   CHEF_VAT_RATE,
-  berekenUrenMinuten, berekenBedragen,
-  euroNaarCenten, centenNaarEuro, minutenVanTijd,
+  berekenUrenMinuten, berekenBedragen, minutenVanTijd,
 } from '@/lib/factuur'
 import Stripe from 'stripe'
 
@@ -83,12 +82,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
 
     // ===== Calcul en centimes entiers (TVA 21%, commission 15% du HT) =====
     const urenMinuten = berekenUrenMinuten(startMin, endMin, shift.breakMinutes)
-    const b = berekenBedragen(urenMinuten, euroNaarCenten(shift.hourlyRate))
-    const excl = centenNaarEuro(b.exclCenten)
-    const vat = centenNaarEuro(b.btwCenten)
-    const incl = centenNaarEuro(b.inclCenten)
-    const fee = centenNaarEuro(b.commissieCenten)
-    const payout = centenNaarEuro(b.payoutCenten)
+    const b = berekenBedragen(urenMinuten, shift.hourlyRate) // tarif déjà en centimes
     const heures = urenMinuten / 60
 
     // ===== Facture (une par shift) — le numéro est attribué au paiement (webhook) =====
@@ -97,20 +91,20 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
       create: {
         shiftId: shift.id,
         horecaId: session.user.id,
-        amountExclVat: excl,
-        vatAmount: vat,
-        amountInclVat: incl,
-        platformFee: fee,
-        kokPayout: payout,
+        amountExclVat: b.exclCenten,
+        vatAmount: b.btwCenten,
+        amountInclVat: b.inclCenten,
+        platformFee: b.commissieCenten,
+        kokPayout: b.payoutCenten,
         status: 'PENDING',
         paymentProvider: 'stripe',
       },
       update: {
-        amountExclVat: excl,
-        vatAmount: vat,
-        amountInclVat: incl,
-        platformFee: fee,
-        kokPayout: payout,
+        amountExclVat: b.exclCenten,
+        vatAmount: b.btwCenten,
+        amountInclVat: b.inclCenten,
+        platformFee: b.commissieCenten,
+        kokPayout: b.payoutCenten,
         paymentProvider: 'stripe',
       },
     })
@@ -139,7 +133,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
               unit_amount: b.inclCenten,
               product_data: {
                 name: `ChefShift: ${shift.title}`,
-                description: `${heures.toFixed(1)}u × €${shift.hourlyRate.toFixed(2)} + ${CHEF_VAT_RATE}% btw${finReelle ? ' (werkelijke eindtijd)' : ''}`,
+                description: `${heures.toFixed(1)}u × €${(shift.hourlyRate / 100).toFixed(2)} + ${CHEF_VAT_RATE}% btw${finReelle ? ' (werkelijke eindtijd)' : ''}`,
               },
             },
           },

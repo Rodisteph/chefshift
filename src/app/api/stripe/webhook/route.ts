@@ -109,7 +109,7 @@ export async function POST(req: NextRequest) {
           // Email au chef : paiement reçu
           const kok = await prisma.user.findUnique({ where: { id: invoice.shift.chosenKokId } })
           if (kok?.email) {
-            await emailBetalingOntvangen(kok.email, invoice.shift.title, invoice.kokPayout)
+            await emailBetalingOntvangen(kok.email, invoice.shift.title, invoice.kokPayout / 100)
           }
         }
       } catch {}

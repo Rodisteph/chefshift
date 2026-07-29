@@ -3,8 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import {
-  berekenUrenMinuten, berekenBedragen,
-  euroNaarCenten, centenNaarEuro, minutenVanTijd,
+  berekenUrenMinuten, berekenBedragen, minutenVanTijd,
 } from '@/lib/factuur'
 
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
@@ -36,7 +35,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     } catch {}
 
     const urenMinuten = berekenUrenMinuten(startMin, endMin, shift.breakMinutes)
-    const b = berekenBedragen(urenMinuten, euroNaarCenten(shift.hourlyRate))
+    const b = berekenBedragen(urenMinuten, shift.hourlyRate) // tarif déjà en centimes
 
     // Le numéro de facture n'est PAS attribué ici : il l'est au paiement (webhook Stripe),
     // de façon transactionnelle, sans trou dans la série.
@@ -45,19 +44,19 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
       create: {
         shiftId,
         horecaId: shift.horecaId,
-        amountExclVat: centenNaarEuro(b.exclCenten),
-        vatAmount: centenNaarEuro(b.btwCenten),
-        amountInclVat: centenNaarEuro(b.inclCenten),
-        platformFee: centenNaarEuro(b.commissieCenten),
-        kokPayout: centenNaarEuro(b.payoutCenten),
+        amountExclVat: b.exclCenten,
+        vatAmount: b.btwCenten,
+        amountInclVat: b.inclCenten,
+        platformFee: b.commissieCenten,
+        kokPayout: b.payoutCenten,
         status: 'PENDING',
       },
       update: {
-        amountExclVat: centenNaarEuro(b.exclCenten),
-        vatAmount: centenNaarEuro(b.btwCenten),
-        amountInclVat: centenNaarEuro(b.inclCenten),
-        platformFee: centenNaarEuro(b.commissieCenten),
-        kokPayout: centenNaarEuro(b.payoutCenten),
+        amountExclVat: b.exclCenten,
+        vatAmount: b.btwCenten,
+        amountInclVat: b.inclCenten,
+        platformFee: b.commissieCenten,
+        kokPayout: b.payoutCenten,
       },
     })
 

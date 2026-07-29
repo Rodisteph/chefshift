@@ -30,7 +30,7 @@ export async function GET(req: NextRequest) {
     })
 
     return NextResponse.json({
-      stats: { totalUsers, totalHoreca, totalKoks, totalShifts, totalInvoices, totalRevenue: revenue._sum.amountInclVat || 0 },
+      stats: { totalUsers, totalHoreca, totalKoks, totalShifts, totalInvoices, totalRevenue: (revenue._sum.amountInclVat || 0) / 100 },
       recentShifts,
     })
   } catch (error) {

@@ -15,8 +15,8 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
     const stad = shift.locationCity ? ` in ${shift.locationCity}` : ''
     const bedrijf = shift.horeca.horecaProfile?.companyName || 'Horecazaak'
     return {
-      title: `${shift.title}${stad} · €${shift.hourlyRate}/u`,
-      description: `${bedrijf} zoekt een kok${stad} op ${shift.date.toISOString().slice(0, 10)}. Tarief €${shift.hourlyRate}/u. Reageer direct via ChefShift.`,
+      title: `${shift.title}${stad} · €${shift.hourlyRate / 100}/u`,
+      description: `${bedrijf} zoekt een kok${stad} op ${shift.date.toISOString().slice(0, 10)}. Tarief €${shift.hourlyRate / 100}/u. Reageer direct via ChefShift.`,
       alternates: { canonical: `/shifts/${params.id}` },
     }
   } catch {
@@ -52,7 +52,7 @@ export default async function ShiftLayout({
         '@context': 'https://schema.org',
         '@type': 'JobPosting',
         title: s.title,
-        description: `<p>${bedrijf} zoekt een ${s.function || 'kok'}${stad} op ${s.date.toISOString().slice(0, 10)} van ${start} tot ${end}. Uurtarief €${s.hourlyRate}. Reageer direct via ChefShift, het platform voor zzp-koks en horeca.</p>`,
+        description: `<p>${bedrijf} zoekt een ${s.function || 'kok'}${stad} op ${s.date.toISOString().slice(0, 10)} van ${start} tot ${end}. Uurtarief €${s.hourlyRate / 100}. Reageer direct via ChefShift, het platform voor zzp-koks en horeca.</p>`,
         identifier: { '@type': 'PropertyValue', name: 'ChefShift', value: s.id },
         datePosted: s.createdAt.toISOString().slice(0, 10),
         validThrough: valid.toISOString(),
@@ -77,7 +77,7 @@ export default async function ShiftLayout({
         baseSalary: {
           '@type': 'MonetaryAmount',
           currency: 'EUR',
-          value: { '@type': 'QuantitativeValue', value: s.hourlyRate, unitText: 'HOUR' },
+          value: { '@type': 'QuantitativeValue', value: s.hourlyRate / 100, unitText: 'HOUR' },
         },
       }
     }

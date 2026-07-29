@@ -45,7 +45,7 @@ export async function GET() {
           select: { paidAt: true, amountInclVat: true },
         }),
       ])
-      const serie = parMois(mois, factures.map((f) => ({ date: f.paidAt, montant: f.amountInclVat })))
+      const serie = parMois(mois, factures.map((f) => ({ date: f.paidAt, montant: f.amountInclVat / 100 })))
       return NextResponse.json({
         role,
         nbShifts,
@@ -65,7 +65,7 @@ export async function GET() {
         select: { paidAt: true, kokPayout: true },
       }),
     ])
-    const serie = parMois(mois, paiements.map((f) => ({ date: f.paidAt, montant: f.kokPayout })))
+    const serie = parMois(mois, paiements.map((f) => ({ date: f.paidAt, montant: f.kokPayout / 100 })))
     return NextResponse.json({
       role,
       nbCandidatures,

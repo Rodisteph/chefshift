@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { MIN_HOURLY_RATE } from '@/lib/constants'
+import { euroNaarCenten, afrondenHalfUp } from '@/lib/factuur'
 import { emailShiftVoorWhatsApp } from '@/lib/email'
 
 const INCLUSIONS = {
@@ -64,8 +65,8 @@ export async function POST(req: NextRequest) {
     const body = await req.json()
     const { title, function: func, date, startTime, endTime, hourlyRate, locationStreet, locationPostal, locationCity, isUrgent } = body
 
-    const rate = Number(hourlyRate)
-    if (!(rate >= MIN_HOURLY_RATE)) {
+    const rateEuro = Number(hourlyRate)
+    if (!(rateEuro >= MIN_HOURLY_RATE)) {
       return NextResponse.json({ error: 'RATE_TOO_LOW', min: MIN_HOURLY_RATE }, { status: 400 })
     }
 
@@ -75,7 +76,8 @@ export async function POST(req: NextRequest) {
     let durMin = (end.getUTCHours() * 60 + end.getUTCMinutes()) - (start.getUTCHours() * 60 + start.getUTCMinutes())
     if (durMin <= 0) durMin += 1440
     const hours = Math.max(0, durMin / 60 - 0.5)
-    const totalAmount = hours * rate
+    const rate = euroNaarCenten(rateEuro) // stockage en centimes
+    const totalAmount = afrondenHalfUp(hours * rate)
 
     const shift = await prisma.shift.create({
       data: {
@@ -104,7 +106,7 @@ export async function POST(req: NextRequest) {
         datum: shift.date.toISOString().slice(0, 10),
         start: startTime,
         eind: endTime,
-        tarief: rate,
+        tarief: rateEuro,
         stad: locationCity || '',
         bedrijf: horeca?.companyName || '',
         urgent: !!isUrgent,
