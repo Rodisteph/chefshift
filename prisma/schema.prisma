@@ -214,9 +214,9 @@ model Shift {
   requiredExperience Int?     @default(0) @map("required_experience")
   requiredCerts   String?     @map("required_certs")
 
-  hourlyRate      Float       @map("hourly_rate")
+  hourlyRate      Int         @map("hourly_rate")
   vatRate         Float       @default(21) @map("vat_rate")
-  totalAmount     Float?      @map("total_amount")
+  totalAmount     Int?        @map("total_amount")
 
   status          ShiftStatus @default(OPEN)
   isUrgent        Boolean     @default(false) @map("is_urgent")
@@ -279,11 +279,11 @@ model Invoice {
   shiftId       String          @unique @map("shift_id")
   shift         Shift           @relation(fields: [shiftId], references: [id], onDelete: Cascade)
 
-  amountExclVat Float           @map("amount_excl_vat")
-  vatAmount     Float           @map("vat_amount")
-  amountInclVat Float           @map("amount_incl_vat")
-  platformFee   Float           @map("platform_fee")
-  kokPayout     Float           @map("kok_payout")
+  amountExclVat Int             @map("amount_excl_vat")
+  vatAmount     Int             @map("vat_amount")
+  amountInclVat Int             @map("amount_incl_vat")
+  platformFee   Int             @map("platform_fee")
+  kokPayout     Int             @map("kok_payout")
 
   status        InvoiceStatus   @default(PENDING)
 

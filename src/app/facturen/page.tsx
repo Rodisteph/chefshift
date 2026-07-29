@@ -51,8 +51,9 @@ const T = {
   },
 }
 
-function eur(n: number): string {
-  return `€ ${Number(n || 0).toFixed(2).replace('.', ',')}`
+// Montants stockés en centimes entiers : conversion à l'affichage
+function eur(centen: number): string {
+  return `€ ${(Number(centen || 0) / 100).toFixed(2).replace('.', ',')}`
 }
 
 function datumNL(d: string, lang: Lang): string {

@@ -132,10 +132,10 @@ export default function ShiftCard({
       </div>
       <div className="cs-end" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 7 }}>
         <div>
-          <div style={{ fontSize: 20, fontWeight: 800, color: '#4c5e42', letterSpacing: -0.5 }}>€{shift.hourlyRate}{parHeure}</div>
+          <div style={{ fontSize: 20, fontWeight: 800, color: '#4c5e42', letterSpacing: -0.5 }}>€{shift.hourlyRate / 100}{parHeure}</div>
           {shift.totalAmount != null && (
             <div style={{ fontSize: 12.5, color: 'hsl(var(--muted-foreground))', fontWeight: 600 }}>
-              {t('total')} : €{Math.round(shift.totalAmount)}
+              {t('total')} : €{Math.round(shift.totalAmount / 100)}
             </div>
           )}
         </div>

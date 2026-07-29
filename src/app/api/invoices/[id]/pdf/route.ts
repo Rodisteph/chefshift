@@ -8,8 +8,9 @@ function esc(t: string): string {
   return t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 }
 
-function eur(n: number): string {
-  return `€ ${n.toFixed(2).replace('.', ',')}`
+// Montants stockés en centimes entiers : conversion à l'affichage
+function eur(centen: number): string {
+  return `€ ${(centen / 100).toFixed(2).replace('.', ',')}`
 }
 
 function datumNL(d: Date | string): string {
