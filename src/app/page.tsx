@@ -350,6 +350,7 @@ export default function HomePage() {
             <span style={{ display: 'flex', gap: 22, flexWrap: 'wrap' }}>
               <a href="/kok-inhuren" style={{ color: 'rgba(255,255,255,0.72)', textDecoration: 'none', fontWeight: 600 }}>Kok inhuren</a>
               <a href="/zzp-kok-worden" style={{ color: 'rgba(255,255,255,0.72)', textDecoration: 'none', fontWeight: 600 }}>ZZP-kok worden</a>
+              <a href="/over-ons" style={{ color: 'rgba(255,255,255,0.72)', textDecoration: 'none', fontWeight: 600 }}>{t('footer_over')}</a>
               <a href="/shifts" style={{ color: 'rgba(255,255,255,0.72)', textDecoration: 'none', fontWeight: 600 }}>Shifts</a>
               <a href={`mailto:${CONTACT_EMAIL}`} style={{ color: 'rgba(255,255,255,0.72)', textDecoration: 'none', fontWeight: 600 }}>{t('contact')}</a>
               <a href="/voorwaarden" style={{ color: 'rgba(255,255,255,0.72)', textDecoration: 'none', fontWeight: 600 }}>{t('terms_of')}</a>
