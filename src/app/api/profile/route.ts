@@ -72,14 +72,37 @@ export async function PUT(req: NextRequest) {
       functions, specialties, description,
       haccpCertified, svhCertified, svhLevel,
       hourlyRateMin, hourlyRateMax,
-      workExperience, iban, straat, huisnummer, postcode,
+      workExperience, iban, straat, huisnummer, postcode, vatNumber,
     } = body
+
+    const straatPropre = (straat || '').trim()
+    const huisnrPropre = (huisnummer || '').trim()
+    const postcodePropre = (postcode || '').trim()
+    const vatNumberPropre = (vatNumber || '').trim().toUpperCase()
+
+    // Champs facturation obligatoires (adresse complète + btw-id)
+    const manquants: string[] = []
+    if (!straatPropre) manquants.push('straat')
+    if (!huisnrPropre) manquants.push('huisnummer')
+    if (!postcodePropre) manquants.push('postcode')
+    if (!(city || '').trim()) manquants.push('city')
+    if (!vatNumberPropre) manquants.push('vatNumber')
+    if (manquants.length > 0) {
+      return NextResponse.json(
+        { error: `Verplichte velden ontbreken: ${manquants.join(', ')}`, manquants },
+        { status: 400 }
+      )
+    }
 
     const data = {
       firstName: firstName || '',
       lastName: lastName || '',
       dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : null,
-      city: city || null,
+      city: (city || '').trim(),
+      vatNumber: vatNumberPropre,
+      street: straatPropre,
+      houseNumber: huisnrPropre,
+      postalCode: postcodePropre,
       yearsExperience: yearsExperience != null ? parseInt(yearsExperience) : null,
       functions: functions || [],
       specialties: specialties || [],
@@ -130,11 +153,8 @@ export async function PUT(req: NextRequest) {
       ON CONFLICT (kok_id) DO UPDATE SET iban = ${ibanPropre}, updated_at = now()
     `
 
-    // ===== Adresse de facturation (table auto-créée) =====
+    // ===== Adresse de facturation (table auto-créée, synchronisée en secours) =====
     await ensureAdresTable()
-    const straatPropre = (straat || '').trim()
-    const huisnrPropre = (huisnummer || '').trim()
-    const postcodePropre = (postcode || '').trim()
     await prisma.$executeRaw`
       INSERT INTO kok_adres (kok_id, straat, huisnummer, postcode, updated_at)
       VALUES (${profile.id}, ${straatPropre}, ${huisnrPropre}, ${postcodePropre}, now())
