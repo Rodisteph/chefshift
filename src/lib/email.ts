@@ -3,6 +3,9 @@ import { Resend } from 'resend'
 // Expéditeur : noreply@chefshift.nl (domaine vérifié dans Resend)
 const FROM = (process.env.EMAIL_FROM || 'ChefShift <onboarding@resend.dev>').trim()
 
+// Adresse du propriétaire (reçoit les messages WhatsApp prêts à coller)
+const OWNER_EMAIL = (process.env.OWNER_EMAIL || 'rdrgbouabida@gmail.com').trim()
+
 export function baseUrl(): string {
   return (process.env.NEXTAUTH_URL || 'https://www.chefshift.nl').trim().replace(/\/+$/, '')
 }
@@ -18,6 +21,11 @@ export async function envoyerEmail(to: string, sujet: string, html: string) {
   } catch {
     return { ok: false }
   }
+}
+
+// Échappe le HTML pour un affichage sûr dans les cadres copiables
+function esc(t: string): string {
+  return t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 }
 
 // Logo ChefShift en HTML pur (aucune image à charger, compatible tous clients mail)
@@ -289,5 +297,66 @@ export async function emailBienvenueHoreca(horecaEmail: string) {
       'Tip: rate your chef after each shift. You help fellow business owners and build your own network of reliable chefs.',
       `${baseUrl()}/shifts/new`
     )
+  )
+}
+
+// 11. Propriétaire : nouvelle shift publiée, message prêt à coller dans le groupe WhatsApp
+export async function emailShiftVoorWhatsApp(s: {
+  shiftId: string
+  titel: string
+  functie?: string | null
+  datum: string // YYYY-MM-DD
+  start: string
+  eind: string
+  tarief: number
+  stad?: string
+  bedrijf?: string
+  urgent?: boolean
+}) {
+  const link = `${baseUrl()}/shifts/${s.shiftId}`
+  let datumMooi = s.datum
+  try {
+    datumMooi = new Date(`${s.datum}T00:00:00Z`).toLocaleDateString('nl-NL', {
+      weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC',
+    })
+  } catch {}
+
+  const regels = [
+    s.urgent ? '🔥 SPOEDSHIFT op ChefShift!' : '🔪 Nieuwe shift op ChefShift!',
+    '',
+    `👨‍🍳 ${s.functie || s.titel}${s.bedrijf ? ` bij ${s.bedrijf}` : ''}`,
+    s.stad ? `📍 ${s.stad}` : '',
+    `📅 ${datumMooi}`,
+    `🕐 ${s.start} - ${s.eind}`,
+    `💶 €${s.tarief}/u`,
+    '',
+    `Reageer direct: ${link}`,
+  ].filter((l) => l !== '')
+
+  const bericht = regels.join('\n')
+  const berichtHtml = esc(bericht)
+    .split('\n')
+    .map((l) => `<p style="margin:0 0 4px">${l}</p>`)
+    .join('')
+
+  const html = `<div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;background:#f6f7f2;padding:32px 16px">
+  <div style="background:#ffffff;border:1px solid #eceee3;border-radius:16px;padding:32px">
+    ${logoHtml()}
+    <h1 style="font-size:21px;color:#23281f;margin:28px 0 12px;font-family:Arial,sans-serif">Nieuwe shift geplaatst ✅</h1>
+    <p style="font-size:15px;line-height:1.7;color:#4a5044;margin:0 0 18px">
+      Copie le message ci-dessous et colle-le dans le groupe WhatsApp des chefs. Le lien renvoie directement vers la shift.
+    </p>
+    <div style="background:#f6f7f2;border:1.5px solid #dfe4d4;border-radius:12px;padding:16px 18px;font-size:14.5px;line-height:1.55;color:#23281f">${berichtHtml}</div>
+    <a href="${link}" style="display:inline-block;margin-top:22px;background:#46553c;color:#ffffff;text-decoration:none;padding:12px 26px;border-radius:999px;font-weight:700;font-size:14px">Bekijk de shift</a>
+  </div>
+  <p style="font-size:12px;color:#9aa39b;text-align:center;margin-top:16px;line-height:1.6">
+    ChefShift · Alleen zichtbaar voor jou als beheerder
+  </p>
+</div>`
+
+  return envoyerEmail(
+    OWNER_EMAIL,
+    `WhatsApp-bericht klaar: ${s.titel}${s.stad ? ` (${s.stad})` : ''}`,
+    html
   )
 }
