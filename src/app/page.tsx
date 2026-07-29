@@ -215,6 +215,7 @@ export default function HomePage() {
             { icon: 'bolt', t: t('feat1_t'), d: t('feat1_d') },
             { icon: 'shield', t: t('feat2_t'), d: t('feat2_d') },
             { icon: 'card', t: t('feat3_t'), d: t('feat3_d') },
+            { icon: 'doc', t: t('feat4_t'), d: t('feat4_d') },
           ].map((c) => (
             <div key={c.t} className="cs-card" style={{ background: '#fff', borderRadius: 20, border: '1px solid #eceee3', boxShadow: '0 3px 12px rgba(46,52,43,0.05)', padding: '32px 28px' }}>
               <div style={{ marginBottom: 18 }}><IcoTile n={c.icon} s={21} /></div>
@@ -243,7 +244,7 @@ export default function HomePage() {
             <h2 style={{ fontSize: 'clamp(26px, 3.5vw, 38px)', fontWeight: 800, letterSpacing: -1.1, margin: '12px 0 12px' }}>{t('hor_title')}</h2>
             <p style={{ color: '#6b7268', fontSize: 15.5, lineHeight: 1.65, marginBottom: 24 }}>{t('hor_sub')}</p>
             <div style={{ display: 'grid', gap: 13, marginBottom: 30 }}>
-              {[t('hor_p1'), t('hor_p2'), t('hor_p3')].map((p) => (
+              {[t('hor_p1'), t('hor_p2'), t('hor_p3'), t('hor_p4')].map((p) => (
                 <div key={p} style={{ display: 'flex', alignItems: 'center', gap: 11, fontSize: 14.5, fontWeight: 600, color: '#3c4436' }}>
                   <span style={{ width: 27, height: 27, borderRadius: 9, background: '#eef2e6', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                     <Ico n="check" s={14} c="#4c5e42" />
