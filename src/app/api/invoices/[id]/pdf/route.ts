@@ -19,7 +19,7 @@ function datum(d: Date | string, lang: 'nl' | 'en'): string {
 
 // GET /api/invoices/[id]/pdf[?lang=en] : facture au format page imprimable (Ctrl+P → PDF)
 // Émise par ChefShift AU NOM ET POUR LE COMPTE du chef (zelf-facturatie, art. 6 AV)
-// ChefShift est sous le régime KOR : pas de TVA sur la commission.
+// ChefShift est sous le régime KOR (art. 25 Wet OB) : pas de TVA sur la commission.
 // Accès : la horecazaak de la facture, le kok choisi, ou un admin
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
   const session = await getServerSession(authOptions)
@@ -64,11 +64,12 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
       subtotaal: 'Subtotaal excl. btw',
       btw: (r: number) => `${r}% btw`,
       totaal: 'Totaal',
-      commissie: 'Bemiddelingscommissie ChefShift (15% · btw-vrijgesteld, KOR)',
+      commissie: 'Bemiddelingscommissie ChefShift (15%)',
       uitbetaling: 'Uitbetaling aan de kok',
-      notitie: 'De betaling van deze factuur is via het platform verlopen. De commissie van ChefShift is verrekend bij de uitbetaling; de kok ontvangt het restbedrag op zijn opgegeven rekeningnummer. ChefShift is vrijgesteld van btw op grond van de kleineondernemersregeling (KOR); over de commissie is geen btw berekend.',
+      kor: 'De commissie van ChefShift is vrijgesteld van omzetbelasting op grond van artikel 25 Wet op de omzetbelasting 1968 (kleineondernemersregeling).',
+      notitie: 'De betaling van deze factuur is via het platform verlopen. De commissie van ChefShift is verrekend bij de uitbetaling; de kok ontvangt het restbedrag op zijn opgegeven rekeningnummer.',
       voet_1: 'ChefShift · Bemiddelingsplatform voor zzp-koks en horeca · www.chefshift.nl',
-      voet_2: 'KvK 91547261 · btw-vrijgesteld (KOR) · Fred. Roeskestraat 90, 1076 ED Amsterdam',
+      voet_2: 'KvK 91547261 · btw-vrijgesteld o.g.v. art. 25 Wet OB (KOR) · Fred. Roeskestraat 90, 1076 ED Amsterdam',
       voet_3: 'Vragen over deze factuur? Mail info@chefshift.nl',
       knop: 'Opslaan als PDF / Afdrukken',
     },
@@ -89,11 +90,12 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
       subtotaal: 'Subtotal excl. VAT',
       btw: (r: number) => `${r}% VAT`,
       totaal: 'Total',
-      commissie: 'ChefShift intermediation commission (15% · VAT-exempt, KOR)',
+      commissie: 'ChefShift intermediation commission (15%)',
       uitbetaling: 'Payout to the chef',
-      notitie: 'Payment of this invoice was processed via the platform. The ChefShift commission was deducted at payout; the chef receives the remaining amount in their registered bank account. ChefShift is exempt from VAT under the Dutch small businesses scheme (KOR); no VAT was charged on the commission.',
+      kor: 'The ChefShift commission is exempt from VAT pursuant to article 25 of the Dutch VAT Act 1968 (small businesses scheme, KOR).',
+      notitie: 'Payment of this invoice was processed via the platform. The ChefShift commission was deducted at payout; the chef receives the remaining amount in their registered bank account.',
       voet_1: 'ChefShift · Intermediation platform for freelance chefs and hospitality · www.chefshift.nl',
-      voet_2: 'Chamber of Commerce 91547261 · VAT-exempt (KOR) · Fred. Roeskestraat 90, 1076 ED Amsterdam, the Netherlands',
+      voet_2: 'Chamber of Commerce 91547261 · VAT-exempt (art. 25 Dutch VAT Act, KOR) · Fred. Roeskestraat 90, 1076 ED Amsterdam, the Netherlands',
       voet_3: 'Questions about this invoice? Email info@chefshift.nl',
       knop: 'Save as PDF / Print',
     },
@@ -151,6 +153,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
   .totalen .tt { border-top: 1px solid #dfe4d4; margin-top: 8px; padding-top: 12px; font-weight: 800; font-size: 16px; color: #23281f; }
   .commissie { margin-left: auto; width: 300px; margin-top: 14px; font-size: 12.5px; color: #6b7268; border-top: 1px dashed #dfe4d4; padding-top: 10px; }
   .commissie div { display: flex; justify-content: space-between; gap: 12px; padding: 3px 0; }
+  .kor { margin-left: auto; width: 300px; margin-top: 8px; font-size: 11px; color: #9aa39b; line-height: 1.5; }
   .notitie { margin-top: 30px; background: #f6f7f2; border-radius: 10px; padding: 14px 16px; font-size: 12px; color: #6b7268; line-height: 1.6; }
   .voet { text-align: center; color: #9aa39b; font-size: 11px; margin-top: 40px; line-height: 1.7; }
   .acties { max-width: 760px; margin: 18px auto 0; text-align: center; }
@@ -234,6 +237,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
       <div><span>${T.commissie}</span><span>- ${eur(fee)}</span></div>
       <div><span><strong>${T.uitbetaling}</strong></span><span><strong>${eur(inv.kokPayout)}</strong></span></div>
     </div>
+    <div class="kor">${T.kor}</div>
 
     <div class="notitie">
       ${T.notitie}
