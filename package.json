@@ -43,8 +43,7 @@
     "bull": "^4.15.1",
     "ioredis": "^5.4.1",
     "resend": "^3.4.0",
-    "uuid": "^10.0.0",
-    "pdfkit": "^0.15.0"
+    "uuid": "^10.0.0"
   },
   "devDependencies": {
     "typescript": "^5.5.3",
@@ -54,7 +53,6 @@
     "@types/bcryptjs": "^2.4.6",
     "@types/uuid": "^10.0.0",
     "@types/web-push": "^3.6.4",
-    "@types/pdfkit": "^0.13.5",
     "prisma": "^5.16.0",
     "tsx": "^4.16.2",
     "eslint": "^8.57.0",
