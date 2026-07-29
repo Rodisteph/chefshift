@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { CHEF_VAT_RATE, berekenUrenMinuten, minutenVanTijd } from '@/lib/factuur'
+import { COMMISSION_RATE, commissieNummer } from '@/lib/factuur'
 
 function esc(t: string): string {
   return t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
@@ -16,12 +16,25 @@ function datumNL(d: Date | string): string {
   return new Date(d).toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' })
 }
 
+async function ensureNummerTables() {
+  await prisma.$executeRaw`
+    CREATE TABLE IF NOT EXISTS platform_factuur_seq (
+      jaar INT PRIMARY KEY,
+      laatste_seq INT NOT NULL DEFAULT 0
+    )`
+  await prisma.$executeRaw`
+    CREATE TABLE IF NOT EXISTS commissie_factuur (
+      invoice_id TEXT PRIMARY KEY,
+      nummer TEXT NOT NULL,
+      jaar INT NOT NULL,
+      seq INT NOT NULL
+    )`
+}
+
 // ============================================================================
-// DOCUMENT A — Facture CHEF → RESTAURANT (zelf-facturatie)
-// Émise par ChefShift au nom et pour le compte du chef.
-// Contient UNIQUEMENT la prestation : heures × tarif, TVA 21%, total TTC.
-// Pas de commission, pas de payout, pas de mention KOR (ça, c'est le document B).
-// Accès : la horecazaak, le kok, ou un admin.
+// DOCUMENT B — Facture CHEFSHIFT → CHEF (commission de 15% du HT)
+// Série propre : CM-{année}-{seq:04d}. Sans TVA (KOR, art. 25 Wet OB).
+// Accès : le chef concerné ou un admin (PAS la horecazaak).
 // ============================================================================
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
   const session = await getServerSession(authOptions)
@@ -41,49 +54,48 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
   if (!inv) return new NextResponse('Factuur niet gevonden', { status: 404 })
 
   const toegang =
-    inv.horecaId === session.user.id ||
     inv.shift.chosenKokId === session.user.id ||
     session.user.role === 'ADMIN'
   if (!toegang) return new NextResponse('Geen toegang', { status: 403 })
 
+  // ===== Numéro du document B : série plateforme, attribué au paiement ;
+  // pour les anciennes factures, attribution à la volée (idempotente) =====
+  await ensureNummerTables()
   const jaar = new Date(inv.paidAt || inv.createdAt).getFullYear()
-  const nummer = inv.invoiceNumber || `CS-${jaar}-${inv.id.slice(0, 6).toUpperCase()}`
+  const gevonden: { nummer: string }[] = await prisma.$queryRaw`
+    SELECT nummer FROM commissie_factuur WHERE invoice_id = ${inv.id} LIMIT 1`
+  let nummer = gevonden[0]?.nummer || null
+  if (!nummer) {
+    nummer = await prisma.$transaction(async (tx) => {
+      const rows: { laatste_seq: number }[] = await tx.$queryRaw`
+        INSERT INTO platform_factuur_seq (jaar, laatste_seq)
+        VALUES (${jaar}, 1)
+        ON CONFLICT (jaar)
+        DO UPDATE SET laatste_seq = platform_factuur_seq.laatste_seq + 1
+        RETURNING laatste_seq`
+      const n = commissieNummer(jaar, rows[0].laatste_seq)
+      await tx.$executeRaw`
+        INSERT INTO commissie_factuur (invoice_id, nummer, jaar, seq)
+        VALUES (${inv.id}, ${n}, ${jaar}, ${rows[0].laatste_seq})
+        ON CONFLICT (invoice_id) DO NOTHING`
+      const check: { nummer: string }[] = await tx.$queryRaw`
+        SELECT nummer FROM commissie_factuur WHERE invoice_id = ${inv.id} LIMIT 1`
+      return check[0].nummer
+    })
+  }
 
-  // ===== Heures dérivées des horaires (fin réelle confirmée si disponible) =====
-  const startMin = minutenVanTijd(inv.shift.startTime)
-  let endMin = minutenVanTijd(inv.shift.endTime)
-  try {
-    const fins: { reported_end: Date }[] = await prisma.$queryRaw`
-      SELECT reported_end FROM shift_end WHERE shift_id = ${inv.shiftId} LIMIT 1
-    `
-    if (fins.length > 0) endMin = minutenVanTijd(fins[0].reported_end)
-  } catch {}
-  const uren = berekenUrenMinuten(startMin, endMin, inv.shift.breakMinutes) / 60
-
-  // ===== Montants stockés (calculés en centimes au moment du paiement) =====
-  const excl = inv.amountExclVat
-  const btw = inv.vatAmount
-  const totaal = inv.amountInclVat
-  // Taux affiché : dérivé des montants stockés (21% pour les nouvelles factures)
-  const btwTarief = excl > 0 ? Math.round((btw / excl) * 100) : CHEF_VAT_RATE
-
-  const hp = inv.shift.horeca.horecaProfile
   const kp = inv.shift.chosenKok?.kokProfile
   const kokNaam = kp ? `${kp.firstName || ''} ${kp.lastName || ''}`.trim() || 'Kok' : 'Kok'
-  const start = new Date(inv.shift.startTime).toISOString().slice(11, 16)
-  const eind = new Date(inv.shift.endTime).toISOString().slice(11, 16)
   const adresKok = [kp?.postalCode, kp?.city].filter(Boolean).join(' ')
-  const adresHoreca = [
-    [hp?.street, hp?.houseNumber].filter(Boolean).join(' '),
-    [hp?.postalCode, hp?.city].filter(Boolean).join(' '),
-  ].filter(Boolean).join(', ')
+  const grondslag = inv.amountExclVat
+  const fee = inv.platformFee
 
   const html = `<!doctype html>
 <html lang="nl">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Factuur ${esc(nummer)} · ChefShift</title>
+<title>Commissiefactuur ${esc(nummer)} · ChefShift</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body { font-family: 'Helvetica Neue', Arial, sans-serif; background: #e9ece4; color: #23281f; padding: 32px 16px; }
@@ -95,9 +107,8 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
   .naam b { color: #5f7052; }
   .sub { color: #6b7268; font-size: 12px; margin-top: 2px; }
   .fact-titel { text-align: right; }
-  .fact-titel h1 { font-size: 26px; font-weight: 800; letter-spacing: -0.5px; }
+  .fact-titel h1 { font-size: 24px; font-weight: 800; letter-spacing: -0.5px; }
   .fact-titel p { color: #4a5044; font-size: 13px; margin-top: 4px; }
-  .namens { margin-top: 18px; background: #eef2e6; border-radius: 10px; padding: 10px 14px; font-size: 12px; color: #4c5e42; line-height: 1.55; }
   hr { border: none; border-top: 1px solid #dfe4d4; margin: 26px 0; }
   .blokken { display: flex; gap: 60px; flex-wrap: wrap; }
   .blok h3 { color: #5f7052; font-size: 10px; letter-spacing: 2px; margin-bottom: 8px; }
@@ -110,9 +121,9 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
   .klein { color: #6b7268; font-size: 11.5px; margin-top: 4px; }
   .r { text-align: right; }
   .totalen { margin-left: auto; width: 280px; margin-top: 20px; font-size: 13.5px; }
-  .totalen div { display: flex; justify-content: space-between; padding: 5px 0; color: #4a5044; }
-  .totalen .tt { border-top: 1px solid #dfe4d4; margin-top: 8px; padding-top: 12px; font-weight: 800; font-size: 16px; color: #23281f; }
-  .notitie { margin-top: 30px; background: #f6f7f2; border-radius: 10px; padding: 14px 16px; font-size: 12px; color: #6b7268; line-height: 1.6; }
+  .totalen .tt { border-top: 1px solid #dfe4d4; margin-top: 8px; padding-top: 12px; font-weight: 800; font-size: 16px; color: #23281f; display: flex; justify-content: space-between; }
+  .kor { margin-top: 24px; background: #eef2e6; border-radius: 10px; padding: 12px 16px; font-size: 12.5px; color: #4c5e42; font-weight: 700; line-height: 1.55; }
+  .notitie { margin-top: 22px; background: #f6f7f2; border-radius: 10px; padding: 14px 16px; font-size: 12px; color: #6b7268; line-height: 1.6; }
   .voet { text-align: center; color: #9aa39b; font-size: 11px; margin-top: 40px; line-height: 1.7; }
   .acties { max-width: 760px; margin: 18px auto 0; text-align: center; }
   .knop { display: inline-block; background: #46553c; color: #fff; border: none; padding: 13px 28px; border-radius: 999px; font-weight: 700; font-size: 14px; cursor: pointer; font-family: inherit; text-decoration: none; }
@@ -134,32 +145,27 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
         </div>
       </div>
       <div class="fact-titel">
-        <h1>FACTUUR</h1>
+        <h1>COMMISSIEFACTUUR</h1>
         <p>Factuurnummer: <strong>${esc(nummer)}</strong></p>
         <p>Factuurdatum: ${datumNL(inv.paidAt || inv.createdAt)}</p>
-        <p>Prestatiedatum: ${datumNL(inv.shift.date)}</p>
       </div>
-    </div>
-
-    <div class="namens">
-      Deze factuur wordt door ChefShift uitgereikt <strong>namens en voor rekening van de zelfstandige kok</strong> (zelf-facturatie, artikel 6 van de algemene voorwaarden). De prestatie is geleverd door de kok aan de opdrachtgever; ChefShift is uitsluitend bemiddelaar.
     </div>
 
     <hr>
 
     <div class="blokken">
       <div class="blok">
-        <h3>VAN (ZELFSTANDIGE)</h3>
-        <p><strong>${esc(kokNaam)}</strong>
-        ${adresKok ? `<br>${esc(adresKok)}` : ''}
-        ${kp?.kvkNumber ? `<br>KvK: ${esc(kp.kvkNumber)}` : ''}
-        ${kp?.vatNumber ? `<br>Btw-id: ${esc(kp.vatNumber)}` : ''}</p>
+        <h3>VAN</h3>
+        <p><strong>ChefShift</strong><br>
+        Fred. Roeskestraat 90<br>
+        1076 ED Amsterdam<br>
+        KvK: 91547261</p>
       </div>
       <div class="blok">
-        <h3>AAN (OPDRACHTGEVER)</h3>
-        <p><strong>${esc(hp?.companyName || 'Horecazaak')}</strong>
-        ${adresHoreca ? `<br>${esc(adresHoreca)}` : ''}
-        ${hp?.kvkNumber ? `<br>KvK: ${esc(hp.kvkNumber)}` : ''}</p>
+        <h3>AAN (ZELFSTANDIGE)</h3>
+        <p><strong>${esc(kokNaam)}</strong>
+        ${adresKok ? `<br>${esc(adresKok)}` : ''}
+        ${kp?.kvkNumber ? `<br>KvK: ${esc(kp.kvkNumber)}` : ''}</p>
       </div>
     </div>
 
@@ -167,38 +173,38 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
       <thead>
         <tr>
           <td>OMSCHRIJVING</td>
-          <td class="r">UREN</td>
-          <td class="r">TARIEF</td>
+          <td class="r">GRONDSLAG</td>
           <td class="r">BEDRAG</td>
         </tr>
       </thead>
       <tbody>
         <tr>
           <td>
-            <strong>${esc(inv.shift.title)}</strong>
-            <div class="klein">${datumNL(inv.shift.date)} · ${start} - ${eind} · via ChefShift</div>
+            <strong>Bemiddelingscommissie ChefShift</strong>
+            <div class="klein">Shift: ${esc(inv.shift.title)} · ${datumNL(inv.shift.date)}${inv.invoiceNumber ? ` · factuur ${esc(inv.invoiceNumber)}` : ''}</div>
           </td>
-          <td class="r">${uren.toFixed(1).replace('.', ',')}</td>
-          <td class="r">${eur(inv.shift.hourlyRate)}</td>
-          <td class="r"><strong>${eur(excl)}</strong></td>
+          <td class="r">${COMMISSION_RATE}% van ${eur(grondslag)} excl. btw</td>
+          <td class="r"><strong>${eur(fee)}</strong></td>
         </tr>
       </tbody>
     </table>
 
     <div class="totalen">
-      <div><span>Subtotaal excl. btw</span><span>${eur(excl)}</span></div>
-      <div><span>${btwTarief}% btw</span><span>${eur(btw)}</span></div>
-      <div class="tt"><span>Totaal incl. btw</span><span>${eur(totaal)}</span></div>
+      <div class="tt"><span>Totaal</span><span>${eur(fee)}</span></div>
+    </div>
+
+    <div class="kor">
+      Factuur vrijgesteld van OB o.g.v. artikel 25 Wet OB
     </div>
 
     <div class="notitie">
-      De betaling van deze factuur is via het platform verlopen.
-      ${inv.paidAt ? `Betaald op ${datumNL(inv.paidAt)} via iDEAL.` : ''}
+      Deze commissie is verrekend bij de uitbetaling van je shift; je hoeft niets over te maken.
+      Bewaar deze factuur voor je administratie.
     </div>
 
     <div class="voet">
-      Factuur uitgereikt namens de zelfstandige kok via ChefShift · Bemiddelingsplatform voor zzp-koks en horeca<br>
-      Vragen over deze factuur? Mail info@chefshift.nl
+      ChefShift · Fred. Roeskestraat 90, 1076 ED Amsterdam · KvK 91547261<br>
+      www.chefshift.nl · info@chefshift.nl
     </div>
   </div>
 
