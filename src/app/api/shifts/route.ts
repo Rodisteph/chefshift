@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { MIN_HOURLY_RATE } from '@/lib/constants'
+import { emailShiftVoorWhatsApp } from '@/lib/email'
 
 const INCLUSIONS = {
   horeca: { include: { horecaProfile: true } },
@@ -92,6 +93,23 @@ export async function POST(req: NextRequest) {
         isUrgent: isUrgent || false,
       },
     })
+
+    // E-mail au propriétaire avec le message WhatsApp prêt à copier-coller (ne bloque jamais la création)
+    try {
+      const horeca = await prisma.horecaProfile.findUnique({ where: { userId: session.user.id } })
+      await emailShiftVoorWhatsApp({
+        shiftId: shift.id,
+        titel: shift.title,
+        functie: shift.function,
+        datum: shift.date.toISOString().slice(0, 10),
+        start: startTime,
+        eind: endTime,
+        tarief: rate,
+        stad: locationCity || '',
+        bedrijf: horeca?.companyName || '',
+        urgent: !!isUrgent,
+      })
+    } catch {}
 
     return NextResponse.json({ shift }, { status: 201 })
   } catch (error) {
