@@ -3,26 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { emailRappelShift, emailRappelEindtijdChef, emailRappelEindtijdHoreca } from '@/lib/email'
 import webpush from 'web-push'
 
-// Tables auto-créées : abonnements push + journal des rappels envoyés
-async function ensureTables() {
-  await prisma.$executeRaw`
-    CREATE TABLE IF NOT EXISTS kok_push (
-      endpoint TEXT PRIMARY KEY,
-      user_id TEXT NOT NULL,
-      p256dh TEXT NOT NULL,
-      auth TEXT NOT NULL,
-      created_at TIMESTAMP DEFAULT now()
-    )
-  `
-  await prisma.$executeRaw`
-    CREATE TABLE IF NOT EXISTS kok_reminder (
-      shift_id TEXT NOT NULL,
-      kind TEXT NOT NULL,
-      sent_at TIMESTAMP DEFAULT now(),
-      PRIMARY KEY (shift_id, kind)
-    )
-  `
-}
+// Tables kok_push / kok_reminder : gérées par les migrations Prisma (Phase 5)
 
 type Sub = { endpoint: string; p256dh: string; auth: string }
 
@@ -46,7 +27,6 @@ export async function GET(req: NextRequest) {
       webpush.setVapidDetails('mailto:info@chefshift.nl', pub, priv)
     }
 
-    await ensureTables()
 
     const maintenant = Date.now()
     const heure = 3600 * 1000

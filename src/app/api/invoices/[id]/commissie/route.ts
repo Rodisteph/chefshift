@@ -17,21 +17,6 @@ function datumNL(d: Date | string): string {
   return new Date(d).toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' })
 }
 
-async function ensureNummerTables() {
-  await prisma.$executeRaw`
-    CREATE TABLE IF NOT EXISTS platform_factuur_seq (
-      jaar INT PRIMARY KEY,
-      laatste_seq INT NOT NULL DEFAULT 0
-    )`
-  await prisma.$executeRaw`
-    CREATE TABLE IF NOT EXISTS commissie_factuur (
-      invoice_id TEXT PRIMARY KEY,
-      nummer TEXT NOT NULL,
-      jaar INT NOT NULL,
-      seq INT NOT NULL
-    )`
-}
-
 // ============================================================================
 // DOCUMENT B — Facture CHEFSHIFT → CHEF (commission de 15% du HT)
 // Série propre : CM-{année}-{seq:04d}. Sans TVA (KOR, art. 25 Wet OB).
@@ -60,8 +45,8 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
   if (!toegang) return new NextResponse('Geen toegang', { status: 403 })
 
   // ===== Numéro du document B : série plateforme, attribué au paiement ;
-  // pour les anciennes factures, attribution à la volée (idempotente) =====
-  await ensureNummerTables()
+  // pour les anciennes factures, attribution à la volée (idempotente).
+  // Tables gérées par les migrations Prisma (série gapless préservée). =====
   const jaar = new Date(inv.paidAt || inv.createdAt).getFullYear()
   const gevonden: { nummer: string }[] = await prisma.$queryRaw`
     SELECT nummer FROM commissie_factuur WHERE invoice_id = ${inv.id} LIMIT 1`
