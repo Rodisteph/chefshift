@@ -183,6 +183,7 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
 
     <div class="voet">
       ChefShift · Bemiddelingsplatform voor zzp-koks en horeca · www.chefshift.nl<br>
+      KvK 91547261 · btw NL004899617B11 · Fred. Roeskestraat 90, 1076 ED Amsterdam<br>
       Vragen over deze factuur? Mail info@chefshift.nl
     </div>
   </div>
