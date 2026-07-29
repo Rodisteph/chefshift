@@ -135,6 +135,8 @@ model KokProfile {
   kvkNumber     String   @unique @map("kvk_number")
   vatNumber     String?  @map("vat_number")
 
+  street        String?
+  houseNumber   String?  @map("house_number")
   postalCode    String?  @map("postal_code")
   city          String?
   latitude      Float?

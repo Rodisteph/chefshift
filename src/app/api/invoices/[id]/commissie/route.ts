@@ -95,8 +95,8 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
     } catch {}
   }
   const adresKok = [
-    [adrKok?.straat, adrKok?.huisnummer].filter(Boolean).join(' '),
-    [adrKok?.postcode || kp?.postalCode, kp?.city].filter(Boolean).join(' '),
+    [kp?.street || adrKok?.straat, kp?.houseNumber || adrKok?.huisnummer].filter(Boolean).join(' '),
+    [kp?.postalCode || adrKok?.postcode, kp?.city].filter(Boolean).join(' '),
   ].filter(Boolean).join(', ')
   const grondslag = inv.amountExclVat
   const fee = inv.platformFee
