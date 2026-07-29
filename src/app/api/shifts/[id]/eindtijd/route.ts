@@ -5,16 +5,7 @@ import { prisma } from '@/lib/prisma'
 import { verstuurPush } from '@/lib/push'
 import { emailEindtijdGemeld } from '@/lib/email'
 
-async function ensureTable() {
-  await prisma.$executeRaw`
-    CREATE TABLE IF NOT EXISTS shift_end (
-      shift_id TEXT PRIMARY KEY,
-      reported_end TIMESTAMP NOT NULL,
-      reported_at TIMESTAMP DEFAULT now(),
-      confirmed_at TIMESTAMP
-    )
-  `
-}
+// Table shift_end : gérée par les migrations Prisma (Phase 5)
 
 // POST : le chef déclare son heure de fin réelle { endTime: "HH:MM" }
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
@@ -45,7 +36,6 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
       fin = new Date(fin.getTime() + 86400000)
     }
 
-    await ensureTable()
 
     // Pas de modification après confirmation
     const existant: { confirmed_at: Date | null }[] = await prisma.$queryRaw`

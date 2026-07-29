@@ -4,29 +4,6 @@ import { emailBetalingOntvangen } from '@/lib/email'
 import { factuurNummer, commissieNummer } from '@/lib/factuur'
 import Stripe from 'stripe'
 
-// Tables de numérotation : séries continues, sans trou, attribuées en transaction
-async function ensureNummerTables() {
-  await prisma.$executeRaw`
-    CREATE TABLE IF NOT EXISTS kok_factuur_seq (
-      kok_id TEXT NOT NULL,
-      jaar INT NOT NULL,
-      laatste_seq INT NOT NULL DEFAULT 0,
-      PRIMARY KEY (kok_id, jaar)
-    )`
-  await prisma.$executeRaw`
-    CREATE TABLE IF NOT EXISTS platform_factuur_seq (
-      jaar INT PRIMARY KEY,
-      laatste_seq INT NOT NULL DEFAULT 0
-    )`
-  await prisma.$executeRaw`
-    CREATE TABLE IF NOT EXISTS commissie_factuur (
-      invoice_id TEXT PRIMARY KEY,
-      nummer TEXT NOT NULL,
-      jaar INT NOT NULL,
-      seq INT NOT NULL
-    )`
-}
-
 // Stripe appelle cette route après un paiement réussi
 export async function POST(req: NextRequest) {
   const key = process.env.STRIPE_SECRET_KEY
@@ -51,7 +28,7 @@ export async function POST(req: NextRequest) {
     const invoiceId = s.metadata?.invoiceId
     if (invoiceId) {
       try {
-        await ensureNummerTables()
+        // Tables de numérotation gérées par les migrations Prisma (séries gapless préservées)
         const jaar = new Date().getFullYear()
 
         // Transaction : passage en PAID + attribution des deux numéros de façon atomique

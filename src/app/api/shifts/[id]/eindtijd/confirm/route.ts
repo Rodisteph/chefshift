@@ -5,16 +5,7 @@ import { prisma } from '@/lib/prisma'
 import { verstuurPush } from '@/lib/push'
 import { emailEindtijdBevestigd } from '@/lib/email'
 
-async function ensureTable() {
-  await prisma.$executeRaw`
-    CREATE TABLE IF NOT EXISTS shift_end (
-      shift_id TEXT PRIMARY KEY,
-      reported_end TIMESTAMP NOT NULL,
-      reported_at TIMESTAMP DEFAULT now(),
-      confirmed_at TIMESTAMP
-    )
-  `
-}
+// Table shift_end : gérée par les migrations Prisma (Phase 5)
 
 // POST : l'horeca (ou un admin) confirme l'heure de fin.
 // body optionnel { endTime: "HH:MM" } : permet au restaurant de saisir/corriger l'heure
@@ -41,7 +32,6 @@ export async function POST(req: Request, { params }: { params: { id: string } })
       return NextResponse.json({ error: 'Shift not finished yet' }, { status: 400 })
     }
 
-    await ensureTable()
 
     const body = await req.json().catch(() => ({}))
     const endTime = typeof body?.endTime === 'string' ? body.endTime : ''

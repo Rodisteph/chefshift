@@ -47,15 +47,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     }
 
     // ===== L'heure de fin doit être confirmée avant le paiement =====
-    try {
-      await prisma.$executeRaw`
-        CREATE TABLE IF NOT EXISTS shift_end (
-          shift_id TEXT PRIMARY KEY,
-          reported_end TIMESTAMP NOT NULL,
-          reported_at TIMESTAMP DEFAULT now(),
-          confirmed_at TIMESTAMP
-        )`
-    } catch {}
+    // Table shift_end : gérée par les migrations Prisma (Phase 5)
     const conf: { confirmed_at: Date | null }[] = await prisma.$queryRaw`
       SELECT confirmed_at FROM shift_end WHERE shift_id = ${shift.id} LIMIT 1
     `

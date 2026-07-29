@@ -4,6 +4,13 @@ import bcrypt from 'bcryptjs'
 const prisma = new PrismaClient()
 
 async function main() {
+  // Sécurité : le seed contient des identifiants de démo (admin123, demo123) —
+  // il ne doit JAMAIS tourner sur la base de production.
+  if (process.env.NODE_ENV !== 'development') {
+    console.error('Seed refusé : NODE_ENV doit valoir "development".')
+    process.exit(1)
+  }
+
   // Clear existing data
   await prisma.auditLog.deleteMany()
   await prisma.notification.deleteMany()

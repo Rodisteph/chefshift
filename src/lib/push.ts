@@ -1,18 +1,7 @@
 import { prisma } from '@/lib/prisma'
 import webpush from 'web-push'
 
-// Table des abonnements push (auto-créée)
-export async function ensurePushTable() {
-  await prisma.$executeRaw`
-    CREATE TABLE IF NOT EXISTS kok_push (
-      endpoint TEXT PRIMARY KEY,
-      user_id TEXT NOT NULL,
-      p256dh TEXT NOT NULL,
-      auth TEXT NOT NULL,
-      created_at TIMESTAMP DEFAULT now()
-    )
-  `
-}
+// Table kok_push : gérée par les migrations Prisma (Phase 5)
 
 type Sub = { endpoint: string; p256dh: string; auth: string }
 
@@ -24,7 +13,6 @@ export async function verstuurPush(userId: string, title: string, body: string, 
 
   try {
     webpush.setVapidDetails('mailto:info@chefshift.nl', pub, priv)
-    await ensurePushTable()
     const subs: Sub[] = await prisma.$queryRaw`
       SELECT endpoint, p256dh, auth FROM kok_push WHERE user_id = ${userId}
     `

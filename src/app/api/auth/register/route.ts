@@ -51,13 +51,7 @@ export async function POST(req: NextRequest) {
     // Canal d'acquisition (comment l'utilisateur a connu ChefShift)
     if (source) {
       try {
-        await prisma.$executeRaw`
-          CREATE TABLE IF NOT EXISTS user_source (
-            user_id TEXT PRIMARY KEY,
-            source TEXT NOT NULL,
-            created_at TIMESTAMP DEFAULT now()
-          )
-        `
+        // Table user_source : gérée par les migrations Prisma (Phase 5)
         await prisma.$executeRaw`
           INSERT INTO user_source (user_id, source, created_at)
           VALUES (${user.id}, ${String(source)}, now())
