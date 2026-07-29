@@ -5,7 +5,7 @@ import {
   berekenUrenMinuten, berekenBedragen,
   euroNaarCenten, centenNaarEuro,
   factuurNummer, commissieNummer,
-} from '../src/lib/factuur.ts'
+} from '../src/lib/factuur'
 
 // ===== Heures dérivées des horaires =====
 
