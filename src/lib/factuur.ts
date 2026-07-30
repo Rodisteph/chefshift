@@ -25,6 +25,22 @@ export function minutenVanTijd(d: Date | string): number {
   return t.getUTCHours() * 60 + t.getUTCMinutes()
 }
 
+// Minutes depuis minuit -> "HH:MM". Gère le passage minuit (1470 -> "00:30", -30 -> "23:30").
+export function tijdVanMinuten(m: number): string {
+  const w = ((m % 1440) + 1440) % 1440
+  const h = Math.floor(w / 60)
+  const min = w % 60
+  return `${String(h).padStart(2, '0')}:${String(min).padStart(2, '0')}`
+}
+
+// Indique si le minimum facturable d'une heure a gonflé la durée réelle
+// (durée effective après pause < 60 min). S'appuie sur berekenUrenMinuten().
+export function isMinimumToegepast(startMin: number, eindMin: number, pauzeMin: number): boolean {
+  let duur = eindMin - startMin
+  if (duur <= 0) duur += 1440
+  return berekenUrenMinuten(startMin, eindMin, pauzeMin) > duur - pauzeMin
+}
+
 export interface Bedragen {
   exclCenten: number
   btwCenten: number

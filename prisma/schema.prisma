@@ -181,9 +181,9 @@ model WorkExperience {
   companyName String?  @map("company_name")
   location    String?
   fromDate    DateTime @map("from_date")
-  toDate      DateTime? @map("to_date")
-  isCurrent   Boolean  @default(false) @map("is_current")
-  description String?  @db.Text
+  toDate      DateTime?  @map("to_date")
+  isCurrent   Boolean    @default(false) @map("is_current")
+  description String?    @db.Text
 
   createdAt   DateTime @default(now()) @map("created_at")
 
@@ -293,6 +293,15 @@ model Invoice {
 
   invoiceNumber String?         @map("invoice_number")
   invoiceUrl    String?         @map("invoice_url")
+
+  // Instantané figé au moment du paiement (une facture est un document légal).
+  // Nullable volontairement : les factures antérieures n'ont pas d'instantané
+  // et sont recalculées à l'affichage (comportement de repli).
+  billedMinutes Int?            @map("billed_minutes")
+  breakMinutes  Int?            @map("break_minutes")
+  startMinutes  Int?            @map("start_minutes")
+  endMinutes    Int?            @map("end_minutes")
+  vatRateUsed   Int?            @map("vat_rate_used")
 
   createdAt     DateTime        @default(now()) @map("created_at")
   paidAt        DateTime?       @map("paid_at")
