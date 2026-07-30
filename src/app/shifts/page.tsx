@@ -8,12 +8,23 @@ import { IcoTile } from '@/components/Icons'
 
 const FONT = '"Sora","Inter","Helvetica Neue",Arial,sans-serif'
 
+type Filtre = 'alle' | 'open' | 'bevestigd' | 'afgerond' | 'geannuleerd'
+
+// Groupe de statut d'une shift, pour les chips de filtre
+function groupe(s: ShiftData): Exclude<Filtre, 'alle'> {
+  if (s.status === 'CANCELLED') return 'geannuleerd'
+  if (s.status === 'COMPLETED' || s.invoice?.status === 'PAID' || (s.eind && s.eind.confirmedAt)) return 'afgerond'
+  if (s.status === 'OPEN') return 'open'
+  return 'bevestigd'
+}
+
 export default function ShiftsPage() {
   const { t } = useT()
   const [shifts, setShifts] = useState<ShiftData[]>([])
   const [chargement, setChargement] = useState(true)
   const [role, setRole] = useState('')
   const [titre, setTitre] = useState<Key | null>(null)
+  const [filtre, setFiltre] = useState<Filtre>('alle')
 
   useEffect(() => {
     async function charger() {
@@ -46,6 +57,18 @@ export default function ShiftsPage() {
 
   const estKok = role === 'KOK'
 
+  // Chips de filtre par statut : pas sur la vue "shifts disponibles" (tout est OPEN)
+  const voirFiltres = titre !== null && titre !== 'shifts_title'
+  const filtres: { f: Filtre; cle: Key }[] = [
+    { f: 'alle', cle: 'filt_alle' },
+    { f: 'open', cle: 'filt_open' },
+    { f: 'bevestigd', cle: 'filt_bevestigd' },
+    { f: 'afgerond', cle: 'filt_afgerond' },
+    { f: 'geannuleerd', cle: 'filt_geannuleerd' },
+  ]
+  const compte = (f: Filtre) => (f === 'alle' ? shifts.length : shifts.filter((s) => groupe(s) === f).length)
+  const visibles = filtre === 'alle' ? shifts : shifts.filter((s) => groupe(s) === filtre)
+
   return (
     <main style={{ fontFamily: FONT, background: 'hsl(var(--background))', color: 'hsl(var(--foreground))', minHeight: '100vh' }}>
       <AnimStyles />
@@ -70,7 +93,7 @@ export default function ShiftsPage() {
         <div className="cs-fade" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16, marginBottom: 32 }}>
           <div>
             <h1 style={{ fontSize: 'clamp(26px, 4vw, 36px)', fontWeight: 800, letterSpacing: -1.2 }}>
-              {titre ? t(titre) : ' '}
+              {titre ? t(titre) : ' '}
             </h1>
             <p style={{ color: 'hsl(var(--muted-foreground))', marginTop: 6, fontSize: 15 }}>
               {titre === 'shifts_title' && estKok ? t('shifts_sub') : ''}
@@ -87,9 +110,42 @@ export default function ShiftsPage() {
           )}
         </div>
 
+        {/* ===== Filtres par statut ===== */}
+        {!chargement && voirFiltres && shifts.length > 0 && (
+          <div className="cs-fade" style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 22 }}>
+            {filtres.map(({ f, cle }) => {
+              const actif = filtre === f
+              return (
+                <button
+                  key={f}
+                  onClick={() => setFiltre(f)}
+                  className="cs-btn"
+                  style={{
+                    border: actif ? 'none' : '1.5px solid #dfe4d4',
+                    background: actif ? '#4c5e42' : 'hsl(var(--card))',
+                    color: actif ? '#fff' : '#4c5e42',
+                    borderRadius: 999, padding: '8px 16px',
+                    fontWeight: 700, fontSize: 13, cursor: 'pointer', fontFamily: FONT,
+                  }}
+                >
+                  {t(cle)}
+                  <span style={{
+                    marginLeft: 7, fontSize: 11.5, fontWeight: 800,
+                    background: actif ? 'rgba(255,255,255,0.25)' : '#eef2e6',
+                    color: actif ? '#fff' : '#4c5e42',
+                    padding: '2px 8px', borderRadius: 999,
+                  }}>
+                    {compte(f)}
+                  </span>
+                </button>
+              )
+            })}
+          </div>
+        )}
+
         {chargement ? (
           <p style={{ color: 'hsl(var(--muted-foreground))', fontWeight: 600, textAlign: 'center', padding: 40 }}>{t('dash_loading')}</p>
-        ) : shifts.length === 0 ? (
+        ) : visibles.length === 0 ? (
           <div className="cs-card" style={{ background: 'hsl(var(--card))', borderRadius: 20, border: '1px solid #eceee3', boxShadow: '0 3px 12px rgba(46,52,43,0.05)', padding: 52, textAlign: 'center' }}>
             <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}>
               <IcoTile n="inbox" s={22} taille={56} />
@@ -98,12 +154,13 @@ export default function ShiftsPage() {
           </div>
         ) : (
           <div style={{ display: 'grid', gap: 16 }}>
-            {shifts.map((shift) => (
+            {visibles.map((shift) => (
               <ShiftCard
                 key={shift.id}
                 shift={shift}
                 showApply={estKok && titre === 'shifts_title'}
                 detailHref={`/shifts/${shift.id}`}
+                perspectief={estKok ? 'kok' : 'horeca'}
               />
             ))}
           </div>
