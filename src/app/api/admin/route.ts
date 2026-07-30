@@ -10,6 +10,89 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    const vue = new URL(req.url).searchParams.get('vue')
+
+    // Vues détaillées pour les pages dédiées de l'admin
+    if (vue === 'users') {
+      const users = await prisma.user.findMany({
+        orderBy: { createdAt: 'desc' },
+        take: 300,
+        select: { id: true, name: true, email: true, role: true, isActive: true, createdAt: true },
+      })
+      return NextResponse.json({ users })
+    }
+
+    if (vue === 'businesses') {
+      const businesses = await prisma.user.findMany({
+        where: { role: 'HORECA' },
+        orderBy: { createdAt: 'desc' },
+        take: 300,
+        select: {
+          id: true, email: true, createdAt: true,
+          horecaProfile: { select: { companyName: true, kvkNumber: true, city: true, contactName: true, horecaType: true } },
+        },
+      })
+      return NextResponse.json({ businesses })
+    }
+
+    if (vue === 'chefs') {
+      const chefs = await prisma.user.findMany({
+        where: { role: 'KOK' },
+        orderBy: { createdAt: 'desc' },
+        take: 300,
+        select: {
+          id: true, email: true, createdAt: true,
+          kokProfile: { select: { firstName: true, lastName: true, kvkNumber: true, city: true, yearsExperience: true, averageScore: true, reviewCount: true } },
+        },
+      })
+      return NextResponse.json({ chefs })
+    }
+
+    if (vue === 'shifts') {
+      const shifts = await prisma.shift.findMany({
+        take: 300,
+        orderBy: [{ date: 'desc' }],
+        include: {
+          horeca: { include: { horecaProfile: true } },
+          chosenKok: { include: { kokProfile: true } },
+          _count: { select: { applications: true } },
+        },
+      })
+      return NextResponse.json({ shifts })
+    }
+
+    if (vue === 'invoices') {
+      const invoices = await prisma.invoice.findMany({
+        orderBy: { createdAt: 'desc' },
+        take: 300,
+        include: { shift: { select: { title: true } } },
+      })
+      return NextResponse.json({ invoices })
+    }
+
+    if (vue === 'revenue') {
+      const [paid, totaux] = await Promise.all([
+        prisma.invoice.findMany({
+          where: { status: 'PAID' },
+          orderBy: { paidAt: 'desc' },
+          take: 300,
+          include: { shift: { select: { title: true } } },
+        }),
+        prisma.invoice.aggregate({
+          where: { status: 'PAID' },
+          _sum: { amountInclVat: true, platformFee: true, kokPayout: true },
+        }),
+      ])
+      return NextResponse.json({
+        invoices: paid,
+        totaux: {
+          facture: (totaux._sum.amountInclVat || 0) / 100,
+          commission: (totaux._sum.platformFee || 0) / 100,
+          reverse: (totaux._sum.kokPayout || 0) / 100,
+        },
+      })
+    }
+
     const [totalUsers, totalHoreca, totalKoks, totalShifts, totalInvoices, revenue] = await Promise.all([
       prisma.user.count(),
       prisma.user.count({ where: { role: 'HORECA' } }),
