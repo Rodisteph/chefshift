@@ -105,12 +105,12 @@ export default function AdminPage() {
   })
 
   const cartesStats = [
-    { c: String(s?.totalUsers ?? 0), l: t('admin_users'), icone: 'users' },
-    { c: String(s?.totalHoreca ?? 0), l: t('admin_horeca'), icone: 'brief' },
-    { c: String(s?.totalKoks ?? 0), l: t('admin_koks'), icone: 'chef' },
-    { c: String(s?.totalShifts ?? 0), l: t('admin_shifts_stat'), icone: 'cal' },
-    { c: String(s?.totalInvoices ?? 0), l: t('admin_invoices'), icone: 'card' },
-    { c: `€${Math.round(s?.totalRevenue ?? 0)}`, l: t('admin_revenue'), icone: 'bank' },
+    { c: String(s?.totalUsers ?? 0), l: t('admin_users'), icone: 'users', lien: '/admin/users' },
+    { c: String(s?.totalHoreca ?? 0), l: t('admin_horeca'), icone: 'brief', lien: '/admin/businesses' },
+    { c: String(s?.totalKoks ?? 0), l: t('admin_koks'), icone: 'chef', lien: '/admin/chefs' },
+    { c: String(s?.totalShifts ?? 0), l: t('admin_shifts_stat'), icone: 'cal', lien: '/admin/shifts' },
+    { c: String(s?.totalInvoices ?? 0), l: t('admin_invoices'), icone: 'card', lien: '/admin/invoices' },
+    { c: `€${Math.round(s?.totalRevenue ?? 0)}`, l: t('admin_revenue'), icone: 'bank', lien: '/admin/revenue' },
   ]
 
   const nomKok = (sh: AdminShift) => {
@@ -146,13 +146,13 @@ export default function AdminPage() {
         {/* Statistiques */}
         <div className="cs-fade cs-d1 cs-stats" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 16, marginBottom: 34 }}>
           {cartesStats.map((st) => (
-            <div key={st.l} className="cs-card cs-stat" style={{ ...carte, display: 'flex', alignItems: 'center', gap: 14 }}>
+            <a key={st.l} href={st.lien} className="cs-card cs-stat" style={{ ...carte, display: 'flex', alignItems: 'center', gap: 14, textDecoration: 'none', color: 'inherit' }}>
               <IcoTile n={st.icone} s={19} taille={42} />
               <div>
                 <div className="cs-stat-n" style={{ fontSize: 24, fontWeight: 800, color: 'hsl(var(--foreground))', letterSpacing: -0.8 }}>{st.c}</div>
                 <div className="cs-stat-l" style={{ fontSize: 12.5, color: 'hsl(var(--muted-foreground))', fontWeight: 600 }}>{st.l}</div>
               </div>
-            </div>
+            </a>
           ))}
         </div>
 
