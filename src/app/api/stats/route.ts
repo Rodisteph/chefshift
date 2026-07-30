@@ -51,7 +51,7 @@ export async function GET() {
         nbShifts,
         nbCandidatures,
         nbEmbauches,
-        totalDepense: Math.round(factures.reduce((a, f) => a + f.amountInclVat, 0) * 100) / 100,
+        totalDepense: Math.round(factures.reduce((a, f) => a + f.amountInclVat, 0)) / 100,
         serie,
       })
     }
@@ -70,7 +70,7 @@ export async function GET() {
       role,
       nbCandidatures,
       nbAcceptees,
-      totalGagne: Math.round(paiements.reduce((a, f) => a + f.kokPayout, 0) * 100) / 100,
+      totalGagne: Math.round(paiements.reduce((a, f) => a + f.kokPayout, 0)) / 100,
       serie,
     })
   } catch (error) {
