@@ -47,7 +47,7 @@ export default function DashboardPage() {
       setUser(s.user)
       try {
         const [resShifts, resPasses, resStats] = await Promise.all([
-          fetch('/api/shifts'),
+          fetch(s.user.role === 'KOK' ? '/api/shifts?vue=avenir' : '/api/shifts'),
           fetch('/api/shifts?passe=1'),
           fetch('/api/stats'),
         ])
@@ -96,9 +96,9 @@ export default function DashboardPage() {
   // ===== Cartes de stats selon le rôle =====
   const statsCartes = estKok
     ? [
-        { c: String(aVenir.length), l: t('stat_kok_1'), icone: 'brief', lien: '/shifts' },
-        { c: String(stats?.nbCandidatures ?? 0), l: t('stat_kok_apps'), icone: 'users', lien: '/shifts' },
-        { c: String(stats?.nbAcceptees ?? 0), l: t('stat_kok_accepted'), icone: 'check', lien: '/shifts' },
+        { c: String(aVenir.length), l: t('stat_kok_1'), icone: 'brief', lien: '/shifts?vue=avenir' },
+        { c: String(stats?.nbCandidatures ?? 0), l: t('stat_kok_apps'), icone: 'users', lien: '/shifts?vue=candidatures' },
+        { c: String(stats?.nbAcceptees ?? 0), l: t('stat_kok_accepted'), icone: 'check', lien: '/shifts?vue=acceptees' },
         { c: `€${Math.round(stats?.totalGagne ?? 0)}`, l: t('stat_earn_total'), icone: 'bank', lien: '' },
       ]
     : [
@@ -114,7 +114,7 @@ export default function DashboardPage() {
   }))
 
   // ===== Bloc de section (à venir / passés) =====
-  function Section({ titre, icone, liste, vide }: { titre: string; icone: string; liste: ShiftData[]; vide: Key }) {
+  function Section({ titre, icone, liste, vide, lien }: { titre: string; icone: string; liste: ShiftData[]; vide: Key; lien: string }) {
     return (
       <section>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
@@ -129,7 +129,7 @@ export default function DashboardPage() {
             </span>
           </h2>
           {liste.length > 3 && (
-            <a href="/shifts" style={{ display: 'inline-flex', alignItems: 'center', gap: 5, color: '#5f7052', fontWeight: 700, fontSize: 13, textDecoration: 'none' }}>
+            <a href={lien} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, color: '#5f7052', fontWeight: 700, fontSize: 13, textDecoration: 'none' }}>
               {t('view_all')} <Ico n="arrow" s={13} />
             </a>
           )}
@@ -144,13 +144,13 @@ export default function DashboardPage() {
               <ShiftCard
                 key={shift.id}
                 shift={shift}
-                showApply={estKok}
+                showApply={false}
                 detailHref={`/shifts/${shift.id}`}
               />
             ))}
             {liste.length > 3 && (
               <a
-                href="/shifts"
+                href={lien}
                 className="cs-btn"
                 style={{
                   display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
@@ -281,16 +281,18 @@ export default function DashboardPage() {
         {/* ===== Deux colonnes : à venir | passés ===== */}
         <div className="cs-fade cs-d2" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))', gap: 28, alignItems: 'start', marginBottom: 34 }}>
           <Section
-            titre={estKok ? t('list_kok') : t('list_upcoming')}
+            titre={estKok ? t('list_kok_upcoming') : t('list_upcoming')}
             icone="cal"
             liste={aVenir}
             vide="empty_none"
+            lien={estKok ? '/shifts?vue=avenir' : '/shifts'}
           />
           <Section
             titre={t('list_past')}
             icone="check"
             liste={passes}
             vide="empty_past"
+            lien="/shifts?passe=1"
           />
         </div>
 

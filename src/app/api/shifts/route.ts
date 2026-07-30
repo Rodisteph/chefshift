@@ -35,6 +35,32 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ shifts })
     }
 
+    // Vues dédiées du chef : ses shifts à venir, ses candidatures, ses shifts acceptés
+    if (session.user.role === 'KOK') {
+      const vue = searchParams.get('vue')
+      const aujourdhui = new Date(new Date().toDateString())
+      if (vue === 'avenir' || vue === 'acceptees') {
+        where.chosenKokId = session.user.id
+        if (vue === 'avenir') where.date = { gte: aujourdhui }
+        const shifts = await prisma.shift.findMany({
+          where,
+          include: INCLUSIONS,
+          orderBy: [{ date: vue === 'avenir' ? 'asc' : 'desc' }],
+        })
+        return NextResponse.json({ shifts })
+      }
+      if (vue === 'candidatures') {
+        where.applications = { some: { kokId: session.user.id } }
+        where.date = { gte: aujourdhui }
+        const shifts = await prisma.shift.findMany({
+          where,
+          include: INCLUSIONS,
+          orderBy: [{ date: 'asc' }],
+        })
+        return NextResponse.json({ shifts })
+      }
+    }
+
     if (session.user.role === 'HORECA') where.horecaId = session.user.id
     if (session.user.role === 'KOK') {
       // Shifts disponibles : ouverts ET dont la date n'est pas passée

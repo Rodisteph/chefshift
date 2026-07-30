@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useT, LangToggle } from '@/lib/i18n'
+import { useT, LangToggle, Key } from '@/lib/i18n'
 import ShiftCard, { ShiftData } from '@/components/ShiftCard'
 import AnimStyles from '@/components/AnimStyles'
 import { IcoTile } from '@/components/Icons'
@@ -13,6 +13,7 @@ export default function ShiftsPage() {
   const [shifts, setShifts] = useState<ShiftData[]>([])
   const [chargement, setChargement] = useState(true)
   const [role, setRole] = useState('')
+  const [titre, setTitre] = useState<Key>('shifts_title')
 
   useEffect(() => {
     async function charger() {
@@ -22,8 +23,16 @@ export default function ShiftsPage() {
         return
       }
       setRole(s.user.role)
+      // Filtres dédiés : ?vue=avenir|candidatures|acceptees (chef) ou ?passe=1 (shifts passés)
+      const params = new URLSearchParams(window.location.search)
+      const qs = params.toString()
+      if (params.get('passe') === '1') setTitre('list_past')
+      else if (params.get('vue') === 'avenir') setTitre('list_kok_upcoming')
+      else if (params.get('vue') === 'candidatures') setTitre('stat_kok_apps')
+      else if (params.get('vue') === 'acceptees') setTitre('stat_kok_accepted')
+      else if (s.user.role !== 'KOK') setTitre('shifts_my')
       try {
-        const res = await fetch('/api/shifts')
+        const res = await fetch(`/api/shifts${qs ? `?${qs}` : ''}`)
         if (res.ok) {
           const data = await res.json()
           setShifts(data.shifts || [])
@@ -60,10 +69,10 @@ export default function ShiftsPage() {
         <div className="cs-fade" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16, marginBottom: 32 }}>
           <div>
             <h1 style={{ fontSize: 'clamp(26px, 4vw, 36px)', fontWeight: 800, letterSpacing: -1.2 }}>
-              {estKok ? t('shifts_title') : t('shifts_my')}
+              {t(titre)}
             </h1>
             <p style={{ color: 'hsl(var(--muted-foreground))', marginTop: 6, fontSize: 15 }}>
-              {estKok ? t('shifts_sub') : ''}
+              {titre === 'shifts_title' && estKok ? t('shifts_sub') : ''}
             </p>
           </div>
           {role === 'HORECA' && (
@@ -92,7 +101,7 @@ export default function ShiftsPage() {
               <ShiftCard
                 key={shift.id}
                 shift={shift}
-                showApply={estKok}
+                showApply={estKok && titre === 'shifts_title'}
                 detailHref={`/shifts/${shift.id}`}
               />
             ))}
