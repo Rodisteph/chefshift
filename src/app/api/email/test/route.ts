@@ -22,7 +22,7 @@ const POSTS: Record<string, { sujet: string; img: string; fichier: string; texte
     texte: 'Horeca-ondernemers: herkenbaar? 👨‍🍳\n\nIemand valt uit op vrijdagavond en er is niemand om in te springen.\n\nMet ChefShift vind je binnen een paar uur een geverifieerde zzp-kok:\n✅ Shift plaatsen kost 1 minuut\n✅ Koks geverifieerd op KvK en HACCP\n✅ Jij kiest zelf wie er komt werken\n✅ Betaling veilig via iDEAL\n✅ No cure, no pay\n\nGeen uitzendbureau, geen 30% commissie.\nMaak gratis een account: 👉 www.chefshift.nl\n\nVragen? Reageer hieronder of stuur me een bericht, ik lees alles.',
   },
   '3': {
-    sujet: 'Post Facebook 3 prêt à publier (semaine 2 — groupes de chefs)',
+    sujet: 'Post Facebook 3 prêt à publier (semaine 2 - groupes de chefs)',
     img: 'https://www.kimi.com/apiv2-files/sign-obj/kimi-fs%2Ffiles%2Fblob%2F166b35ed5bd114f604dc4e916e85489ae727d7d4ea25eace205cf479afb26060?filename=Post+Facebook+3+-+chefs+semaine+2+%28logo%29.jpg&sig=UhgiKQLdZH9OR6APPRLIJ3dkwApphN60ulhKxurthxo=&t=o',
     fichier: 'post-facebook-semaine2.jpg',
     texte: 'Vraag aan alle zzp-koks hier: 👨‍🍳\n\nWaar werkte jij deze maand het liefst? En tegen welk tarief?\n\nOp ChefShift bepaal je dat helemaal zelf:\n✅ Kies je eigen shifts bij restaurants en hotels\n✅ Stel je eigen tarief in (min. €14,06/u)\n✅ Ontvang je geld veilig via iDEAL\n✅ Beoordeel en word beoordeeld, zo groeit je reputatie\n\nGratis aanmelden in 1 minuut:\n👉 www.chefshift.nl\n\nDeel deze post met een kok die dit verdient! 🙌',

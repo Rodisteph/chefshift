@@ -28,10 +28,10 @@ const C = {
     s1h: 'Waarom horecazaken zelf een kok inhuren via ChefShift',
     s1p: 'Het personeelstekort in de horeca is groot en uitzendbureaus rekenen vaak 25 tot 35% commissie bovenop het uurtarief. ChefShift werkt anders: je spreekt rechtstreeks met de kok af, zonder tussenpersoon. Daardoor houd je de kosten in de hand en weet je precies wie er in je keuken staat.',
     s1l: [
-      ['Snelheid', 'gemiddeld binnen 2 uur de eerste reacties op je shift.'],
-      ['Zekerheid', 'koks geverifieerd op KvK en HACCP, met beoordelingen van andere zaken.'],
-      ['Controle', 'jij kiest wie er komt werken, op basis van profiel, ervaring en tarief.'],
-      ['Geen risico', 'betaling pas na de shift, no cure no pay.'],
+      'De eerste reacties op je shift komen gemiddeld binnen 2 uur binnen.',
+      'Alle koks zijn geverifieerd op KvK en HACCP, met beoordelingen van andere zaken.',
+      'Jij kiest zelf wie er komt werken, op basis van profiel, ervaring en tarief.',
+      'Je betaalt pas na de shift. Geen match, geen kosten.',
     ],
     s2h: 'Zo werkt een kok inhuren via ChefShift',
     s2p: [
@@ -67,10 +67,10 @@ const C = {
     s1h: 'Why businesses hire chefs directly through ChefShift',
     s1p: 'The staff shortage in hospitality is real, and temp agencies often charge 25 to 35% commission on top of the hourly rate. ChefShift works differently: you deal with the chef directly, no middleman. That keeps costs under control and you know exactly who is in your kitchen.',
     s1l: [
-      ['Speed', 'on average the first responses arrive within 2 hours of posting.'],
-      ['Security', 'chefs verified on KvK and HACCP, with reviews from other businesses.'],
-      ['Control', 'you choose who comes to work, based on profile, experience and rate.'],
-      ['No risk', 'payment only after the shift, no cure no pay.'],
+      'The first responses to your shift usually arrive within 2 hours.',
+      'All chefs are verified on KvK and HACCP, with reviews from other businesses.',
+      'You choose who comes to work, based on profile, experience and rate.',
+      'You only pay after the shift. No match, no cost.',
     ],
     s2h: 'How hiring a chef through ChefShift works',
     s2p: [
@@ -131,9 +131,9 @@ export default function KokInhurenPage() {
         <h2 style={h2s}>{c.s1h}</h2>
         <p style={ps}>{c.s1p}</p>
         <ul style={{ paddingLeft: 22, margin: '0 0 14px', display: 'grid', gap: 8 }}>
-          {c.s1l.map(([t, d]) => (
-            <li key={t} style={{ color: '#4a5044', fontSize: 16, lineHeight: 1.75 }}>
-              <strong>{t}:</strong> {d}
+          {c.s1l.map((z) => (
+            <li key={z} style={{ color: '#4a5044', fontSize: 16, lineHeight: 1.75 }}>
+              {z}
             </li>
           ))}
         </ul>

@@ -181,7 +181,7 @@ export async function emailEindtijdGemeld(horecaEmail: string, shiftId: string, 
     `Eindtijd doorgegeven voor: ${shiftTitre} · End time reported`,
     gabarit(
       'Eindtijd doorgegeven',
-      `${kokNaam} geeft aan om <strong>${eindtijd}</strong> te zijn gestopt met de shift <strong>${shiftTitre}</strong>. Bevestig dit eindtijd in de app.`,
+      `${kokNaam} geeft aan om <strong>${eindtijd}</strong> te zijn gestopt met de shift <strong>${shiftTitre}</strong>. Bevestig deze eindtijd in de app.`,
       'Bevestig eindtijd',
       'End time reported',
       `${kokNaam} reported finishing the shift <strong>${shiftTitre}</strong> at <strong>${eindtijd}</strong>. Please confirm this end time in the app.`,

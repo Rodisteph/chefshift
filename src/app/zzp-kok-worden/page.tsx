@@ -28,10 +28,10 @@ const C = {
     s1h: 'Waarom steeds meer koks voor het zzp-leven kiezen',
     s1p: 'Vaste roosters en een salaris dat al jaren hetzelfde is: steeds meer koks kiezen voor vrijheid. Als zzp-kok combineer je shifts zoals het jou uitkomt. Extra bijverdienen naast je vaste baan, of juist fulltime zelfstandig aan de slag: het kan allebei.',
     s1l: [
-      ['Vrijheid', 'kies zelf welke shifts je werkt en welke je laat schieten.'],
-      ['Eigen tarief', 'jij stelt je uurtarief in, niemand anders.'],
-      ['Geen commissie', 'geen uitzendbureau dat 25 tot 35% van je loon pakt.'],
-      ['Variatie', 'werk in verschillende keukens en bouw snel ervaring en een netwerk op.'],
+      'Jij kiest welke shifts je werkt en welke je laat schieten.',
+      'Je stelt zelf je uurtarief in, niemand anders.',
+      'Er is geen uitzendbureau dat 25 tot 35% van je loon pakt.',
+      'Je werkt in verschillende keukens en bouwt zo snel ervaring en een netwerk op.',
     ],
     s2h: 'Zo start je als zzp-kok op ChefShift',
     s2p: [
@@ -65,10 +65,10 @@ const C = {
     s1h: 'Why more and more chefs are going freelance',
     s1p: 'Fixed rosters and a salary that has barely moved in years: more and more chefs are choosing freedom. As a freelance chef you combine shifts however suits you. Earn extra alongside a permanent job, or go fully independent: both work.',
     s1l: [
-      ['Freedom', 'you choose which shifts you take and which you skip.'],
-      ['Your own rate', 'you set your hourly rate, nobody else.'],
-      ['No commission', 'no temp agency taking 25 to 35% of your pay.'],
-      ['Variety', 'work in different kitchens and build experience and a network fast.'],
+      'You choose which shifts you take and which you skip.',
+      'You set your own hourly rate, nobody else.',
+      'There is no temp agency taking 25 to 35% of your pay.',
+      'You work in different kitchens and build experience and a network fast.',
     ],
     s2h: 'How to start as a freelance chef on ChefShift',
     s2p: [
@@ -127,9 +127,9 @@ export default function ZzpKokWordenPage() {
         <h2 style={h2s}>{c.s1h}</h2>
         <p style={ps}>{c.s1p}</p>
         <ul style={{ paddingLeft: 22, margin: '0 0 14px', display: 'grid', gap: 8 }}>
-          {c.s1l.map(([t, d]) => (
-            <li key={t} style={{ color: '#4a5044', fontSize: 16, lineHeight: 1.75 }}>
-              <strong>{t}:</strong> {d}
+          {c.s1l.map((z) => (
+            <li key={z} style={{ color: '#4a5044', fontSize: 16, lineHeight: 1.75 }}>
+              {z}
             </li>
           ))}
         </ul>
