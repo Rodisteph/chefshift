@@ -113,6 +113,74 @@ export default function DashboardPage() {
     value: m.value,
   }))
 
+  // ===== Actions en attente : eindtijden à confirmer (horeca) ou à transmettre (kok) =====
+  const aConfirmer = passes.filter(
+    (s) => s.chosenKokId && s.eind && !s.eind.confirmedAt && s.status !== 'CANCELLED' && s.invoice?.status !== 'PAID'
+  )
+  const aDoorgeven = estKok
+    ? passes.filter((s) => s.chosenKokId && !s.eind && s.status !== 'CANCELLED')
+    : []
+  const actieLijst = estKok ? aDoorgeven : aConfirmer
+
+  // ===== Encart orange d'action en attente =====
+  function ActieKaart() {
+    if (actieLijst.length === 0) return null
+    return (
+      <div className="cs-fade cs-d1 cs-card" style={{
+        background: '#fff7ed', border: '1px solid #fed7aa', borderRadius: 20,
+        boxShadow: '0 3px 12px rgba(194,65,12,0.06)', padding: 20, marginBottom: 26,
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
+          <span style={{
+            display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+            width: 34, height: 34, borderRadius: 12, background: '#ffedd5',
+          }}>
+            <Ico n="clock" s={16} c="#c2410c" />
+          </span>
+          <h2 style={{ fontSize: 16, fontWeight: 800, letterSpacing: -0.3, color: '#9a3412', margin: 0 }}>
+            {estKok ? t('dash_end_t') : t('dash_confirm_t')}
+            <span style={{
+              background: '#c2410c', color: '#fff', fontSize: 12, fontWeight: 800,
+              padding: '2px 10px', borderRadius: 999, marginLeft: 9,
+            }}>
+              {actieLijst.length}
+            </span>
+          </h2>
+        </div>
+        <p style={{ fontSize: 13, color: '#9a3412', margin: '4px 0 12px', fontWeight: 500 }}>
+          {estKok ? t('dash_end_sub') : t('dash_confirm_sub')}
+        </p>
+        <div style={{ display: 'grid', gap: 8 }}>
+          {actieLijst.slice(0, 3).map((shift) => (
+            <a
+              key={shift.id}
+              href={`/shifts/${shift.id}`}
+              style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10,
+                background: 'hsl(var(--card))', border: '1px solid #fed7aa', borderRadius: 14,
+                padding: '11px 16px', textDecoration: 'none', color: 'hsl(var(--foreground))',
+              }}
+            >
+              <span style={{ fontSize: 13.5, fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                {shift.title}
+                <span style={{ color: 'hsl(var(--muted-foreground))', fontWeight: 500, fontSize: 12.5 }}>
+                  {new Date(shift.date).toLocaleDateString(locale, { weekday: 'short', day: 'numeric', month: 'short' })}
+                </span>
+              </span>
+              <span style={{
+                display: 'inline-flex', alignItems: 'center', gap: 5, flexShrink: 0,
+                background: '#c2410c', color: '#fff', fontSize: 12.5, fontWeight: 800,
+                padding: '6px 14px', borderRadius: 999,
+              }}>
+                {estKok ? t('dash_end_cta') : t('dash_confirm_cta')} <Ico n="arrow" s={12} c="#fff" />
+              </span>
+            </a>
+          ))}
+        </div>
+      </div>
+    )
+  }
+
   // ===== Bloc de section (à venir / passés) =====
   function Section({ titre, icone, liste, vide, lien }: { titre: string; icone: string; liste: ShiftData[]; vide: Key; lien: string }) {
     return (
@@ -146,6 +214,7 @@ export default function DashboardPage() {
                 shift={shift}
                 showApply={false}
                 detailHref={`/shifts/${shift.id}`}
+                perspectief={estKok ? 'kok' : 'horeca'}
               />
             ))}
             {liste.length > 3 && (
@@ -252,6 +321,9 @@ export default function DashboardPage() {
 
         {/* ===== Notifications push ===== */}
         <PushSetup />
+
+        {/* ===== Eindtijden en attente d'action ===== */}
+        <ActieKaart />
 
         {/* ===== Statistiques ===== */}
         <div className="cs-fade cs-d1 cs-stats" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: 16, marginBottom: 34 }}>
