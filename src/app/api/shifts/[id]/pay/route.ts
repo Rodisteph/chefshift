@@ -59,13 +59,16 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     const startMin = minutenVanTijd(shift.startTime)
     let endMin: number | null = null
     let finReelle = false
+    // Pause déclarée par le chef (shift_end.break_minuten) ; NULL = pause par défaut du shift
+    let pauzeGemeld: number | null = null
     try {
-      const fins: { reported_end: Date }[] = await prisma.$queryRaw`
-        SELECT reported_end FROM shift_end WHERE shift_id = ${shift.id} LIMIT 1
+      const fins: { reported_end: Date; break_minuten: number | null }[] = await prisma.$queryRaw`
+        SELECT reported_end, break_minuten FROM shift_end WHERE shift_id = ${shift.id} LIMIT 1
       `
       if (fins.length > 0) {
         endMin = minutenVanTijd(fins[0].reported_end)
         finReelle = true
+        pauzeGemeld = fins[0].break_minuten
       }
     } catch {}
     if (endMin == null) {
@@ -73,7 +76,8 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     }
 
     // ===== Calcul en centimes entiers (TVA 21%, commission 15% du HT) =====
-    const urenMinuten = berekenUrenMinuten(startMin, endMin, shift.breakMinutes)
+    const pauze = pauzeGemeld != null ? pauzeGemeld : shift.breakMinutes
+    const urenMinuten = berekenUrenMinuten(startMin, endMin, pauze)
     const b = berekenBedragen(urenMinuten, shift.hourlyRate) // tarif déjà en centimes
     const heures = urenMinuten / 60
 

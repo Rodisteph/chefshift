@@ -41,11 +41,11 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
     // Heure de fin déclarée / confirmée (table créée à la première déclaration)
     let eind = null
     try {
-      const lignes: { reported_end: Date; confirmed_at: Date | null }[] = await prisma.$queryRaw`
-        SELECT reported_end, confirmed_at FROM shift_end WHERE shift_id = ${params.id} LIMIT 1
+      const lignes: { reported_end: Date; confirmed_at: Date | null; break_minuten: number | null }[] = await prisma.$queryRaw`
+        SELECT reported_end, confirmed_at, break_minuten FROM shift_end WHERE shift_id = ${params.id} LIMIT 1
       `
       if (lignes.length > 0) {
-        eind = { reportedEnd: lignes[0].reported_end, confirmedAt: lignes[0].confirmed_at }
+        eind = { reportedEnd: lignes[0].reported_end, confirmedAt: lignes[0].confirmed_at, breakMinuten: lignes[0].break_minuten }
       }
     } catch {}
 

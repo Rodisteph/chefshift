@@ -7,7 +7,7 @@ import { emailEindtijdGemeld } from '@/lib/email'
 
 // Table shift_end : gérée par les migrations Prisma (Phase 5)
 
-// POST : le chef déclare son heure de fin réelle { endTime: "HH:MM" }
+// POST : le chef déclare son heure de fin réelle { endTime: "HH:MM", breakMinutes?: number }
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
   try {
     const session = await getServerSession(authOptions)
@@ -24,6 +24,16 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     const endTime = String(body.endTime || '')
     if (!/^\d{2}:\d{2}$/.test(endTime)) {
       return NextResponse.json({ error: 'Invalid time' }, { status: 400 })
+    }
+
+    // Pause déclarée par le chef : 0 = pas de pause, entier 0..480, absent = pause par défaut du shift
+    let pauze: number | null = null
+    if (body.breakMinutes != null) {
+      const b = Number(body.breakMinutes)
+      if (!Number.isInteger(b) || b < 0 || b > 480) {
+        return NextResponse.json({ error: 'Invalid break' }, { status: 400 })
+      }
+      pauze = b
     }
 
     // Heure "wall-clock" : instant UTC sur la date du shift (+1 jour si shift de nuit)
@@ -46,9 +56,9 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     }
 
     await prisma.$executeRaw`
-      INSERT INTO shift_end (shift_id, reported_end, reported_at, confirmed_at)
-      VALUES (${shift.id}, ${fin}, now(), NULL)
-      ON CONFLICT (shift_id) DO UPDATE SET reported_end = ${fin}, reported_at = now(), confirmed_at = NULL
+      INSERT INTO shift_end (shift_id, reported_end, reported_at, confirmed_at, break_minuten)
+      VALUES (${shift.id}, ${fin}, now(), NULL, ${pauze})
+      ON CONFLICT (shift_id) DO UPDATE SET reported_end = ${fin}, reported_at = now(), confirmed_at = NULL, break_minuten = ${pauze}
     `
 
     // Email + push à l'horeca
