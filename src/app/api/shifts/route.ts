@@ -13,6 +13,19 @@ const INCLUSIONS = {
   _count: { select: { applications: true } },
 } as const
 
+// Ajoute l'eindtijd (table shift_end, sans relation dans le schéma) à chaque shift
+async function avecEind<T extends { id: string }>(shifts: T[]) {
+  const ids = shifts.map((s) => s.id)
+  const fins = ids.length > 0
+    ? await prisma.shiftEnd.findMany({ where: { shiftId: { in: ids } } })
+    : []
+  const parId = new Map(fins.map((f) => [f.shiftId, f]))
+  return shifts.map((s) => {
+    const f = parId.get(s.id)
+    return { ...s, eind: f ? { reportedEnd: f.reportedEnd, confirmedAt: f.confirmedAt } : null }
+  })
+}
+
 export async function GET(req: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
@@ -32,7 +45,7 @@ export async function GET(req: NextRequest) {
         include: INCLUSIONS,
         orderBy: [{ date: 'desc' }],
       })
-      return NextResponse.json({ shifts })
+      return NextResponse.json({ shifts: await avecEind(shifts) })
     }
 
     // Vues dédiées du chef : ses shifts à venir, ses candidatures, ses shifts acceptés
@@ -47,7 +60,7 @@ export async function GET(req: NextRequest) {
           include: INCLUSIONS,
           orderBy: [{ date: vue === 'avenir' ? 'asc' : 'desc' }],
         })
-        return NextResponse.json({ shifts })
+        return NextResponse.json({ shifts: await avecEind(shifts) })
       }
       if (vue === 'candidatures') {
         where.applications = { some: { kokId: session.user.id } }
@@ -57,7 +70,7 @@ export async function GET(req: NextRequest) {
           include: INCLUSIONS,
           orderBy: [{ date: 'asc' }],
         })
-        return NextResponse.json({ shifts })
+        return NextResponse.json({ shifts: await avecEind(shifts) })
       }
     }
 
@@ -73,7 +86,7 @@ export async function GET(req: NextRequest) {
           include: INCLUSIONS,
           orderBy: [{ date: 'desc' }],
         })
-        return NextResponse.json({ shifts })
+        return NextResponse.json({ shifts: await avecEind(shifts) })
       }
     }
 
@@ -91,7 +104,7 @@ export async function GET(req: NextRequest) {
       orderBy: [{ isUrgent: 'desc' }, { createdAt: 'desc' }],
     })
 
-    return NextResponse.json({ shifts })
+    return NextResponse.json({ shifts: await avecEind(shifts) })
   } catch (error) {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
