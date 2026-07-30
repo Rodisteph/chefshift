@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useT } from '@/lib/i18n'
 import { heureHHMM } from '@/lib/time'
+import { statutShift, TOON_STIJLEN } from '@/lib/statut'
 
 // Photo libre de droits (Unsplash, licence gratuite)
 const PHOTO = 'https://images.unsplash.com/photo-1556910103-1c02745aae4d?auto=format&fit=crop&w=300&q=70'
@@ -22,7 +23,9 @@ export type ShiftData = {
   totalAmount?: number | null
   isUrgent: boolean
   status: string
+  chosenKokId?: string | null
   invoice?: { status: string } | null
+  eind?: { reportedEnd: string; confirmedAt: string | null } | null
   _count?: { applications: number }
   horeca?: { horecaProfile?: { companyName?: string | null } | null }
 }
@@ -31,10 +34,12 @@ export default function ShiftCard({
   shift,
   showApply,
   detailHref,
+  perspectief,
 }: {
   shift: ShiftData
   showApply?: boolean
   detailHref?: string
+  perspectief?: 'horeca' | 'kok'
 }) {
   const { t, lang } = useT()
   const locale = lang === 'en' ? 'en-GB' : 'nl-NL'
@@ -81,6 +86,7 @@ export default function ShiftCard({
   const start = heureHHMM(shift.startTime, locale)
   const end = heureHHMM(shift.endTime, locale)
   const estPaye = shift.invoice?.status === 'PAID'
+  const statut = perspectief ? statutShift(shift, perspectief) : null
 
   const meta: React.CSSProperties = {
     display: 'inline-flex', alignItems: 'center', gap: 5,
@@ -139,8 +145,18 @@ export default function ShiftCard({
             </div>
           )}
         </div>
-        {/* Mention payé : visible des deux côtés */}
-        {estPaye && (
+        {/* Badge de statut clair, adapté au point de vue */}
+        {statut && (
+          <span style={{
+            display: 'inline-flex', alignItems: 'center', gap: 5,
+            background: TOON_STIJLEN[statut.toon].bg, color: TOON_STIJLEN[statut.toon].color,
+            fontSize: 12, fontWeight: 800, padding: '5px 13px', borderRadius: 999,
+          }}>
+            <Ico n={statut.icone} s={13} /> {t(statut.cle)}
+          </span>
+        )}
+        {/* Mention payé : visible des deux côtés (affichage sans point de vue) */}
+        {!statut && estPaye && (
           <span style={{
             display: 'inline-flex', alignItems: 'center', gap: 5,
             background: '#dcfce7', color: '#15803d', fontSize: 12, fontWeight: 800,
@@ -149,7 +165,7 @@ export default function ShiftCard({
             <Ico n="card" s={13} /> {t('pay_paid_badge')}
           </span>
         )}
-        {!estPaye && (shift.status === 'CONFIRMED' || shift.status === 'COMPLETED') && (
+        {!statut && !estPaye && (shift.status === 'CONFIRMED' || shift.status === 'COMPLETED') && (
           <span style={{
             display: 'inline-flex', alignItems: 'center', gap: 5,
             background: '#f0f4ea', color: '#4c5e42', fontSize: 12, fontWeight: 700,
