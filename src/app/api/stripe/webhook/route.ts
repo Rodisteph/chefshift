@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { emailBetalingOntvangen } from '@/lib/email'
-import { factuurNummer, commissieNummer } from '@/lib/factuur'
+import { factuurNummer, commissieNummer, minutenVanTijd, berekenUrenMinuten } from '@/lib/factuur'
 import Stripe from 'stripe'
 
 // Stripe appelle cette route après un paiement réussi
@@ -38,6 +38,26 @@ export async function POST(req: NextRequest) {
             data: { status: 'PAID', paidAt: new Date() },
             include: { shift: true },
           })
+
+          // Instantané figé : une facture payée est un document légal.
+          // Écrit une seule fois — Stripe rejoue les webhooks, d'où la garde sur null.
+          // Heure de fin : celle confirmée (shift_end) si elle existe, sinon le planning.
+          if (inv.billedMinutes == null) {
+            const shiftEnd = await tx.shiftEnd.findUnique({ where: { shiftId: inv.shiftId } })
+            const startMin = minutenVanTijd(inv.shift.startTime)
+            const endMin = shiftEnd ? minutenVanTijd(shiftEnd.reportedEnd) : minutenVanTijd(inv.shift.endTime)
+            const pauze = shiftEnd?.breakMinuten ?? inv.shift.breakMinutes
+            await tx.invoice.update({
+              where: { id: inv.id },
+              data: {
+                billedMinutes: berekenUrenMinuten(startMin, endMin, pauze),
+                breakMinutes: pauze,
+                startMinutes: startMin,
+                endMinutes: endMin,
+                vatRateUsed: Math.round(inv.shift.vatRate),
+              },
+            })
+          }
 
           // Document A : série continue PAR CHEF, sans trou (CS-{année}-{chefId}-{seq:04d})
           if (!inv.invoiceNumber && inv.shift.chosenKokId) {
