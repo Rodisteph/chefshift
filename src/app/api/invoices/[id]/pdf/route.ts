@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { berekenUrenMinuten, minutenVanTijd } from '@/lib/factuur'
+import { berekenUrenMinuten, minutenVanTijd, tijdVanMinuten, isMinimumToegepast } from '@/lib/factuur'
 
 function esc(t: string): string {
   return t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
@@ -50,29 +50,41 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
   const jaar = new Date(inv.paidAt || inv.createdAt).getFullYear()
   const nummer = inv.invoiceNumber || `CS-${jaar}-${inv.id.slice(0, 6).toUpperCase()}`
 
-  // ===== Heures dérivées des horaires (fin réelle confirmée si disponible) =====
-  const startMin = minutenVanTijd(inv.shift.startTime)
-  let endMin = minutenVanTijd(inv.shift.endTime)
-  try {
-    const fins: { reported_end: Date }[] = await prisma.$queryRaw`
-      SELECT reported_end FROM shift_end WHERE shift_id = ${inv.shiftId} LIMIT 1
-    `
-    if (fins.length > 0) endMin = minutenVanTijd(fins[0].reported_end)
-  } catch {}
-  const uren = berekenUrenMinuten(startMin, endMin, inv.shift.breakMinutes) / 60
+  // ===== Heures : instantané figé au paiement si présent, sinon calcul (anciennes factures) =====
+  // Une facture payée est un document légal : on relit exactement ce qui a été
+  // facturé, sans recalculer — même si les horaires du shift changent ensuite.
+  let startMin: number
+  let endMin: number
+  let pauze: number
+  let gefactureerd: number
+  if (inv.billedMinutes != null && inv.startMinutes != null && inv.endMinutes != null) {
+    startMin = inv.startMinutes
+    endMin = inv.endMinutes
+    pauze = inv.breakMinutes ?? 0
+    gefactureerd = inv.billedMinutes
+  } else {
+    // Factures d'avant l'instantané : calcul historique (fin confirmée si disponible)
+    startMin = minutenVanTijd(inv.shift.startTime)
+    endMin = minutenVanTijd(inv.shift.endTime)
+    const shiftEnd = await prisma.shiftEnd.findUnique({ where: { shiftId: inv.shiftId } })
+    if (shiftEnd) endMin = minutenVanTijd(shiftEnd.reportedEnd)
+    pauze = shiftEnd?.breakMinuten ?? inv.shift.breakMinutes
+    gefactureerd = berekenUrenMinuten(startMin, endMin, pauze)
+  }
+  const uren = gefactureerd / 60
 
   // ===== Montants stockés (calculés en centimes au moment du paiement) =====
   const excl = inv.amountExclVat
   const btw = inv.vatAmount
   const totaal = inv.amountInclVat
-  // Taux affiché : lu depuis le taux stocké sur le shift (9% pour les anciens, 21% pour les nouveaux)
-  const btwTarief = inv.shift.vatRate ?? 21
+  // Taux affiché : celui figé au paiement, sinon celui du shift (9% anciens, 21% nouveaux)
+  const btwTarief = inv.vatRateUsed ?? inv.shift.vatRate ?? 21
 
   const hp = inv.shift.horeca.horecaProfile
   const kp = inv.shift.chosenKok?.kokProfile
   const kokNaam = kp ? `${kp.firstName || ''} ${kp.lastName || ''}`.trim() || 'Kok' : 'Kok'
-  const start = new Date(inv.shift.startTime).toISOString().slice(11, 16)
-  const eind = new Date(inv.shift.endTime).toISOString().slice(11, 16)
+  const start = tijdVanMinuten(startMin)
+  const eind = tijdVanMinuten(endMin)
   let adrKok: { straat: string | null; huisnummer: string | null; postcode: string | null } | null = null
   if (kp) {
     try {
@@ -188,7 +200,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
         <tr>
           <td>
             <strong>${esc(inv.shift.title)}</strong>
-            <div class="klein">${datumNL(inv.shift.date)} · ${start} - ${eind} · via ChefShift</div>
+            <div class="klein">${datumNL(inv.shift.date)} · ${start} - ${eind}${pauze > 0 ? ` · pauze ${pauze} min` : ''} · via ChefShift${isMinimumToegepast(startMin, endMin, pauze) ? ' · minimum 1 uur' : ''}</div>
           </td>
           <td class="r">${uren.toFixed(1).replace('.', ',')}</td>
           <td class="r">${eur(inv.shift.hourlyRate)}</td>
