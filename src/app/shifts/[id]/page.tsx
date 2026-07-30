@@ -55,6 +55,7 @@ type Application = {
 type Eind = {
   reportedEnd: string
   confirmedAt: string | null
+  breakMinuten: number | null
 }
 
 type ShiftDetail = {
@@ -70,6 +71,7 @@ type ShiftDetail = {
   locationCity: string | null
   status: string
   isUrgent: boolean
+  breakMinutes: number
   chosenKokId: string | null
   horecaId: string
   horeca: { horecaProfile: { companyName: string | null; kvkNumber: string | null } | null }
@@ -124,6 +126,8 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
   const [eCity, setECity] = useState('')
   const [eUrgent, setEUrgent] = useState(false)
   const [eindInvoer, setEindInvoer] = useState('')
+  const [pauzeAan, setPauzeAan] = useState(true)
+  const [pauzeMin, setPauzeMin] = useState('30')
   const [eindEnvoi, setEindEnvoi] = useState(false)
   const [bevestigEnvoi, setBevestigEnvoi] = useState(false)
   const [note, setNote] = useState(0)
@@ -141,6 +145,13 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
       if (data.shift) {
         const source = data.shift.eind?.reportedEnd || data.shift.endTime
         if (source) setEindInvoer(versChamp(source))
+        // Pause : valeur déclarée si présente, sinon pause par défaut du shift
+        if (data.shift.eind?.breakMinuten != null) {
+          setPauzeAan(data.shift.eind.breakMinuten > 0)
+          setPauzeMin(String(data.shift.eind.breakMinuten))
+        } else {
+          setPauzeMin(String(data.shift.breakMinutes ?? 30))
+        }
       }
     }
     setChargement(false)
@@ -216,7 +227,7 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
     const res = await fetch(`/api/shifts/${id}/eindtijd`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ endTime: eindInvoer }),
+      body: JSON.stringify({ endTime: eindInvoer, breakMinutes: pauzeAan ? Math.max(0, Math.min(480, parseInt(pauzeMin) || 0)) : 0 }),
     })
     if (res.ok) await charger()
     setEindEnvoi(false)
@@ -361,6 +372,9 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
   const shiftActif = shift.status === 'CONFIRMED' || shift.status === 'COMPLETED'
   const eindGemeld = shift.eind ? heureHHMM(shift.eind.reportedEnd, locale) : ''
   const eindBevestigd = !!(shift.eind && shift.eind.confirmedAt)
+  // Pause retenue pour la facturation : déclarée par le chef, sinon pause par défaut du shift
+  const pauzeEffectief = shift.eind?.breakMinuten != null ? shift.eind.breakMinuten : shift.breakMinutes
+  const pauzeTekst = pauzeEffectief > 0 ? `${t('end_break')} : ${pauzeEffectief} min` : t('end_break_none')
   const voirBlocEind = shiftActif && shift.chosenKokId
 
   return (
@@ -673,7 +687,7 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
               shift.eind ? (
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
                   <span style={{ display: 'inline-flex', alignItems: 'center', gap: 7, ...badgeSauge, fontSize: 13.5, padding: '8px 16px' }}>
-                    <Ico n="clock" s={14} /> {t('end_wait')} · {eindGemeld}
+                    <Ico n="clock" s={14} /> {t('end_wait')} · {eindGemeld} · {pauzeTekst}
                   </span>
                 </div>
               ) : (
@@ -684,6 +698,32 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
                       <label style={etiquette}>{t('field_end')}</label>
                       <input type="time" value={eindInvoer} onChange={(e) => setEindInvoer(e.target.value)} required style={champ} />
                     </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, minHeight: 44 }}>
+                      <input
+                        type="checkbox"
+                        id="pauze"
+                        checked={pauzeAan}
+                        onChange={(e) => setPauzeAan(e.target.checked)}
+                        style={{ width: 18, height: 18, accentColor: '#5f7052', cursor: 'pointer' }}
+                      />
+                      <label htmlFor="pauze" style={{ fontSize: 13.5, fontWeight: 700, color: '#3c4436', cursor: 'pointer' }}>
+                        {t('end_break_label')}
+                      </label>
+                    </div>
+                    {pauzeAan && (
+                      <div style={{ minWidth: 110 }}>
+                        <label style={etiquette}>{t('end_break')} (min)</label>
+                        <input
+                          type="number"
+                          min="0"
+                          max="480"
+                          step="5"
+                          value={pauzeMin}
+                          onChange={(e) => setPauzeMin(e.target.value)}
+                          style={champ}
+                        />
+                      </div>
+                    )}
                     <button
                       onClick={rapporteerEind}
                       disabled={eindEnvoi || !eindInvoer}
@@ -721,6 +761,10 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
                       <div style={{ fontSize: 22, fontWeight: 800, color: '#4c5e42' }}>{eindGemeld}</div>
                     </div>
                   )}
+                  <div>
+                    <div style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: 1.5, color: '#8a9a7b', fontWeight: 800, marginBottom: 4 }}>{t('end_break')}</div>
+                    <div style={{ fontSize: 18, fontWeight: 800, color: 'hsl(var(--muted-foreground))' }}>{pauzeEffectief > 0 ? `${pauzeEffectief} min` : t('end_break_none')}</div>
+                  </div>
                   <div style={{ minWidth: 130 }}>
                     <label style={etiquette}>{t('end_final')}</label>
                     <input type="time" value={eindInvoer} onChange={(e) => setEindInvoer(e.target.value)} required style={champ} />
@@ -733,7 +777,7 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
                   style={{
                     background: 'linear-gradient(135deg,#647a55,#46553c)', color: '#fff', border: 'none',
                     borderRadius: 12, padding: '12px 24px', fontWeight: 700, fontSize: 14,
-                    cursor: bevestigEnvoi || !eindInvoer ? 'not-allowed' : 'pointer', opacity: bevestigEnvoi || !eindInvoer ? 0.7 : 1, fontFamily: FONT,
+                    cursor: bevestigEnvoi || !eindInvoer ? 'not-allowed' : 'pointer', opacity: bevestigEnvoi ? 0.7 : 1, fontFamily: FONT,
                     boxShadow: '0 8px 18px -8px rgba(70,85,60,.5)',
                   }}
                 >
