@@ -75,7 +75,7 @@ type ShiftDetail = {
   chosenKokId: string | null
   horecaId: string
   horeca: { horecaProfile: { companyName: string | null; kvkNumber: string | null } | null }
-  invoice: { status: string; amountInclVat: number } | null
+  invoice: { id: string; status: string; amountInclVat: number } | null
   applications: Application[]
   eind: Eind | null
   horecaReviewed: boolean
@@ -606,7 +606,31 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
               </span>
             </div>
 
-            {eindBevestigd ? (
+            {estPaye ? (
+              // Shift payé : plus rien à déclarer ni confirmer — la facture est disponible
+              <>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: '#dcfce7', color: '#15803d', fontSize: 13.5, fontWeight: 800, padding: '8px 16px', borderRadius: 999 }}>
+                  <Ico n="check" s={14} /> {t('end_confirmed')}{shift.eind ? ` · ${eindGemeld}` : ''} · {t('pay_paid_badge')}
+                </span>
+                {shift.invoice && (
+                  <div style={{ marginTop: 14 }}>
+                    <a
+                      href={`/api/invoices/${shift.invoice.id}/pdf`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="cs-btn"
+                      style={{
+                        display: 'inline-flex', alignItems: 'center', gap: 8, background: 'none',
+                        border: '1.5px solid #dfe4d4', borderRadius: 12, padding: '10px 20px',
+                        fontWeight: 700, fontSize: 13.5, color: 'hsl(var(--foreground))', textDecoration: 'none',
+                      }}
+                    >
+                      <Ico n="card" s={15} /> {t('invoice_view')}
+                    </a>
+                  </div>
+                )}
+              </>
+            ) : eindBevestigd ? (
               <>
                 <span style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: '#dcfce7', color: '#15803d', fontSize: 13.5, fontWeight: 800, padding: '8px 16px', borderRadius: 999 }}>
                   <Ico n="check" s={14} /> {t('end_confirmed')} · {eindGemeld}
@@ -825,9 +849,19 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
             )}
           </div>
         )}
-        {estPaye && role === 'HORECA' && (
-          <p style={{ color: '#15803d', fontWeight: 700, marginBottom: 40, display: 'flex', alignItems: 'center', gap: 8 }}>
+        {estPaye && (
+          <p style={{ color: '#15803d', fontWeight: 700, marginBottom: 40, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
             <Ico n="check" s={16} /> {t('pay_success')}
+            {shift.invoice && (
+              <a
+                href={`/api/invoices/${shift.invoice.id}/pdf`}
+                target="_blank"
+                rel="noreferrer"
+                style={{ color: '#4c5e42', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 5 }}
+              >
+                <Ico n="card" s={14} /> {t('invoice_view')}
+              </a>
+            )}
           </p>
         )}
 
