@@ -13,7 +13,7 @@ export default function ShiftsPage() {
   const [shifts, setShifts] = useState<ShiftData[]>([])
   const [chargement, setChargement] = useState(true)
   const [role, setRole] = useState('')
-  const [titre, setTitre] = useState<Key>('shifts_title')
+  const [titre, setTitre] = useState<Key | null>(null)
 
   useEffect(() => {
     async function charger() {
@@ -26,11 +26,12 @@ export default function ShiftsPage() {
       // Filtres dédiés : ?vue=avenir|candidatures|acceptees (chef) ou ?passe=1 (shifts passés)
       const params = new URLSearchParams(window.location.search)
       const qs = params.toString()
+      const estKokIci = s.user.role === 'KOK'
       if (params.get('passe') === '1') setTitre('list_past')
       else if (params.get('vue') === 'avenir') setTitre('list_kok_upcoming')
-      else if (params.get('vue') === 'candidatures') setTitre('stat_kok_apps')
-      else if (params.get('vue') === 'acceptees') setTitre('stat_kok_accepted')
-      else if (s.user.role !== 'KOK') setTitre('shifts_my')
+      else if (params.get('vue') === 'candidatures') setTitre(estKokIci ? 'stat_kok_apps' : 'stat_hor_2')
+      else if (params.get('vue') === 'acceptees') setTitre(estKokIci ? 'stat_kok_accepted' : 'stat_hor_3')
+      else setTitre(estKokIci ? 'shifts_title' : 'shifts_my')
       try {
         const res = await fetch(`/api/shifts${qs ? `?${qs}` : ''}`)
         if (res.ok) {
@@ -69,7 +70,7 @@ export default function ShiftsPage() {
         <div className="cs-fade" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16, marginBottom: 32 }}>
           <div>
             <h1 style={{ fontSize: 'clamp(26px, 4vw, 36px)', fontWeight: 800, letterSpacing: -1.2 }}>
-              {t(titre)}
+              {titre ? t(titre) : ' '}
             </h1>
             <p style={{ color: 'hsl(var(--muted-foreground))', marginTop: 6, fontSize: 15 }}>
               {titre === 'shifts_title' && estKok ? t('shifts_sub') : ''}

@@ -61,6 +61,22 @@ export async function GET(req: NextRequest) {
       }
     }
 
+    // Vues dédiées de la horeca : shifts avec candidatures reçues, chefs engagés
+    if (session.user.role === 'HORECA') {
+      const vue = searchParams.get('vue')
+      if (vue === 'candidatures' || vue === 'acceptees') {
+        where.horecaId = session.user.id
+        if (vue === 'candidatures') where.applications = { some: {} }
+        if (vue === 'acceptees') where.chosenKokId = { not: null }
+        const shifts = await prisma.shift.findMany({
+          where,
+          include: INCLUSIONS,
+          orderBy: [{ date: 'desc' }],
+        })
+        return NextResponse.json({ shifts })
+      }
+    }
+
     if (session.user.role === 'HORECA') where.horecaId = session.user.id
     if (session.user.role === 'KOK') {
       // Shifts disponibles : ouverts ET dont la date n'est pas passée

@@ -103,8 +103,8 @@ export default function DashboardPage() {
       ]
     : [
         { c: String(shifts.length), l: t('stat_hor_1'), icone: 'brief', lien: '/shifts' },
-        { c: String(stats?.nbCandidatures ?? 0), l: t('stat_hor_2'), icone: 'users', lien: '/shifts' },
-        { c: String(stats?.nbEmbauches ?? 0), l: t('stat_hor_3'), icone: 'chef', lien: '/shifts' },
+        { c: String(stats?.nbCandidatures ?? 0), l: t('stat_hor_2'), icone: 'users', lien: '/shifts?vue=candidatures' },
+        { c: String(stats?.nbEmbauches ?? 0), l: t('stat_hor_3'), icone: 'chef', lien: '/shifts?vue=acceptees' },
         { c: `€${Math.round(stats?.totalDepense ?? 0)}`, l: t('stat_spend_total'), icone: 'bank', lien: '' },
       ]
 
