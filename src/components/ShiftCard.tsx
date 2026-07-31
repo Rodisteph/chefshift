@@ -7,7 +7,7 @@ import { statutShift, TOON_STIJLEN } from '@/lib/statut'
 
 // Photo libre de droits (Unsplash, licence gratuite)
 const PHOTO = 'https://images.unsplash.com/photo-1556910103-1c02745aae4d?auto=format&fit=crop&w=300&q=70'
-import { Ico } from './Icons'
+import { Ico, IcoStar } from './Icons'
 
 const FONT = '"Sora","Inter","Helvetica Neue",Arial,sans-serif'
 
@@ -28,7 +28,11 @@ export type ShiftData = {
   invoice?: { status: string } | null
   eind?: { reportedEnd: string; confirmedAt: string | null } | null
   _count?: { applications: number }
-  horeca?: { horecaProfile?: { companyName?: string | null } | null }
+  horeca?: { horecaProfile?: {
+    companyName?: string | null
+    averageScore?: number | null
+    reviewCount?: number | null
+  } | null }
 }
 
 export default function ShiftCard({
@@ -133,6 +137,19 @@ export default function ShiftCard({
           {shift.horeca?.horecaProfile?.companyName && (
             <span style={{ ...meta, fontWeight: 700, color: 'hsl(var(--foreground))' }}>
               {shift.horeca.horecaProfile.companyName}
+            </span>
+          )}
+          {/* Note du restaurant : visible cote chef, la ou se prend la decision
+              de postuler. Masquee sous 1 avis : une moyenne sur un seul avis
+              est plus trompeuse qu'utile. */}
+          {perspectief === 'kok' && (shift.horeca?.horecaProfile?.reviewCount ?? 0) > 0 && (
+            <span
+              style={{ ...meta, fontWeight: 700, color: '#8a6d1f', display: 'inline-flex', alignItems: 'center', gap: 4 }}
+              title={`${(shift.horeca!.horecaProfile!.averageScore ?? 0).toFixed(1)} / 5 · ${shift.horeca!.horecaProfile!.reviewCount} ${t('reviews')}`}
+            >
+              <IcoStar s={13} plein />
+              {(shift.horeca!.horecaProfile!.averageScore ?? 0).toFixed(1)}
+              <span style={{ fontWeight: 600, opacity: 0.75 }}>({shift.horeca!.horecaProfile!.reviewCount})</span>
             </span>
           )}
         </p>

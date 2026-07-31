@@ -461,6 +461,10 @@ const dict = {
     review_placeholder: 'Optionele toelichting (bijv. stiptheid, kwaliteit, hygiëne)…',
     review_submit: 'Beoordeling versturen',
     review_done: 'Bedankt voor je beoordeling!',
+    // Kok -> horeca : de kok beoordeelt de opdrachtgever na de shift
+    review_h_title: 'Beoordeel de opdrachtgever',
+    review_h_desc: 'Hoe was het werken bij deze zaak? Je beoordeling helpt andere koks.',
+    review_h_placeholder: 'Optionele toelichting (bijv. ontvangst, werkplek, communicatie)…',
     admin_title: 'Beheer',
     admin_sub: 'Overzicht en beheer van shifts, gebruikers en betalingen.',
     admin_denied: 'Geen toegang, alleen voor beheerders.',
@@ -913,6 +917,10 @@ const dict = {
     review_placeholder: 'Optional note (e.g. punctuality, quality, hygiene)…',
     review_submit: 'Submit review',
     review_done: 'Thanks for your review!',
+    // Chef -> restaurant : the chef rates the client after the shift
+    review_h_title: 'Rate the restaurant',
+    review_h_desc: 'How was it working there? Your rating helps other chefs.',
+    review_h_placeholder: 'Optional note (e.g. welcome, workspace, communication)…',
     admin_title: 'Admin',
     admin_sub: 'Overview and management of shifts, users and payments.',
     admin_denied: 'No access, admins only.',

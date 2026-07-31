@@ -76,7 +76,12 @@ type ShiftDetail = {
   breakMinutes: number
   chosenKokId: string | null
   horecaId: string
-  horeca: { horecaProfile: { companyName: string | null; kvkNumber: string | null } | null }
+  horeca: { horecaProfile: {
+    companyName: string | null
+    kvkNumber: string | null
+    averageScore?: number | null
+    reviewCount?: number | null
+  } | null }
   invoice: { id: string; status: string; amountInclVat: number } | null
   applications: Application[]
   eind: Eind | null
@@ -399,6 +404,61 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
   const shiftActif = shift.status === 'CONFIRMED' || shift.status === 'COMPLETED'
   const eindGemeld = shift.eind ? heureHHMM(shift.eind.reportedEnd, locale) : ''
   const eindBevestigd = !!(shift.eind && shift.eind.confirmedAt)
+
+  // ===== Notation reciproque =====
+  // HORECA note le chef, KOK note le restaurant : meme formulaire, meme route
+  // API, seuls le libelle et le drapeau consulte changent.
+  // Extrait en variable pour rester disponible AVANT et APRES le paiement.
+  const dejaNote = role === 'HORECA' ? shift.horecaReviewed : shift.kokReviewed
+  const blocAvis = (role !== 'HORECA' && role !== 'KOK') ? null : dejaNote ? (
+    <p style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#15803d', fontWeight: 700, fontSize: 13.5, marginTop: 16, marginBottom: 0 }}>
+      <Ico n="check" s={15} /> {t('review_done')}
+    </p>
+  ) : (
+    <div style={{ marginTop: 20, borderTop: '1px solid hsl(var(--border))', paddingTop: 18 }}>
+      <div style={{ fontWeight: 800, fontSize: 15.5, letterSpacing: -0.3, marginBottom: 3 }}>
+        {t(role === 'KOK' ? 'review_h_title' : 'review_title')}
+      </div>
+      <p style={{ color: 'hsl(var(--muted-foreground))', fontSize: 13.5, fontWeight: 600, marginTop: 0, marginBottom: 12 }}>
+        {t(role === 'KOK' ? 'review_h_desc' : 'review_desc')}
+      </p>
+      <div style={{ display: 'flex', gap: 6, marginBottom: 14 }}>
+        {[1, 2, 3, 4, 5].map((i) => (
+          <button
+            key={i}
+            type="button"
+            onClick={() => setNote(i)}
+            aria-label={`${i} / 5`}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2, lineHeight: 0 }}
+          >
+            <IcoStar s={28} plein={i <= note} />
+          </button>
+        ))}
+      </div>
+      <textarea
+        value={avis}
+        onChange={(e) => setAvis(e.target.value)}
+        placeholder={t(role === 'KOK' ? 'review_h_placeholder' : 'review_placeholder')}
+        rows={3}
+        style={{ ...champ, resize: 'vertical' }}
+      />
+      <div style={{ marginTop: 12 }}>
+        <button
+          onClick={envoyerAvis}
+          disabled={avisEnvoi || !note}
+          className="cs-btn"
+          style={{
+            background: 'linear-gradient(135deg,#647a55,#46553c)', color: '#fff', border: 'none',
+            borderRadius: 12, padding: '11px 26px', fontWeight: 700, fontSize: 14, fontFamily: FONT,
+            cursor: avisEnvoi || !note ? 'not-allowed' : 'pointer', opacity: avisEnvoi || !note ? 0.6 : 1,
+            boxShadow: '0 8px 18px -8px rgba(70,85,60,.5)',
+          }}
+        >
+          {avisEnvoi ? t('form_loading') : t('review_submit')}
+        </button>
+      </div>
+    </div>
+  )
   // Pause retenue pour la facturation : déclarée par le chef, sinon pause par défaut du shift
   const pauzeEffectief = shift.eind?.breakMinuten != null ? shift.eind.breakMinuten : shift.breakMinutes
   const pauzeTekst = pauzeEffectief > 0 ? `${t('end_break')} : ${pauzeEffectief} min` : t('end_break_none')
@@ -555,8 +615,19 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
                   {shift.locationCity && <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: 'hsl(var(--muted-foreground))', fontSize: 14.5 }}><Ico n="pin" s={15} c="#8a9a7b" /> {shift.locationCity}</span>}
                 </p>
                 {shift.horeca.horecaProfile?.companyName && (
-                  <p style={{ marginTop: 10, fontWeight: 700, fontSize: 15 }}>
+                  <p style={{ marginTop: 10, fontWeight: 700, fontSize: 15, display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
                     {shift.horeca.horecaProfile.companyName}
+                    {/* Note du restaurant, cote chef : elle eclaire la decision
+                        de postuler. Sans avis, on n'affiche rien plutot qu'un zero. */}
+                    {(shift.horeca.horecaProfile.reviewCount ?? 0) > 0 && (
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontWeight: 700, fontSize: 13.5, color: 'hsl(var(--muted-foreground))' }}>
+                        <Etoiles n={shift.horeca.horecaProfile.averageScore ?? 0} />
+                        {(shift.horeca.horecaProfile.averageScore ?? 0).toFixed(1)}
+                        <span style={{ fontWeight: 600 }}>
+                          ({shift.horeca.horecaProfile.reviewCount} {t('reviews')})
+                        </span>
+                      </span>
+                    )}
                   </p>
                 )}
               </div>
@@ -670,6 +741,8 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
                     </a>
                   </div>
                 )}
+                {/* L'avis reste accessible apres le paiement */}
+                {blocAvis}
               </>
             ) : eindBevestigd ? (
               <>
@@ -677,54 +750,7 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
                   <Ico n="check" s={14} /> {t('end_confirmed')} · {eindGemeld}
                 </span>
 
-                {/* ===== Notation du chef par le restaurant ===== */}
-                {role === 'HORECA' && (
-                  shift.horecaReviewed ? (
-                    <p style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#15803d', fontWeight: 700, fontSize: 13.5, marginTop: 16, marginBottom: 0 }}>
-                      <Ico n="check" s={15} /> {t('review_done')}
-                    </p>
-                  ) : (
-                    <div style={{ marginTop: 20, borderTop: '1px solid hsl(var(--border))', paddingTop: 18 }}>
-                      <div style={{ fontWeight: 800, fontSize: 15.5, letterSpacing: -0.3, marginBottom: 3 }}>{t('review_title')}</div>
-                      <p style={{ color: 'hsl(var(--muted-foreground))', fontSize: 13.5, fontWeight: 600, marginTop: 0, marginBottom: 12 }}>{t('review_desc')}</p>
-                      <div style={{ display: 'flex', gap: 6, marginBottom: 14 }}>
-                        {[1, 2, 3, 4, 5].map((i) => (
-                          <button
-                            key={i}
-                            type="button"
-                            onClick={() => setNote(i)}
-                            aria-label={`${i} / 5`}
-                            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2, lineHeight: 0 }}
-                          >
-                            <IcoStar s={28} plein={i <= note} />
-                          </button>
-                        ))}
-                      </div>
-                      <textarea
-                        value={avis}
-                        onChange={(e) => setAvis(e.target.value)}
-                        placeholder={t('review_placeholder')}
-                        rows={3}
-                        style={{ ...champ, resize: 'vertical' }}
-                      />
-                      <div style={{ marginTop: 12 }}>
-                        <button
-                          onClick={envoyerAvis}
-                          disabled={avisEnvoi || !note}
-                          className="cs-btn"
-                          style={{
-                            background: 'linear-gradient(135deg,#647a55,#46553c)', color: '#fff', border: 'none',
-                            borderRadius: 12, padding: '11px 26px', fontWeight: 700, fontSize: 14, fontFamily: FONT,
-                            cursor: avisEnvoi || !note ? 'not-allowed' : 'pointer', opacity: avisEnvoi || !note ? 0.6 : 1,
-                            boxShadow: '0 8px 18px -8px rgba(70,85,60,.5)',
-                          }}
-                        >
-                          {avisEnvoi ? t('form_loading') : t('review_submit')}
-                        </button>
-                      </div>
-                    </div>
-                  )
-                )}
+                {blocAvis}
 
                 {/* Admin : peut corriger l'heure même après confirmation */}
                 {role === 'ADMIN' && (
