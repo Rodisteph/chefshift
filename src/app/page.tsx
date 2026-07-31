@@ -430,7 +430,7 @@ export default function HomePage() {
         </div>
         <div className="cs-card" style={{ background: '#fff', borderRadius: 22, border: '1px solid #eceee3', boxShadow: '0 3px 12px rgba(46,52,43,0.05)', overflow: 'hidden' }}>
           {/* En-tête */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1.1fr 1.2fr 1.2fr', background: '#f6f7f2', borderBottom: '1px solid #eceee3' }}>
+          <div className="cs-cmp-head" style={{ background: '#f6f7f2', borderBottom: '1px solid #eceee3' }}>
             <div style={{ padding: '18px 22px' }} />
             <div style={{ padding: '18px 22px', color: '#9aa39b', fontWeight: 700, fontSize: 13.5 }}>{t('cmp_col_a')}</div>
             <div style={{ padding: '18px 22px', fontWeight: 800, fontSize: 14.5, color: '#46553c', background: '#eef2e6' }}>
@@ -445,12 +445,12 @@ export default function HomePage() {
             { l: t('cmp_l5'), a: t('cmp_r5_a'), b: t('cmp_r5_b') },
             { l: t('cmp_l6'), a: t('cmp_r6_a'), b: t('cmp_r6_b') },
           ].map((r, i, arr) => (
-            <div key={r.l} style={{ display: 'grid', gridTemplateColumns: '1.1fr 1.2fr 1.2fr', borderBottom: i < arr.length - 1 ? '1px solid #f0f2ea' : 'none' }}>
-              <div style={{ padding: '17px 22px', fontWeight: 700, fontSize: 14, color: '#3c4436' }}>{r.l}</div>
-              <div style={{ padding: '17px 22px', color: '#9aa39b', fontSize: 13.5, lineHeight: 1.55, display: 'flex', gap: 9 }}>
+            <div key={r.l} className="cs-cmp-row" style={{ borderBottom: i < arr.length - 1 ? '1px solid #f0f2ea' : 'none' }}>
+              <div className="cs-cmp-label" style={{ padding: '17px 22px', fontWeight: 700, fontSize: 14, color: '#3c4436' }}>{r.l}</div>
+              <div className="cs-cmp-cel" data-kolom={t('cmp_col_a')} style={{ padding: '17px 22px', color: '#9aa39b', fontSize: 13.5, lineHeight: 1.55, display: 'flex', gap: 9 }}>
                 <span aria-hidden="true" style={{ flexShrink: 0, marginTop: 1 }}>✕</span>{r.a}
               </div>
-              <div style={{ padding: '17px 22px', color: '#3c4436', fontSize: 13.5, fontWeight: 600, lineHeight: 1.55, background: '#f4f7ee', display: 'flex', gap: 9 }}>
+              <div className="cs-cmp-cel cs-cmp-cel-cs" data-kolom="ChefShift" style={{ padding: '17px 22px', color: '#3c4436', fontSize: 13.5, fontWeight: 600, lineHeight: 1.55, background: '#f4f7ee', display: 'flex', gap: 9 }}>
                 <span style={{ flexShrink: 0, marginTop: 1 }}><Ico n="check" s={14} c="#4c5e42" /></span>{r.b}
               </div>
             </div>

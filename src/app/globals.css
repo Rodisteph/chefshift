@@ -116,3 +116,58 @@ body {
   background: hsl(var(--accent)) !important;
   border-color: hsl(var(--primary)) !important;
 }
+
+/* ===================================================================
+   Comparatif ChefShift vs uitzendbureau
+   Desktop : 3 colonnes, strictement identique à avant (les valeurs
+   viennent des styles inline, simplement déplacées ici pour qu'une
+   media query puisse les surcharger sans !important).
+   =================================================================== */
+.cs-cmp-head,
+.cs-cmp-row {
+  display: grid;
+  grid-template-columns: 1.1fr 1.2fr 1.2fr;
+}
+
+/* Mobile : chaque ligne devient une petite fiche empilée.
+   Trois colonnes sur 380 px laissaient ~66 px de texte par cellule. */
+@media (max-width: 640px) {
+  .cs-cmp-head {
+    display: none;
+  }
+
+  .cs-cmp-row {
+    grid-template-columns: 1fr;
+  }
+
+  .cs-cmp-label {
+    background: #f6f7f2;
+    padding: 13px 18px !important;
+    font-size: 14.5px !important;
+  }
+
+  .cs-cmp-cel {
+    padding: 13px 18px !important;
+    flex-wrap: wrap;
+    align-items: flex-start;
+  }
+
+  /* L'en-tête étant masqué, chaque cellule annonce sa colonne */
+  .cs-cmp-cel::before {
+    content: attr(data-kolom);
+    display: block;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: #9aa39b;
+    /* Occupe toute la largeur : le libellé passe au-dessus de la
+       puce et du texte, au lieu de s'aligner à côté d'eux. */
+    flex: 0 0 100%;
+    margin-bottom: 3px;
+  }
+
+  .cs-cmp-cel-cs::before {
+    color: #6d7f61;
+  }
+}
