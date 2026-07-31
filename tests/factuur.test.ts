@@ -3,7 +3,7 @@ import assert from 'node:assert/strict'
 import {
   CHEF_VAT_RATE, COMMISSION_RATE,
   berekenUrenMinuten, berekenBedragen,
-  euroNaarCenten, centenNaarEuro,
+  euroNaarCenten, centenNaarEuro, afrondenHalfUp,
   factuurNummer, commissieNummer,
 } from '../src/lib/factuur'
 
@@ -108,4 +108,27 @@ test('deux chefs ont des séries indépendantes', () => {
 test('conversion aller-retour euro/centimes', () => {
   assert.equal(euroNaarCenten(0.1 + 0.2), 30) // 0.30000000000000004 en float
   assert.equal(centenNaarEuro(1060), 10.6)
+})
+
+// ===== Estimation carte shift == montant facture =====
+// Regression : la creation de shift appliquait Math.max(0, duree/60 - 0.5),
+// sans minimum d'une heure. Un shift 11:00-12:00 a 22 EUR/h affichait 11 EUR
+// sur la carte alors que la facture emettait 22 EUR.
+
+test('shift 11:00-12:00 a 22 EUR/h : la carte annonce 22 EUR, pas 11', () => {
+  const minuten = berekenUrenMinuten(11 * 60, 12 * 60, 30)
+  const uren = minuten / 60
+  assert.equal(uren, 1)
+  assert.equal(afrondenHalfUp(uren * euroNaarCenten(22)), 2200)
+})
+
+test('shift 10:30-11:30 a 10 EUR/h : 10 EUR, pas 5', () => {
+  const uren = berekenUrenMinuten(10 * 60 + 30, 11 * 60 + 30, 30) / 60
+  assert.equal(afrondenHalfUp(uren * euroNaarCenten(10)), 1000)
+})
+
+test('journee de 9 h a 28 EUR/h : la pause reste deduite', () => {
+  const uren = berekenUrenMinuten(9 * 60, 18 * 60, 30) / 60
+  assert.equal(uren, 8.5)
+  assert.equal(afrondenHalfUp(uren * euroNaarCenten(28)), 23800)
 })

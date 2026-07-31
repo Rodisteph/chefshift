@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { MIN_HOURLY_RATE } from '@/lib/constants'
-import { euroNaarCenten, afrondenHalfUp } from '@/lib/factuur'
+import { euroNaarCenten, afrondenHalfUp, berekenUrenMinuten, minutenVanTijd } from '@/lib/factuur'
+import { MIN_HOURLY_RATE, STANDAARD_PAUZE_MIN } from '@/lib/constants'
 
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
   try {
@@ -82,7 +82,7 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
     }
 
     const body = await req.json()
-    const { title, function: func, date, startTime, endTime, hourlyRate, locationStreet, locationPostal, locationCity, isUrgent, spoedtoeslagPct } = body
+    const { title, function: func, date, startTime, endTime, hourlyRate, locationStreet, locationPostal, locationCity, isUrgent, spoedtoeslagPct, breakMinutes } = body
 
     // Supplément d'urgence : uniquement 0, 10, 15 ou 20 (% du tarif de base)
     const pct = [0, 10, 15, 20].includes(Number(spoedtoeslagPct)) ? Number(spoedtoeslagPct) : 0
@@ -95,9 +95,16 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
     // Heures "wall-clock" : stockées en composantes UTC, sans conversion de fuseau
     const start = new Date(`1970-01-01T${startTime}:00.000Z`)
     const end = new Date(`1970-01-01T${endTime}:00.000Z`)
-    let durMin = (end.getUTCHours() * 60 + end.getUTCMinutes()) - (start.getUTCHours() * 60 + start.getUTCMinutes())
-    if (durMin <= 0) durMin += 1440
-    const hours = Math.max(0, durMin / 60 - 0.5)
+    const startMin = minutenVanTijd(start)
+    const endMin = minutenVanTijd(end)
+    // Pause : reprise du corps de requête si fournie, sinon le défaut métier.
+    // Elle est persistée pour que la facture se base sur la même valeur.
+    const pauzeMin = breakMinutes != null
+      ? Math.max(0, Math.min(480, Math.round(Number(breakMinutes))))
+      : STANDAARD_PAUZE_MIN
+    // Même fonction que la facturation : minimum d'une heure inclus.
+    // Un calcul inline divergent affichait 0,5 h sur un shift d'une heure.
+    const hours = berekenUrenMinuten(startMin, endMin, pauzeMin) / 60
     const rate = euroNaarCenten(rateEuro) // stockage en centimes
     const totalAmount = afrondenHalfUp(hours * rate)
 
@@ -114,6 +121,7 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
         locationCity,
         hourlyRate: rate,
         totalAmount,
+        breakMinutes: pauzeMin,
         isUrgent: !!isUrgent || pct > 0,
         spoedtoeslagPct: pct,
       },

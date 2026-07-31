@@ -26,9 +26,3 @@ export function formatTime(date: Date | string): string {
     minute: '2-digit',
   }).format(new Date(date))
 }
-
-export function calculateShiftHours(start: Date, end: Date, breakMinutes: number = 30): number {
-  const diffMs = new Date(end).getTime() - new Date(start).getTime()
-  const diffHours = diffMs / (1000 * 60 * 60)
-  return Math.max(0, diffHours - breakMinutes / 60)
-}
