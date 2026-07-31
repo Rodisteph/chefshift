@@ -25,6 +25,7 @@ type WorkExp = {
 
 type Application = {
   id: string
+  kokId: string
   status: string
   message: string | null
   proposedRate: number | null
@@ -71,6 +72,7 @@ type ShiftDetail = {
   locationCity: string | null
   status: string
   isUrgent: boolean
+  spoedtoeslagPct: number
   breakMinutes: number
   chosenKokId: string | null
   horecaId: string
@@ -125,6 +127,10 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
   const [ePostal, setEPostal] = useState('')
   const [eCity, setECity] = useState('')
   const [eUrgent, setEUrgent] = useState(false)
+  const [eToeslag, setEToeslag] = useState(0)
+  const [favoris, setFavoris] = useState<string[]>([])
+  const [seulementFav, setSeulementFav] = useState(false)
+  const [favEnvoi, setFavEnvoi] = useState('')
   const [eindInvoer, setEindInvoer] = useState('')
   const [pauzeAan, setPauzeAan] = useState(true)
   const [pauzeMin, setPauzeMin] = useState('30')
@@ -141,6 +147,7 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
     if (res.ok) {
       const data = await res.json()
       setShift(data.shift)
+      if (data.favoriKokIds) setFavoris(data.favoriKokIds)
       // Préremplir le champ heure : heure déclarée par le chef si présente, sinon horaire prévu
       if (data.shift) {
         const source = data.shift.eind?.reportedEnd || data.shift.endTime
@@ -176,6 +183,24 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
     })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id])
+
+  // Bascule un chef en favori (horeca) — marque-page persistant
+  async function toggleFavori(kokId: string) {
+    if (!kokId || favEnvoi) return
+    setFavEnvoi(kokId)
+    try {
+      const res = await fetch('/api/favorieten', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ kokId }),
+      })
+      if (res.ok) {
+        const d = await res.json()
+        setFavoris((f) => (d.favorite ? [...f, kokId] : f.filter((x) => x !== kokId)))
+      }
+    } catch {}
+    setFavEnvoi('')
+  }
 
   async function postuler() {
     setPostulation(true)
@@ -269,6 +294,7 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
     setEPostal(shift.locationPostal || '')
     setECity(shift.locationCity || '')
     setEUrgent(shift.isUrgent)
+    setEToeslag(shift.spoedtoeslagPct || 0)
     setModif(true)
   }
 
@@ -294,6 +320,7 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
         locationPostal: ePostal,
         locationCity: eCity,
         isUrgent: eUrgent,
+        spoedtoeslagPct: eToeslag,
       }),
     })
     if (!res.ok) {
@@ -459,6 +486,20 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
               <input type="checkbox" checked={eUrgent} onChange={(e) => setEUrgent(e.target.checked)} style={{ width: 18, height: 18 }} />
               <Ico n="flame" s={15} c="#b91c1c" /> {t('field_urgent')}
             </label>
+            {eUrgent && (
+              <div style={{ marginBottom: 20 }}>
+                <label style={etiquette}>{t('toeslag_label')}</label>
+                <select value={eToeslag} onChange={(e) => setEToeslag(Number(e.target.value))} style={champ}>
+                  <option value={0}>{t('toeslag_none')}</option>
+                  <option value={10}>+10%</option>
+                  <option value={15}>+15%</option>
+                  <option value={20}>+20%</option>
+                </select>
+                <div style={{ fontSize: 12, color: 'hsl(var(--muted-foreground))', marginTop: 5, fontWeight: 600 }}>
+                  {t('toeslag_hint')}
+                </div>
+              </div>
+            )}
             {msgModif && (
               <p style={{ color: '#b91c1c', fontSize: 13.5, marginTop: 0, marginBottom: 14, background: '#fef2f2', padding: '10px 14px', borderRadius: 10, fontWeight: 600 }}>{msgModif}</p>
             )}
@@ -504,7 +545,7 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
                   )}
                   {shift.isUrgent && (
                     <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, background: '#fee2e2', color: '#b91c1c', fontSize: 12, fontWeight: 800, padding: '5px 13px', borderRadius: 999 }}>
-                      <Ico n="flame" s={12} /> {t('urgent')}
+                      <Ico n="flame" s={12} /> {t('urgent')}{shift.spoedtoeslagPct > 0 ? ` +${shift.spoedtoeslagPct}%` : ''}
                     </span>
                   )}
                 </div>
@@ -870,13 +911,28 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
         <h2 className="cs-fade cs-d2" style={{ fontSize: 22, fontWeight: 800, marginBottom: 18, letterSpacing: -0.6 }}>
           {t('applicants')} ({shift.applications.length})
         </h2>
+        {shift.applications.some((a) => favoris.includes(a.kokId)) && (
+          <button
+            onClick={() => setSeulementFav(!seulementFav)}
+            className="cs-btn"
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: 6, marginBottom: 16,
+              background: seulementFav ? '#23281f' : '#fff',
+              color: seulementFav ? '#f3ead7' : 'hsl(var(--foreground))',
+              border: '1.5px solid #dfe4d4', borderRadius: 999, padding: '8px 18px',
+              fontWeight: 700, fontSize: 13, cursor: 'pointer', fontFamily: FONT,
+            }}
+          >
+            <IcoStar s={14} plein /> {t('fav_only')} ({shift.applications.filter((a) => favoris.includes(a.kokId)).length})
+          </button>
+        )}
         {shift.applications.length === 0 ? (
           <div className="cs-card" style={{ ...carte, textAlign: 'center', padding: 48 }}>
             <p style={{ color: 'hsl(var(--muted-foreground))', fontWeight: 600 }}>{t('no_applicants')}</p>
           </div>
         ) : (
           <div style={{ display: 'grid', gap: 16 }}>
-            {shift.applications.map((app) => {
+            {(seulementFav ? shift.applications.filter((a) => favoris.includes(a.kokId)) : shift.applications).map((app) => {
               const p = app.kok.kokProfile
               // Moyenne réelle du profil (mise à jour à chaque avis), pas la liste non chargée
               const nbAvis = p?.reviewCount || 0
@@ -888,6 +944,17 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
                     <div>
                       <div style={{ fontSize: 18, fontWeight: 800, letterSpacing: -0.4 }}>
                         {p?.firstName} {p?.lastName}
+                        {(role === 'HORECA' || role === 'ADMIN') && (
+                          <button
+                            onClick={() => toggleFavori(app.kokId)}
+                            disabled={favEnvoi === app.kokId}
+                            title={favoris.includes(app.kokId) ? t('fav_remove') : t('fav_add')}
+                            aria-label={favoris.includes(app.kokId) ? t('fav_remove') : t('fav_add')}
+                            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '0 0 0 8px', verticalAlign: 'middle', opacity: favEnvoi === app.kokId ? 0.5 : 1 }}
+                          >
+                            <IcoStar s={18} plein={favoris.includes(app.kokId)} />
+                          </button>
+                        )}
                         {p?.dateOfBirth && (
                           <span style={{ color: 'hsl(var(--muted-foreground))', fontWeight: 600, fontSize: 14 }}> · {age(p.dateOfBirth)} {t('years_old')}</span>
                         )}
@@ -905,7 +972,7 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
                     </div>
                     {(role === 'HORECA' || role === 'ADMIN') && shift.status === 'OPEN' && app.status === 'PENDING' && (
                       <button
-                        onClick={() => choisir(app.id, (app as any).kokId || '')}
+                        onClick={() => choisir(app.id, app.kokId)}
                         disabled={choix === app.id}
                         className="cs-btn"
                         style={{

@@ -73,6 +73,7 @@ export default function NewShiftPage() {
   const [locationPostal, setLocationPostal] = useState('')
   const [locationCity, setLocationCity] = useState('')
   const [isUrgent, setIsUrgent] = useState(false)
+  const [toeslag, setToeslag] = useState(0)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [autorise, setAutorise] = useState(false)
@@ -112,6 +113,7 @@ export default function NewShiftPage() {
           locationPostal,
           locationCity,
           isUrgent,
+          spoedtoeslagPct: toeslag,
         }),
       })
       if (!res.ok) {
@@ -223,6 +225,20 @@ export default function NewShiftPage() {
             <input type="checkbox" checked={isUrgent} onChange={(e) => setIsUrgent(e.target.checked)} style={{ width: 18, height: 18 }} />
             <Ico n="flame" s={15} c="#b91c1c" /> {t('field_urgent')}
           </label>
+          {isUrgent && (
+            <div style={{ marginBottom: 20 }}>
+              <label style={etiquette}>{t('toeslag_label')}</label>
+              <select value={toeslag} onChange={(e) => setToeslag(Number(e.target.value))} style={champ}>
+                <option value={0}>{t('toeslag_none')}</option>
+                <option value={10}>+10%</option>
+                <option value={15}>+15%</option>
+                <option value={20}>+20%</option>
+              </select>
+              <div style={{ fontSize: 12, color: 'hsl(var(--muted-foreground))', marginTop: 5, fontWeight: 600 }}>
+                {t('toeslag_hint')}
+              </div>
+            </div>
+          )}
 
           {error && (
             <p style={{ color: '#b91c1c', fontSize: 13.5, marginBottom: 16, background: '#fef2f2', padding: '10px 14px', borderRadius: 10, fontWeight: 600 }}>

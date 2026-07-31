@@ -22,6 +22,7 @@ export type ShiftData = {
   hourlyRate: number
   totalAmount?: number | null
   isUrgent: boolean
+  spoedtoeslagPct?: number
   status: string
   chosenKokId?: string | null
   invoice?: { status: string } | null
@@ -121,7 +122,7 @@ export default function ShiftCard({
               background: '#fee2e2', color: '#b91c1c', fontSize: 11.5, fontWeight: 800,
               padding: '4px 11px', borderRadius: 999, textTransform: 'uppercase', letterSpacing: 0.5,
             }}>
-              <Ico n="flame" s={12} /> {t('urgent')}
+              <Ico n="flame" s={12} /> {t('urgent')}{(shift.spoedtoeslagPct ?? 0) > 0 ? ` +${shift.spoedtoeslagPct}%` : ''}
             </span>
           )}
         </div>

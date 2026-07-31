@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import {
   CHEF_VAT_RATE,
+  afrondenHalfUp,
   berekenUrenMinuten, berekenBedragen, minutenVanTijd,
 } from '@/lib/factuur'
 import Stripe from 'stripe'
@@ -81,26 +82,37 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     const b = berekenBedragen(urenMinuten, shift.hourlyRate) // tarif déjà en centimes
     const heures = urenMinuten / 60
 
+    // ===== Spoedtoeslag : % du tarif de base, reversée à 100% au chef =====
+    // La commission plateforme reste calculée sur le tarif de base (b.commissieCenten).
+    const pct = shift.spoedtoeslagPct ?? 0
+    const toeslagExcl = afrondenHalfUp((b.exclCenten * pct) / 100)
+    const toeslagBtw = afrondenHalfUp((toeslagExcl * CHEF_VAT_RATE) / 100)
+    const exclCenten = b.exclCenten + toeslagExcl
+    const btwCenten = b.btwCenten + toeslagBtw
+    const inclCenten = exclCenten + btwCenten
+    const feeCenten = b.commissieCenten // commission sur le tarif de base uniquement
+    const payoutCenten = inclCenten - feeCenten
+
     // ===== Facture (une par shift) — le numéro est attribué au paiement (webhook) =====
     const invoice = await prisma.invoice.upsert({
       where: { shiftId: shift.id },
       create: {
         shiftId: shift.id,
         horecaId: session.user.id,
-        amountExclVat: b.exclCenten,
-        vatAmount: b.btwCenten,
-        amountInclVat: b.inclCenten,
-        platformFee: b.commissieCenten,
-        kokPayout: b.payoutCenten,
+        amountExclVat: exclCenten,
+        vatAmount: btwCenten,
+        amountInclVat: inclCenten,
+        platformFee: feeCenten,
+        kokPayout: payoutCenten,
         status: 'PENDING',
         paymentProvider: 'stripe',
       },
       update: {
-        amountExclVat: b.exclCenten,
-        vatAmount: b.btwCenten,
-        amountInclVat: b.inclCenten,
-        platformFee: b.commissieCenten,
-        kokPayout: b.payoutCenten,
+        amountExclVat: exclCenten,
+        vatAmount: btwCenten,
+        amountInclVat: inclCenten,
+        platformFee: feeCenten,
+        kokPayout: payoutCenten,
         paymentProvider: 'stripe',
       },
     })
@@ -126,10 +138,10 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
             quantity: 1,
             price_data: {
               currency: 'eur',
-              unit_amount: b.inclCenten,
+              unit_amount: inclCenten,
               product_data: {
                 name: `ChefShift: ${shift.title}`,
-                description: `${heures.toFixed(1)}u × €${(shift.hourlyRate / 100).toFixed(2)} + ${CHEF_VAT_RATE}% btw${finReelle ? ' (werkelijke eindtijd)' : ''}`,
+                description: `${heures.toFixed(1)}u × €${(shift.hourlyRate / 100).toFixed(2)} + ${CHEF_VAT_RATE}% btw${finReelle ? ' (werkelijke eindtijd)' : ''}${pct > 0 ? ` + spoedtoeslag ${pct}%` : ''}`,
               },
             },
           },

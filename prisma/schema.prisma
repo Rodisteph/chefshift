@@ -220,6 +220,9 @@ model Shift {
 
   status          ShiftStatus @default(OPEN)
   isUrgent        Boolean     @default(false) @map("is_urgent")
+  // Supplément d'urgence en % du tarif de base (0, 10, 15 ou 20).
+  // Payé par l'horeca, reversé à 100% au chef ; la commission reste sur le tarif de base.
+  spoedtoeslagPct Int         @default(0) @map("spoedtoeslag_pct")
 
   chosenKokId     String?     @map("chosen_kok_id")
   chosenKok       User?       @relation("KokShifts", fields: [chosenKokId], references: [id])
@@ -446,6 +449,17 @@ model KokReminder {
 
   @@id([shiftId, kind])
   @@map("kok_reminder")
+}
+
+// Chefs favoris d'un compte horeca (marque-page, sans relation Prisma
+// volontairement : même approche que KokReminder pour rester non intrusif)
+model FavoriteKok {
+  horecaId  String   @map("horeca_id")
+  kokId     String   @map("kok_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@id([horecaId, kokId])
+  @@map("favorite_kok")
 }
 
 model UserSource {

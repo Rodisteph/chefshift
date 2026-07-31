@@ -49,7 +49,17 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
       }
     } catch {}
 
-    return NextResponse.json({ shift: { ...shift, eind } })
+    // Chefs favoris de l'horeca connectée (étoiles sur les candidatures)
+    let favoriKokIds: string[] = []
+    if (session.user.role === 'HORECA') {
+      const favs = await prisma.favoriteKok.findMany({
+        where: { horecaId: session.user.id },
+        select: { kokId: true },
+      })
+      favoriKokIds = favs.map((f) => f.kokId)
+    }
+
+    return NextResponse.json({ shift: { ...shift, eind }, favoriKokIds })
   } catch (error) {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
@@ -72,7 +82,10 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
     }
 
     const body = await req.json()
-    const { title, function: func, date, startTime, endTime, hourlyRate, locationStreet, locationPostal, locationCity, isUrgent } = body
+    const { title, function: func, date, startTime, endTime, hourlyRate, locationStreet, locationPostal, locationCity, isUrgent, spoedtoeslagPct } = body
+
+    // Supplément d'urgence : uniquement 0, 10, 15 ou 20 (% du tarif de base)
+    const pct = [0, 10, 15, 20].includes(Number(spoedtoeslagPct)) ? Number(spoedtoeslagPct) : 0
 
     const rateEuro = Number(hourlyRate)
     if (!(rateEuro >= MIN_HOURLY_RATE)) {
@@ -101,7 +114,8 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
         locationCity,
         hourlyRate: rate,
         totalAmount,
-        isUrgent: !!isUrgent,
+        isUrgent: !!isUrgent || pct > 0,
+        spoedtoeslagPct: pct,
       },
     })
 
