@@ -8,13 +8,14 @@ import { IcoTile } from '@/components/Icons'
 
 const FONT = '"Sora","Inter","Helvetica Neue",Arial,sans-serif'
 
-type Filtre = 'alle' | 'open' | 'bevestigd' | 'afgerond' | 'geannuleerd'
+type Filtre = 'alle' | 'open' | 'bevestigd' | 'te_betalen' | 'betaald' | 'geannuleerd'
 
-// Groupe de statut d'une shift, pour les chips de filtre
+// Groupe de statut d'une shift, pour les chips de filtre (aligné sur les badges)
 function groupe(s: ShiftData): Exclude<Filtre, 'alle'> {
   if (s.status === 'CANCELLED') return 'geannuleerd'
-  if (s.status === 'COMPLETED' || s.invoice?.status === 'PAID' || (s.eind && s.eind.confirmedAt)) return 'afgerond'
+  if (s.invoice?.status === 'PAID' || s.status === 'COMPLETED') return 'betaald'
   if (s.status === 'OPEN') return 'open'
+  if (s.eind && s.eind.confirmedAt) return 'te_betalen'
   return 'bevestigd'
 }
 
@@ -63,7 +64,8 @@ export default function ShiftsPage() {
     { f: 'alle', cle: 'filt_alle' },
     { f: 'open', cle: 'filt_open' },
     { f: 'bevestigd', cle: 'filt_bevestigd' },
-    { f: 'afgerond', cle: 'filt_afgerond' },
+    { f: 'te_betalen', cle: estKok ? 'filt_wacht_betaling' : 'filt_te_betalen' },
+    { f: 'betaald', cle: 'filt_betaald' },
     { f: 'geannuleerd', cle: 'filt_geannuleerd' },
   ]
   const compte = (f: Filtre) => (f === 'alle' ? shifts.length : shifts.filter((s) => groupe(s) === f).length)

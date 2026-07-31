@@ -94,6 +94,14 @@ export default function DashboardPage() {
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
 
   // ===== Cartes de stats selon le rôle =====
+  // Horeca : "À payer" = shifts avec eindtijd confirmée, pas encore payées (actionnable)
+  const aBetalen = estKok
+    ? []
+    : passes.filter((s) => s.chosenKokId && s.eind && s.eind.confirmedAt && s.status !== 'CANCELLED' && s.invoice?.status !== 'PAID')
+  // Dépense du mois en cours = dernière valeur de la série mensuelle
+  const serieBrute = stats?.serie || []
+  const depenseMois = serieBrute.length > 0 ? serieBrute[serieBrute.length - 1].value : 0
+
   const statsCartes = estKok
     ? [
         { c: String(aVenir.length), l: t('stat_kok_1'), icone: 'brief', lien: '/shifts?vue=avenir' },
@@ -103,8 +111,8 @@ export default function DashboardPage() {
       ]
     : [
         { c: String(shifts.length), l: t('stat_hor_1'), icone: 'brief', lien: '/shifts' },
-        { c: String(stats?.nbCandidatures ?? 0), l: t('stat_hor_2'), icone: 'users', lien: '/shifts?vue=candidatures' },
-        { c: String(stats?.nbEmbauches ?? 0), l: t('stat_hor_3'), icone: 'chef', lien: '/shifts?vue=acceptees' },
+        { c: String(aBetalen.length), l: t('stat_te_betalen'), icone: 'card', lien: '/shifts?passe=1' },
+        { c: `€${Math.round(depenseMois)}`, l: t('stat_spend_month'), icone: 'cal', lien: '' },
         { c: `€${Math.round(stats?.totalDepense ?? 0)}`, l: t('stat_spend_total'), icone: 'bank', lien: '' },
       ]
 
