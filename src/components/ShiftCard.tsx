@@ -223,7 +223,15 @@ export default function ShiftCard({
         )}
         {detailHref && (
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: 5, color: '#5f7052', fontWeight: 700, fontSize: 13 }}>
-            {showApply ? t('details') : shift.status === 'CONFIRMED' ? t('status_confirmed') : t('choose')} <Ico n="arrow" s={13} />
+            {showApply
+              ? t('details')
+              /* Rien a choisir sur une shift expiree ou annulee : le libelle
+                 "Kiezen" promettrait une action qui n'existe plus. */
+              : shift.status === 'EXPIRED' || shift.status === 'CANCELLED'
+              ? t('details')
+              : shift.status === 'CONFIRMED'
+              ? t('status_confirmed')
+              : t('choose')} <Ico n="arrow" s={13} />
           </div>
         )}
       </div>
