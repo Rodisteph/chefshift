@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useT, LangToggle, afficherPoste, afficherSpecialite } from '@/lib/i18n'
 import AnimStyles from '@/components/AnimStyles'
 import { Ico, IcoStar } from '@/components/Icons'
+import { shiftWhatsAppTekst, whatsappDeelUrl } from '@/lib/whatsapp'
 import RateStepper from '@/components/RateStepper'
 import { MIN_HOURLY_RATE } from '@/lib/constants'
 import { heureHHMM, versChamp, minutesUTC } from '@/lib/time'
@@ -712,6 +713,38 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
                 {role === 'KOK' && shift.status === 'OPEN' && fini && (
                   <div style={{ marginTop: 10, color: 'hsl(var(--muted-foreground))', fontWeight: 700, fontSize: 13.5 }}>
                     {t('shift_expired')}
+                  </div>
+                )}
+                {/* Partage WhatsApp : ouvre l'app avec le message pre-rempli.
+                    Le choix du groupe reste manuel — aucune API non officielle,
+                    donc aucun risque de bannissement du numero. */}
+                {(role === 'HORECA' || role === 'ADMIN') && shift.status === 'OPEN' && !fini && (
+                  <div style={{ marginTop: 10 }}>
+                    <a
+                      href={whatsappDeelUrl(shiftWhatsAppTekst({
+                        shiftId: shift.id,
+                        titel: shift.title,
+                        functie: shift.function,
+                        datum: new Date(shift.date).toISOString().slice(0, 10),
+                        start,
+                        eind: end,
+                        tarief: Math.round(shift.hourlyRate / 100),
+                        stad: shift.locationCity,
+                        bedrijf: shift.horeca.horecaProfile?.companyName,
+                        urgent: shift.isUrgent,
+                      }, typeof window !== 'undefined' ? window.location.origin : 'https://www.chefshift.nl'))}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="cs-btn"
+                      style={{
+                        display: 'inline-flex', alignItems: 'center', gap: 8,
+                        background: '#25D366', color: '#fff', border: 'none', borderRadius: 999,
+                        padding: '10px 20px', fontWeight: 700, fontSize: 13, textDecoration: 'none',
+                        fontFamily: FONT,
+                      }}
+                    >
+                      {t('share_whatsapp')}
+                    </a>
                   </div>
                 )}
                 {peutModifier && (

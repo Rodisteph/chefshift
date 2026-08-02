@@ -1,3 +1,4 @@
+import { shiftWhatsAppTekst, whatsappDeelUrl } from '@/lib/whatsapp'
 import { Resend } from 'resend'
 
 // Expéditeur : noreply@chefshift.nl (domaine vérifié dans Resend)
@@ -404,26 +405,9 @@ export async function emailShiftVoorWhatsApp(s: {
   urgent?: boolean
 }) {
   const link = `${baseUrl()}/shifts/${s.shiftId}`
-  let datumMooi = s.datum
-  try {
-    datumMooi = new Date(`${s.datum}T00:00:00Z`).toLocaleDateString('nl-NL', {
-      weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC',
-    })
-  } catch {}
-
-  const regels = [
-    s.urgent ? '🔥 SPOEDSHIFT op ChefShift!' : '🔪 Nieuwe shift op ChefShift!',
-    '',
-    `👨‍🍳 ${s.functie || s.titel}${s.bedrijf ? ` bij ${s.bedrijf}` : ''}`,
-    s.stad ? `📍 ${s.stad}` : '',
-    `📅 ${datumMooi}`,
-    `🕐 ${s.start} - ${s.eind}`,
-    `💶 €${s.tarief}/u`,
-    '',
-    `Reageer direct: ${link}`,
-  ].filter((l) => l !== '')
-
-  const bericht = regels.join('\n')
+  // Meme texte que le bouton "Partager" de la page shift
+  const bericht = shiftWhatsAppTekst(s, baseUrl())
+  const deelUrl = whatsappDeelUrl(bericht)
   const berichtHtml = esc(bericht)
     .split('\n')
     .map((l) => `<p style="margin:0 0 4px">${l}</p>`)
@@ -437,7 +421,8 @@ export async function emailShiftVoorWhatsApp(s: {
       Copie le message ci-dessous et colle-le dans le groupe WhatsApp des chefs. Le lien renvoie directement vers la shift.
     </p>
     <div style="background:#f6f7f2;border:1.5px solid #dfe4d4;border-radius:12px;padding:16px 18px;font-size:14.5px;line-height:1.55;color:#23281f">${berichtHtml}</div>
-    <a href="${link}" style="display:inline-block;margin-top:22px;background:#46553c;color:#ffffff;text-decoration:none;padding:12px 26px;border-radius:999px;font-weight:700;font-size:14px">Bekijk de shift</a>
+    <a href="${deelUrl}" style="display:inline-block;margin-top:22px;background:#25D366;color:#ffffff;text-decoration:none;padding:12px 26px;border-radius:999px;font-weight:700;font-size:14px">Openen in WhatsApp</a>
+    <a href="${link}" style="display:inline-block;margin-top:22px;margin-left:10px;color:#46553c;text-decoration:none;padding:12px 20px;border:1.5px solid #dfe4d4;border-radius:999px;font-weight:700;font-size:14px">Bekijk de shift</a>
   </div>
   <p style="font-size:12px;color:#9aa39b;text-align:center;margin-top:16px;line-height:1.6">
     ChefShift · Alleen zichtbaar voor jou als beheerder
