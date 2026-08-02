@@ -289,7 +289,7 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
       await charger()
     } else {
       const d = await res.json().catch(() => ({}))
-      setBetwistMsg(d.error || t('form_error'))
+      setBetwistMsg(d.error || 'Er ging iets mis')
     }
     setBetwistEnvoi(false)
   }
