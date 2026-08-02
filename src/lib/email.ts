@@ -265,6 +265,56 @@ export async function emailShiftVerlopenKok(kokEmail: string, shiftTitre: string
   )
 }
 
+// Litige sur l'heure de fin : l'horeca propose une autre heure
+
+export async function emailEindtijdBetwist(kokEmail: string, shiftId: string, shiftTitre: string, jouwTijd: string, voorstel: string, reden: string) {
+  return envoyerEmail(
+    kokEmail,
+    `Andere eindtijd voorgesteld \u00b7 ${shiftTitre}`,
+    gabarit(
+      'De zaak stelt een andere eindtijd voor',
+      `Voor <strong>${shiftTitre}</strong> gaf je ${jouwTijd} door. De zaak stelt ${voorstel} voor.<br><br><em>Reden:</em> ${reden}<br><br>Accepteer je dit, dan wordt de factuur op die tijd gemaakt. Weiger je, dan bekijkt ChefShift het dossier. Reageer binnen 48 uur \u2014 daarna geldt jouw eigen tijd.`,
+      'Bekijken en reageren',
+      'The venue proposes a different end time',
+      `For <strong>${shiftTitre}</strong> you reported ${jouwTijd}. The venue proposes ${voorstel}.<br><br><em>Reason:</em> ${reden}<br><br>If you accept, the invoice uses that time. If you refuse, ChefShift reviews the case. Respond within 48 hours \u2014 after that your own time stands.`,
+      'View and respond',
+      `${baseUrl()}/shifts/${shiftId}`
+    )
+  )
+}
+
+export async function emailEindtijdBetwistGeweigerd(horecaEmail: string, shiftId: string, shiftTitre: string, kokTijd: string) {
+  return envoyerEmail(
+    horecaEmail,
+    `Voorstel geweigerd \u00b7 ${shiftTitre}`,
+    gabarit(
+      'De kok weigerde je voorstel',
+      `De kok houdt vast aan ${kokTijd} voor <strong>${shiftTitre}</strong>. ChefShift bekijkt het dossier en neemt contact op. Er wordt niets gefactureerd zolang dit loopt.`,
+      'Shift bekijken',
+      'The chef refused your proposal',
+      `The chef stands by ${kokTijd} for <strong>${shiftTitre}</strong>. ChefShift is reviewing the case and will be in touch. Nothing is invoiced while this is open.`,
+      'View shift',
+      `${baseUrl()}/shifts/${shiftId}`
+    )
+  )
+}
+
+export async function emailBetwistingVerlopen(horecaEmail: string, shiftId: string, shiftTitre: string, kokTijd: string) {
+  return envoyerEmail(
+    horecaEmail,
+    `Eindtijd automatisch bevestigd \u00b7 ${shiftTitre}`,
+    gabarit(
+      'Eindtijd automatisch bevestigd',
+      `Je voorstel voor <strong>${shiftTitre}</strong> bleef 48 uur onbeantwoord. Volgens de voorwaarden geldt daarom de tijd van de kok: ${kokTijd}. Je kunt de shift nu betalen.`,
+      'Naar de shift',
+      'End time automatically confirmed',
+      `Your proposal for <strong>${shiftTitre}</strong> went unanswered for 48 hours. Under the terms, the chef\u2019s time therefore applies: ${kokTijd}. You can now pay the shift.`,
+      'Go to shift',
+      `${baseUrl()}/shifts/${shiftId}`
+    )
+  )
+}
+
 // 8. Rappel : l'horeca n'a pas encore confirmé l'heure de fin
 export async function emailRappelEindtijdHoreca(horecaEmail: string, shiftId: string, shiftTitre: string) {
   return envoyerEmail(

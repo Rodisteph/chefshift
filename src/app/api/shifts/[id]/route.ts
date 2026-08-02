@@ -41,11 +41,26 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
     // Heure de fin déclarée / confirmée (table créée à la première déclaration)
     let eind = null
     try {
-      const lignes: { reported_end: Date; confirmed_at: Date | null; break_minuten: number | null }[] = await prisma.$queryRaw`
-        SELECT reported_end, confirmed_at, break_minuten FROM shift_end WHERE shift_id = ${params.id} LIMIT 1
+      const lignes: {
+        reported_end: Date; confirmed_at: Date | null; break_minuten: number | null
+        disputed_end: Date | null; disputed_break: number | null
+        dispute_reason: string | null; disputed_at: Date | null; refused_at: Date | null
+      }[] = await prisma.$queryRaw`
+        SELECT reported_end, confirmed_at, break_minuten,
+               disputed_end, disputed_break, dispute_reason, disputed_at, refused_at
+        FROM shift_end WHERE shift_id = ${params.id} LIMIT 1
       `
       if (lignes.length > 0) {
-        eind = { reportedEnd: lignes[0].reported_end, confirmedAt: lignes[0].confirmed_at, breakMinuten: lignes[0].break_minuten }
+        eind = {
+          reportedEnd: lignes[0].reported_end,
+          confirmedAt: lignes[0].confirmed_at,
+          breakMinuten: lignes[0].break_minuten,
+          disputedEnd: lignes[0].disputed_end,
+          disputedBreak: lignes[0].disputed_break,
+          disputeReason: lignes[0].dispute_reason,
+          disputedAt: lignes[0].disputed_at,
+          refusedAt: lignes[0].refused_at,
+        }
       }
     } catch {}
 

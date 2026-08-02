@@ -57,6 +57,11 @@ type Eind = {
   reportedEnd: string
   confirmedAt: string | null
   breakMinuten: number | null
+  disputedEnd?: string | null
+  disputedBreak?: number | null
+  disputeReason?: string | null
+  disputedAt?: string | null
+  refusedAt?: string | null
 }
 
 type ShiftDetail = {
@@ -141,6 +146,12 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
   const [pauzeMin, setPauzeMin] = useState('30')
   const [eindEnvoi, setEindEnvoi] = useState(false)
   const [bevestigEnvoi, setBevestigEnvoi] = useState(false)
+  // Contestation de l'heure de fin
+  const [betwistOuvert, setBetwistOuvert] = useState(false)
+  const [betwistTijd, setBetwistTijd] = useState('')
+  const [betwistReden, setBetwistReden] = useState('')
+  const [betwistEnvoi, setBetwistEnvoi] = useState(false)
+  const [betwistMsg, setBetwistMsg] = useState('')
   const [note, setNote] = useState(0)
   const [avis, setAvis] = useState('')
   const [avisEnvoi, setAvisEnvoi] = useState(false)
@@ -261,6 +272,37 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
     })
     if (res.ok) await charger()
     setEindEnvoi(false)
+  }
+
+  async function betwistEind() {
+    if (!betwistTijd || betwistReden.trim().length < 10) return
+    setBetwistEnvoi(true)
+    setBetwistMsg('')
+    const res = await fetch(`/api/shifts/${id}/eindtijd/betwist`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ endTime: betwistTijd, reason: betwistReden.trim() }),
+    })
+    if (res.ok) {
+      setBetwistOuvert(false)
+      setBetwistReden('')
+      await charger()
+    } else {
+      const d = await res.json().catch(() => ({}))
+      setBetwistMsg(d.error || t('form_error'))
+    }
+    setBetwistEnvoi(false)
+  }
+
+  async function reageerBetwisting(accepteer: boolean) {
+    setBetwistEnvoi(true)
+    const res = await fetch(`/api/shifts/${id}/eindtijd/betwist`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ accepteer }),
+    })
+    if (res.ok) await charger()
+    setBetwistEnvoi(false)
   }
 
   async function bevestigEind() {
@@ -775,7 +817,62 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
                 )}
               </>
             ) : role === 'KOK' ? (
-              shift.eind ? (
+              // Contre-proposition en attente : le chef doit trancher
+              shift.eind?.disputedEnd && !shift.eind.refusedAt ? (
+                <div>
+                  <div style={{ background: '#fff7ed', border: '1px solid #fed7aa', borderRadius: 14, padding: 16, marginBottom: 16 }}>
+                    <div style={{ fontWeight: 800, fontSize: 14.5, color: '#9a3412', marginBottom: 8 }}>
+                      {t('disp_kok_title')}
+                    </div>
+                    <div style={{ display: 'flex', gap: 22, flexWrap: 'wrap', marginBottom: 12 }}>
+                      <div>
+                        <div style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: 1.2, color: '#a8a29e', fontWeight: 800 }}>{t('disp_yours')}</div>
+                        <div style={{ fontSize: 19, fontWeight: 800, color: '#4c5e42' }}>{eindGemeld}</div>
+                      </div>
+                      <div>
+                        <div style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: 1.2, color: '#a8a29e', fontWeight: 800 }}>{t('disp_proposed')}</div>
+                        <div style={{ fontSize: 19, fontWeight: 800, color: '#c2410c' }}>{heureHHMM(shift.eind.disputedEnd, locale)}</div>
+                      </div>
+                    </div>
+                    <div style={{ fontSize: 13.5, color: '#57534e', lineHeight: 1.6 }}>
+                      <strong>{t('disp_reason')} :</strong> {shift.eind.disputeReason}
+                    </div>
+                    <p style={{ fontSize: 12.5, color: '#a8a29e', marginTop: 10, marginBottom: 0, fontWeight: 600 }}>
+                      {t('disp_48h')}
+                    </p>
+                  </div>
+                  <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                    <button
+                      onClick={() => reageerBetwisting(true)}
+                      disabled={betwistEnvoi}
+                      className="cs-btn"
+                      style={{
+                        background: 'linear-gradient(135deg,#647a55,#46553c)', color: '#fff', border: 'none',
+                        borderRadius: 12, padding: '12px 24px', fontWeight: 700, fontSize: 14, fontFamily: FONT,
+                        cursor: betwistEnvoi ? 'wait' : 'pointer', opacity: betwistEnvoi ? 0.7 : 1,
+                      }}
+                    >
+                      {t('disp_accept')}
+                    </button>
+                    <button
+                      onClick={() => reageerBetwisting(false)}
+                      disabled={betwistEnvoi}
+                      className="cs-btn"
+                      style={{
+                        background: 'none', border: '1.5px solid #dfe4d4', borderRadius: 12, padding: '12px 24px',
+                        fontWeight: 700, fontSize: 14, color: 'hsl(var(--foreground))', fontFamily: FONT,
+                        cursor: betwistEnvoi ? 'wait' : 'pointer',
+                      }}
+                    >
+                      {t('disp_refuse')}
+                    </button>
+                  </div>
+                </div>
+              ) : shift.eind?.refusedAt ? (
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: '#fef3c7', color: '#92400e', fontSize: 13.5, fontWeight: 800, padding: '8px 16px', borderRadius: 999 }}>
+                  <Ico n="clock" s={14} /> {t('disp_in_review')}
+                </span>
+              ) : shift.eind ? (
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
                   <span style={{ display: 'inline-flex', alignItems: 'center', gap: 7, ...badgeSauge, fontSize: 13.5, padding: '8px 16px' }}>
                     <Ico n="clock" s={14} /> {t('end_wait')} · {eindGemeld} · {pauzeTekst}
@@ -861,19 +958,93 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
                     <input type="time" value={eindInvoer} onChange={(e) => setEindInvoer(e.target.value)} required style={champ} />
                   </div>
                 </div>
-                <button
-                  onClick={bevestigEind}
-                  disabled={bevestigEnvoi || !eindInvoer}
-                  className="cs-btn"
-                  style={{
-                    background: 'linear-gradient(135deg,#647a55,#46553c)', color: '#fff', border: 'none',
-                    borderRadius: 12, padding: '12px 24px', fontWeight: 700, fontSize: 14,
-                    cursor: bevestigEnvoi || !eindInvoer ? 'not-allowed' : 'pointer', opacity: bevestigEnvoi ? 0.7 : 1, fontFamily: FONT,
-                    boxShadow: '0 8px 18px -8px rgba(70,85,60,.5)',
-                  }}
-                >
-                  {bevestigEnvoi ? t('form_loading') : t('end_confirm_btn')}
-                </button>
+                <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
+                  <button
+                    onClick={bevestigEind}
+                    disabled={bevestigEnvoi || !eindInvoer}
+                    className="cs-btn"
+                    style={{
+                      background: 'linear-gradient(135deg,#647a55,#46553c)', color: '#fff', border: 'none',
+                      borderRadius: 12, padding: '12px 24px', fontWeight: 700, fontSize: 14,
+                      cursor: bevestigEnvoi || !eindInvoer ? 'not-allowed' : 'pointer', opacity: bevestigEnvoi ? 0.7 : 1, fontFamily: FONT,
+                      boxShadow: '0 8px 18px -8px rgba(70,85,60,.5)',
+                    }}
+                  >
+                    {bevestigEnvoi ? t('form_loading') : t('end_confirm_btn')}
+                  </button>
+                  {/* Contester : seulement si le chef a declare une heure.
+                      Sans declaration, le restaurant saisit directement. */}
+                  {shift.eind && !shift.eind.disputedEnd && (
+                    <button
+                      onClick={() => { setBetwistOuvert(!betwistOuvert); setBetwistTijd(eindInvoer) }}
+                      className="cs-btn"
+                      style={{
+                        background: 'none', border: '1.5px solid #dfe4d4', borderRadius: 12, padding: '12px 22px',
+                        fontWeight: 700, fontSize: 13.5, color: 'hsl(var(--foreground))', fontFamily: FONT, cursor: 'pointer',
+                      }}
+                    >
+                      {t('disp_open')}
+                    </button>
+                  )}
+                </div>
+
+                {/* Contre-proposition deja envoyee : en attente du chef */}
+                {shift.eind?.disputedEnd && !shift.eind.refusedAt && (
+                  <p style={{ marginTop: 14, marginBottom: 0, fontSize: 13.5, fontWeight: 700, color: '#92400e' }}>
+                    {t('disp_sent')} · {heureHHMM(shift.eind.disputedEnd, locale)}
+                  </p>
+                )}
+                {shift.eind?.refusedAt && (
+                  <p style={{ marginTop: 14, marginBottom: 0, fontSize: 13.5, fontWeight: 700, color: '#92400e' }}>
+                    {t('disp_in_review')}
+                  </p>
+                )}
+
+                {/* Formulaire de contestation */}
+                {betwistOuvert && (
+                  <div style={{ marginTop: 18, borderTop: '1px solid hsl(var(--border))', paddingTop: 18 }}>
+                    <div style={{ fontWeight: 800, fontSize: 14.5, marginBottom: 4 }}>{t('disp_title')}</div>
+                    <p style={{ color: 'hsl(var(--muted-foreground))', fontSize: 13, fontWeight: 600, marginTop: 0, marginBottom: 14 }}>
+                      {t('disp_desc')}
+                    </p>
+                    <div style={{ display: 'flex', gap: 12, alignItems: 'flex-end', flexWrap: 'wrap', marginBottom: 12 }}>
+                      <div style={{ minWidth: 130 }}>
+                        <label style={etiquette}>{t('disp_proposed')}</label>
+                        <input type="time" value={betwistTijd} onChange={(e) => setBetwistTijd(e.target.value)} style={champ} />
+                      </div>
+                    </div>
+                    <label style={etiquette}>{t('disp_reason')}</label>
+                    <textarea
+                      value={betwistReden}
+                      onChange={(e) => setBetwistReden(e.target.value)}
+                      placeholder={t('disp_reason_ph')}
+                      rows={3}
+                      maxLength={500}
+                      style={{ ...champ, resize: 'vertical' }}
+                    />
+                    <div style={{ fontSize: 12, color: 'hsl(var(--muted-foreground))', fontWeight: 600, marginTop: 4 }}>
+                      {betwistReden.trim().length} / 10 {t('disp_min_chars')}
+                    </div>
+                    {betwistMsg && (
+                      <div style={{ color: '#b91c1c', fontSize: 13, fontWeight: 700, marginTop: 8 }}>{betwistMsg}</div>
+                    )}
+                    <div style={{ marginTop: 14 }}>
+                      <button
+                        onClick={betwistEind}
+                        disabled={betwistEnvoi || !betwistTijd || betwistReden.trim().length < 10}
+                        className="cs-btn"
+                        style={{
+                          background: '#c2410c', color: '#fff', border: 'none', borderRadius: 12,
+                          padding: '11px 24px', fontWeight: 700, fontSize: 13.5, fontFamily: FONT,
+                          cursor: betwistEnvoi || betwistReden.trim().length < 10 ? 'not-allowed' : 'pointer',
+                          opacity: betwistEnvoi || betwistReden.trim().length < 10 ? 0.55 : 1,
+                        }}
+                      >
+                        {betwistEnvoi ? t('form_loading') : t('disp_send')}
+                      </button>
+                    </div>
+                  </div>
+                )}
               </>
             )}
           </div>

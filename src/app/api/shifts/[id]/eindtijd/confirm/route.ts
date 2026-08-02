@@ -44,10 +44,21 @@ export async function POST(req: Request, { params }: { params: { id: string } })
       return NextResponse.json({ error: 'Already confirmed' }, { status: 400 })
     }
 
-    // Heure de fin finale (wall-clock, composantes UTC) : saisie > heure déclarée > horaire prévu
+    // Heure de fin finale (wall-clock, composantes UTC).
+    // IMPORTANT : si le chef a declare une heure, l'horeca ne peut plus la
+    // remplacer ici — cela ecrasait sa declaration en silence tout en lui
+    // notifiant "confirme". Pour proposer une autre heure, il passe par
+    // POST /eindtijd/betwist, que le chef doit accepter.
     const dateStr = new Date(shift.date).toISOString().slice(0, 10)
     const st = new Date(shift.startTime)
     const startMin = st.getUTCHours() * 60 + st.getUTCMinutes()
+    const chefADeclare = lignes.length > 0
+    if (/^\d{2}:\d{2}$/.test(endTime) && chefADeclare && !isAdmin) {
+      return NextResponse.json(
+        { error: 'Chef reported an end time. Use /eindtijd/betwist to propose another.' },
+        { status: 409 }
+      )
+    }
     let fin: Date
     if (/^\d{2}:\d{2}$/.test(endTime)) {
       const [h, m] = endTime.split(':').map(Number)
@@ -66,7 +77,9 @@ export async function POST(req: Request, { params }: { params: { id: string } })
     await prisma.$executeRaw`
       INSERT INTO shift_end (shift_id, reported_end, reported_at, confirmed_at)
       VALUES (${shift.id}, ${fin}, now(), now())
-      ON CONFLICT (shift_id) DO UPDATE SET reported_end = ${fin}, confirmed_at = now()
+      ON CONFLICT (shift_id) DO UPDATE SET reported_end = ${fin}, confirmed_at = now(),
+        disputed_end = NULL, disputed_break = NULL, dispute_reason = NULL,
+        disputed_at = NULL, refused_at = NULL
     `
 
     const eindtijd = new Date(fin).toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' })

@@ -6,6 +6,7 @@ import {
   emailRappelEindtijdHoreca,
   emailShiftVerlopenHoreca,
   emailShiftVerlopenKok,
+  emailBetwistingVerlopen,
 } from '@/lib/email'
 import webpush from 'web-push'
 
@@ -188,11 +189,57 @@ export async function GET(req: NextRequest) {
       }
     }
 
+    // ===== Contestations d'heure sans reponse depuis 48 h =====
+    // Le silence ne doit pas bloquer un paiement indefiniment. Passe ce delai,
+    // l'heure declaree par le chef fait foi : c'est lui qui a travaille, et
+    // c'est la partie faible du rapport de force. Ecrit dans les CGU.
+    let betwistingenVerlopen = 0
+    const limite48 = new Date(Date.now() - 48 * heure)
+    const betwist = await prisma.shiftEnd.findMany({
+      where: {
+        confirmedAt: null,
+        refusedAt: null,
+        disputedEnd: { not: null },
+        disputedAt: { lt: limite48 },
+      },
+      take: 100,
+    })
+
+    for (const b of betwist) {
+      try {
+        await prisma.shiftEnd.update({
+          where: { shiftId: b.shiftId },
+          data: {
+            confirmedAt: new Date(),
+            disputedEnd: null,
+            disputedBreak: null,
+            disputeReason: null,
+            disputedAt: null,
+          },
+        })
+        betwistingenVerlopen++
+
+        const sh = await prisma.shift.findUnique({
+          where: { id: b.shiftId },
+          include: { horeca: true },
+        })
+        if (sh?.horeca?.email) {
+          const kokTijd = new Date(b.reportedEnd).toLocaleTimeString('nl-NL', {
+            hour: '2-digit', minute: '2-digit', timeZone: 'UTC',
+          })
+          await emailBetwistingVerlopen(sh.horeca.email, sh.id, sh.title, kokTijd)
+          emails++
+        }
+      } catch (e: any) {
+        erreurs.push(`betwisting ${b.shiftId}: ${e?.message || e}`)
+      }
+    }
+
     // Diagnostic : nombre total d'abonnements push en base
     const compte: { n: bigint }[] = await prisma.$queryRaw`SELECT COUNT(*)::int AS n FROM kok_push`
     const abonnements = Number(compte[0]?.n || 0)
 
-    return NextResponse.json({ ok: true, envoyes, emails, rappelsFin, verlopen, shiftsTrouves, abonnements, erreurs: erreurs.slice(0, 5) })
+    return NextResponse.json({ ok: true, envoyes, emails, rappelsFin, verlopen, betwistingenVerlopen, shiftsTrouves, abonnements, erreurs: erreurs.slice(0, 5) })
   } catch (error: any) {
     return NextResponse.json(
       { ok: false, error: error?.message || 'Internal server error' },

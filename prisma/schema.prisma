@@ -432,6 +432,14 @@ model ShiftEnd {
   confirmedAt DateTime? @map("confirmed_at")
   breakMinuten Int?     @map("break_minuten")
 
+  // Contre-proposition de l'horeca : il ne peut plus ecraser l'heure du
+  // chef en silence, il propose et le chef accepte ou refuse.
+  disputedEnd    DateTime? @map("disputed_end")
+  disputedBreak  Int?      @map("disputed_break")
+  disputeReason  String?   @db.Text @map("dispute_reason")
+  disputedAt     DateTime? @map("disputed_at")
+  refusedAt      DateTime? @map("refused_at")
+
   @@map("shift_end")
 }
 
