@@ -39,6 +39,10 @@ export default function ShiftsPage() {
       const params = new URLSearchParams(window.location.search)
       const qs = params.toString()
       const estKokIci = s.user.role === 'KOK'
+      const f = params.get('filtre')
+      if (f && ['open', 'bevestigd', 'te_betalen', 'betaald', 'geannuleerd'].includes(f)) {
+        setFiltre(f as Filtre)
+      }
       if (params.get('passe') === '1') setTitre('list_past')
       else if (params.get('vue') === 'avenir') setTitre('list_kok_upcoming')
       else if (params.get('vue') === 'candidatures') setTitre(estKokIci ? 'stat_kok_apps' : 'stat_hor_2')
@@ -114,7 +118,7 @@ export default function ShiftsPage() {
 
         {/* ===== Filtres par statut ===== */}
         {!chargement && voirFiltres && shifts.length > 0 && (
-          <div className="cs-fade" style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 22 }}>
+          <div className="cs-fade cs-seg-rij" style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 22 }}>
             {filtres.map(({ f, cle }) => {
               const actif = filtre === f
               return (

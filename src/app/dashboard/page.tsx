@@ -111,7 +111,7 @@ export default function DashboardPage() {
       ]
     : [
         { c: String(shifts.length), l: t('stat_hor_1'), icone: 'brief', lien: '/shifts' },
-        { c: String(aBetalen.length), l: t('stat_te_betalen'), icone: 'card', lien: '/shifts?passe=1' },
+        { c: String(aBetalen.length), l: t('stat_te_betalen'), icone: 'card', lien: '/shifts?passe=1&filtre=te_betalen' },
         { c: `€${Math.round(depenseMois)}`, l: t('stat_spend_month'), icone: 'cal', lien: '' },
         { c: `€${Math.round(stats?.totalDepense ?? 0)}`, l: t('stat_spend_total'), icone: 'bank', lien: '' },
       ]
@@ -334,7 +334,7 @@ export default function DashboardPage() {
         <ActieKaart />
 
         {/* ===== Statistiques ===== */}
-        <div className="cs-fade cs-d1 cs-stats" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: 16, marginBottom: 34 }}>
+        <div className="cs-fade cs-d1 cs-stats" style={{ gap: 16, marginBottom: 34 }}>
           {statsCartes.map((s) => {
             const contenu = (
               <>

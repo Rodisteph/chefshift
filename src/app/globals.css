@@ -171,3 +171,49 @@ body {
     color: #6d7f61;
   }
 }
+
+
+.cs-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+}
+
+/* Adaptation smartphone : tout est dans la media query,
+   le rendu ordinateur n'est pas touche. */
+@media (max-width: 640px) {
+  .cs-hide-mob { display: none !important; }
+
+  .cs-wrap, .cs-sec, .cs-sec2, .cs-hero-pad {
+    padding-left: 16px !important;
+    padding-right: 16px !important;
+  }
+  .cs-wrap { padding-top: 26px !important; padding-bottom: 32px !important; }
+
+  .cs-card { flex-wrap: wrap; gap: 12px !important; padding: 16px !important; }
+  .cs-end {
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    width: 100%; flex-wrap: wrap; gap: 8px !important;
+  }
+
+  .cs-stats { grid-template-columns: repeat(2, 1fr) !important; gap: 10px !important; }
+  .cs-stat { padding: 14px !important; }
+  .cs-stat-n { font-size: 21px !important; }
+  .cs-stat-l { font-size: 11.5px !important; line-height: 1.35; }
+
+  .cs-nav { padding-left: 14px !important; padding-right: 14px !important; }
+  .cs-nav-txt { display: none; }
+  .cs-nav-link { min-width: 44px; min-height: 44px; justify-content: center; }
+
+  .cs-seg-rij {
+    display: flex; flex-wrap: nowrap; overflow-x: auto;
+    -webkit-overflow-scrolling: touch; scrollbar-width: none; padding-bottom: 2px;
+  }
+  .cs-seg-rij::-webkit-scrollbar { display: none; }
+  .cs-seg-rij > * { flex-shrink: 0; }
+
+  .cs-btn { min-height: 44px; }
+  .cs-heroimg { max-height: 62vh; }
+  .cs-bar { max-width: 54px; }
+}
