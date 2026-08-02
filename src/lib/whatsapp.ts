@@ -31,13 +31,13 @@ export function shiftWhatsAppTekst(s: ShiftBericht, baseUrl: string): string {
   } catch {}
 
   return [
-    s.urgent ? '🔥 SPOEDSHIFT op ChefShift!' : '🔪 Nieuwe shift op ChefShift!',
+    s.urgent ? '\uD83D\uDD25 SPOEDSHIFT op ChefShift!' : '\uD83D\uDD2A Nieuwe shift op ChefShift!',
     '',
-    `👨‍🍳 ${s.functie || s.titel}${s.bedrijf ? ` bij ${s.bedrijf}` : ''}`,
-    s.stad ? `📍 ${s.stad}` : '',
-    `📅 ${datumMooi}`,
-    `🕐 ${s.start} - ${s.eind}`,
-    `💶 €${s.tarief}/u`,
+    `\uD83D\uDC68\u200D\uD83C\uDF73 ${s.functie || s.titel}${s.bedrijf ? ` bij ${s.bedrijf}` : ''}`,
+    s.stad ? `\uD83D\uDCCD ${s.stad}` : '',
+    `\uD83D\uDCC5 ${datumMooi}`,
+    `\uD83D\uDD50 ${s.start} - ${s.eind}`,
+    `\uD83D\uDCB6 \u20AC${s.tarief}/u`,
     '',
     `Reageer direct: ${link}`,
   ]
