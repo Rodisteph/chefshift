@@ -247,9 +247,6 @@ enum ShiftStatus {
   CONFIRMED
   COMPLETED
   CANCELLED
-  // Date passee sans kok choisi. Distinct de CANCELLED : personne n'a
-  // annule, l'annonce a simplement expire.
-  EXPIRED
 }
 
 model Application {

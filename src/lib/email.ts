@@ -225,6 +225,46 @@ export async function emailRappelEindtijdChef(kokEmail: string, shiftId: string,
   )
 }
 
+// Shift expire : la date est passee sans kok choisi.
+
+export async function emailShiftVerlopenHoreca(horecaEmail: string, shiftTitre: string, datum: string, aantalKandidaten: number) {
+  const nlKand = aantalKandidaten > 0
+    ? `Er ${aantalKandidaten === 1 ? 'was 1 kandidaat' : `waren ${aantalKandidaten} kandidaten`}, maar er is geen kok gekozen.`
+    : 'Er hebben zich geen koks aangemeld.'
+  const enKand = aantalKandidaten > 0
+    ? `There ${aantalKandidaten === 1 ? 'was 1 applicant' : `were ${aantalKandidaten} applicants`}, but no chef was selected.`
+    : 'No chefs applied.'
+  return envoyerEmail(
+    horecaEmail,
+    `Shift verlopen \u00b7 ${shiftTitre}`,
+    gabarit(
+      'Je shift is verlopen',
+      `De shift <strong>${shiftTitre}</strong> van ${datum} is voorbij. ${nlKand} Plaats hem opnieuw met een andere datum of een hoger tarief.`,
+      'Nieuwe shift plaatsen',
+      'Your shift has expired',
+      `The shift <strong>${shiftTitre}</strong> on ${datum} has passed. ${enKand} Post it again with a different date or a higher rate.`,
+      'Post a new shift',
+      `${baseUrl()}/shifts/new`
+    )
+  )
+}
+
+export async function emailShiftVerlopenKok(kokEmail: string, shiftTitre: string, datum: string) {
+  return envoyerEmail(
+    kokEmail,
+    `Shift niet ingevuld \u00b7 ${shiftTitre}`,
+    gabarit(
+      'Deze shift is niet doorgegaan',
+      `De shift <strong>${shiftTitre}</strong> van ${datum} is verlopen zonder dat er een kok is gekozen. Je aanmelding vervalt. Er staan andere shifts open.`,
+      'Open shifts bekijken',
+      'This shift did not go ahead',
+      `The shift <strong>${shiftTitre}</strong> on ${datum} expired without a chef being selected. Your application has lapsed. Other shifts are available.`,
+      'View open shifts',
+      `${baseUrl()}/shifts`
+    )
+  )
+}
+
 // 8. Rappel : l'horeca n'a pas encore confirmé l'heure de fin
 export async function emailRappelEindtijdHoreca(horecaEmail: string, shiftId: string, shiftTitre: string) {
   return envoyerEmail(

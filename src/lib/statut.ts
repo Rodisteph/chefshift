@@ -19,6 +19,7 @@ export type StatutInfo = {
 // Renvoie le statut à afficher pour une shift, ou null si rien de pertinent.
 export function statutShift(shift: ShiftStatut, perspectief: 'horeca' | 'kok'): StatutInfo | null {
   if (shift.status === 'CANCELLED') return { cle: 'st_geannuleerd', toon: 'gris', icone: 'out' }
+  if (shift.status === 'EXPIRED') return { cle: 'st_verlopen', toon: 'gris', icone: 'clock' }
   if (shift.invoice?.status === 'PAID') return { cle: 'pay_paid_badge', toon: 'ok', icone: 'card' }
 
   const aujourdhui = new Date(new Date().toDateString())

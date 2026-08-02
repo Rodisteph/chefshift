@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { emailRappelShift, emailRappelEindtijdChef, emailRappelEindtijdHoreca } from '@/lib/email'
+import {
+  emailRappelShift,
+  emailRappelEindtijdChef,
+  emailRappelEindtijdHoreca,
+  emailShiftVerlopenHoreca,
+  emailShiftVerlopenKok,
+} from '@/lib/email'
 import webpush from 'web-push'
 
 // Tables kok_push / kok_reminder : gérées par les migrations Prisma (Phase 5)
@@ -147,11 +153,46 @@ export async function GET(req: NextRequest) {
       rappelsFin++
     }
 
+    // ===== Shifts expires =====
+    // Annonce OPEN dont la date est passee depuis plus de 24 h sans kok
+    // choisi. Le delai d'un jour est volontaire : un restaurant peut
+    // trouver quelqu'un le matin meme.
+    let verlopen = 0
+    const hier = new Date(Date.now() - 24 * heure)
+    const shiftsVerlopen = await prisma.shift.findMany({
+      where: { status: 'OPEN', chosenKokId: null, date: { lt: hier } },
+      include: { horeca: true, applications: { include: { kok: true } } },
+      take: 200,
+    })
+
+    for (const sv of shiftsVerlopen) {
+      try {
+        await prisma.shift.update({ where: { id: sv.id }, data: { status: 'EXPIRED' } })
+        verlopen++
+        const datum = new Date(sv.date).toLocaleDateString('nl-NL', {
+          day: 'numeric', month: 'long', timeZone: 'UTC',
+        })
+        if (sv.horeca?.email) {
+          await emailShiftVerlopenHoreca(sv.horeca.email, sv.title, datum, sv.applications.length)
+          emails++
+        }
+        // Les chefs qui ont postule meritent une reponse, pas un silence
+        for (const cand of sv.applications) {
+          if (cand.kok?.email) {
+            await emailShiftVerlopenKok(cand.kok.email, sv.title, datum)
+            emails++
+          }
+        }
+      } catch (e: any) {
+        erreurs.push(`verlopen ${sv.id}: ${e?.message || e}`)
+      }
+    }
+
     // Diagnostic : nombre total d'abonnements push en base
     const compte: { n: bigint }[] = await prisma.$queryRaw`SELECT COUNT(*)::int AS n FROM kok_push`
     const abonnements = Number(compte[0]?.n || 0)
 
-    return NextResponse.json({ ok: true, envoyes, emails, rappelsFin, shiftsTrouves, abonnements, erreurs: erreurs.slice(0, 5) })
+    return NextResponse.json({ ok: true, envoyes, emails, rappelsFin, verlopen, shiftsTrouves, abonnements, erreurs: erreurs.slice(0, 5) })
   } catch (error: any) {
     return NextResponse.json(
       { ok: false, error: error?.message || 'Internal server error' },
