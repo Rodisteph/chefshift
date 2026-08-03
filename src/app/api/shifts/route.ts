@@ -4,7 +4,8 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { euroNaarCenten, afrondenHalfUp, berekenUrenMinuten, minutenVanTijd } from '@/lib/factuur'
 import { MIN_HOURLY_RATE, STANDAARD_PAUZE_MIN } from '@/lib/constants'
-import { emailShiftVoorWhatsApp } from '@/lib/email'
+import { emailShiftVoorWhatsApp, emailShiftVoorFavoriet } from '@/lib/email'
+import { verstuurPush } from '@/lib/push'
 
 const INCLUSIONS = {
   horeca: { include: { horecaProfile: true } },
@@ -162,6 +163,54 @@ export async function POST(req: NextRequest) {
         spoedtoeslagPct: pct,
       },
     })
+
+    // ===== Alerte aux koks =====
+    // Sans cette etape, publier une shift ne prevenait personne : elle
+    // apparaissait dans une liste que personne ne consulte, d'ou les
+    // candidatures a zero. Les favoris de la zaak sont prevenus d'abord
+    // et nommement, les autres koks recoivent une alerte generique.
+    try {
+      const profil = await prisma.horecaProfile.findUnique({ where: { userId: session.user.id } })
+      const nomZaak = profil?.companyName || 'Een horecazaak'
+      const datumNL = shift.date.toLocaleDateString('nl-NL', {
+        weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC',
+      })
+      const uren = `${startTime} - ${endTime}`
+
+      const favoris = await prisma.favoriteKok.findMany({
+        where: { horecaId: session.user.id },
+        select: { kokId: true },
+      })
+      const idsFavoris = favoris.map((f) => f.kokId)
+
+      for (const kokId of idsFavoris) {
+        const kok = await prisma.user.findUnique({ where: { id: kokId } })
+        if (kok?.email) {
+          await emailShiftVoorFavoriet(kok.email, shift.id, shift.title, nomZaak, datumNL, uren, rateEuro)
+        }
+        await verstuurPush(
+          kokId,
+          nomZaak,
+          `Nieuwe shift op ${datumNL}, \u20AC${rateEuro}/u. Je staat bij hun vaste koks.`,
+          `/shifts/${shift.id}?src=favoriet`
+        )
+      }
+
+      // Les autres koks : alerte plus courte, sans nom de zaak
+      const autres = await prisma.user.findMany({
+        where: { role: 'KOK', id: { notIn: idsFavoris.length ? idsFavoris : ['-'] } },
+        select: { id: true },
+        take: 500,
+      })
+      for (const u of autres) {
+        await verstuurPush(
+          u.id,
+          'ChefShift',
+          `${shift.title} in ${locationCity || 'Amsterdam'} \u00b7 ${datumNL} \u00b7 \u20AC${rateEuro}/u`,
+          `/shifts/${shift.id}`
+        )
+      }
+    } catch {}
 
     // E-mail au propriétaire avec le message WhatsApp prêt à copier-coller (ne bloque jamais la création)
     try {

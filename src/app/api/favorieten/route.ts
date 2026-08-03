@@ -4,7 +4,7 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 
 // GET : liste des chefs favoris de l'horeca connectée
-export async function GET() {
+export async function GET(_req: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
     if (!session || session.user.role !== 'HORECA') {
@@ -12,9 +12,54 @@ export async function GET() {
     }
     const favs = await prisma.favoriteKok.findMany({
       where: { horecaId: session.user.id },
-      select: { kokId: true },
+      select: { kokId: true, createdAt: true },
+      orderBy: { createdAt: 'desc' },
     })
-    return NextResponse.json({ kokIds: favs.map((f) => f.kokId) })
+    const kokIds = favs.map((f) => f.kokId)
+
+    // ?detail=1 : profils complets, pour la page "Mijn koks".
+    // Sans ce parametre on garde la reponse legere (juste les ids), utilisee
+    // par l'etoile de la page shift.
+    const url = new URL(_req.url)
+    if (url.searchParams.get('detail') !== '1') {
+      return NextResponse.json({ kokIds })
+    }
+
+    const koks = kokIds.length
+      ? await prisma.user.findMany({
+          where: { id: { in: kokIds } },
+          select: {
+            id: true,
+            name: true,
+            kokProfile: {
+              select: {
+                function: true,
+                city: true,
+                averageScore: true,
+                reviewCount: true,
+                hourlyRateMin: true,
+                hourlyRateMax: true,
+              },
+            },
+          },
+        })
+      : []
+
+    // Nombre de shifts deja effectues ensemble : c'est ce qui justifie
+    // qu'un kok soit dans la liste, plus que la date d'ajout.
+    const samen = await prisma.shift.groupBy({
+      by: ['chosenKokId'],
+      where: { horecaId: session.user.id, chosenKokId: { in: kokIds.length ? kokIds : ['-'] } },
+      _count: { _all: true },
+    })
+    const parKok = new Map(samen.map((r) => [r.chosenKokId, r._count._all]))
+
+    const ordre = new Map<string, number>(kokIds.map((id, i) => [id, i]))
+    const detail = koks
+      .map((k) => ({ ...k, shiftsSamen: parKok.get(k.id) ?? 0 }))
+      .sort((a, b) => (ordre.get(a.id) ?? 0) - (ordre.get(b.id) ?? 0))
+
+    return NextResponse.json({ kokIds, koks: detail })
   } catch (error) {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }

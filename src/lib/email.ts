@@ -316,6 +316,24 @@ export async function emailBetwistingVerlopen(horecaEmail: string, shiftId: stri
   )
 }
 
+// Invitation d'un kok favori a une nouvelle shift de "sa" zaak.
+
+export async function emailShiftVoorFavoriet(kokEmail: string, shiftId: string, shiftTitre: string, bedrijf: string, datum: string, uren: string, tarief: number) {
+  return envoyerEmail(
+    kokEmail,
+    `${bedrijf} heeft een shift voor je \u00b7 ${datum}`,
+    gabarit(
+      `${bedrijf} zoekt een kok`,
+      `Je hebt eerder bij <strong>${bedrijf}</strong> gewerkt. Ze hebben net een nieuwe shift geplaatst:<br><br><strong>${shiftTitre}</strong><br>${datum} \u00b7 ${uren}<br>\u20AC${tarief} per uur<br><br>Je krijgt dit bericht omdat de zaak je bij haar vaste koks heeft gezet. Wees er snel bij.`,
+      'Shift bekijken',
+      `${bedrijf} is looking for a chef`,
+      `You have worked at <strong>${bedrijf}</strong> before. They just posted a new shift:<br><br><strong>${shiftTitre}</strong><br>${datum} \u00b7 ${uren}<br>\u20AC${tarief} per hour<br><br>You are getting this because the venue added you to its regular chefs. Be quick.`,
+      'View shift',
+      `${baseUrl()}/shifts/${shiftId}?src=favoriet`
+    )
+  )
+}
+
 // 8. Rappel : l'horeca n'a pas encore confirmé l'heure de fin
 export async function emailRappelEindtijdHoreca(horecaEmail: string, shiftId: string, shiftTitre: string) {
   return envoyerEmail(
