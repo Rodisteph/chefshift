@@ -408,8 +408,6 @@ export default function HomePage() {
             { icon: 'bank', t: t('feat4_t'), d: t('feat4_d') },
             { icon: 'award', t: t('feat5_t'), d: t('feat5_d') },
             { icon: 'bell', t: t('feat6_t'), d: t('feat6_d') },
-            { icon: 'msg', t: t('feat7_t'), d: t('feat7_d') },
-            { icon: 'cal', t: t('feat8_t'), d: t('feat8_d') },
             { icon: 'flame', t: t('feat9_t'), d: t('feat9_d') },
           ].map((c) => (
             <div key={c.t} className="cs-card" style={{ background: '#fff', borderRadius: 20, border: '1px solid #eceee3', boxShadow: '0 3px 12px rgba(46,52,43,0.05)', padding: '32px 28px' }}>
