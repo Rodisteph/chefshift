@@ -171,11 +171,7 @@ export default function HomePage() {
   const shiftCtaHref = charge && user ? '/shifts/new' : '/login'
 
   // Témoignages (restaurant, hôtel, chef) — textes existants conservés
-  const temoignages = [
-    { q: t('testi1_q'), a: t('testi1_a'), r: t('testi1_r'), score: 5 },
-    { q: t('testi2_q'), a: t('testi2_a'), r: t('testi2_r'), score: 5 },
-    { q: t('testi3_q'), a: t('testi3_a'), r: t('testi3_r'), score: 4 },
-  ]
+
 
   const faqItems = [
     { q: t('faq1_q'), a: t('faq1_a') },
@@ -253,15 +249,6 @@ export default function HomePage() {
         <div aria-hidden="true" style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(24,30,21,0.82) 0%, rgba(24,30,21,0.30) 48%, rgba(24,30,21,0.44) 100%)' }} />
 
         {/* Cartes flottantes : note, vérification, disponibilité */}
-        <ZweefKaart stijl={{ top: '22%', right: '7%' }}>
-          <span style={{ display: 'inline-flex', gap: 2 }}>
-            {[1, 2, 3, 4, 5].map((i) => <IcoStar key={i} s={14} plein />)}
-          </span>
-          <div>
-            <div style={{ fontWeight: 800, fontSize: 15, letterSpacing: -0.3 }}>4,9/5</div>
-            <div style={{ color: '#6b7268', fontSize: 12 }}>{t('fc_rating')}</div>
-          </div>
-        </ZweefKaart>
         <ZweefKaart stijl={{ top: '38%', right: '16%' }}>
           <span style={{ width: 36, height: 36, borderRadius: 11, background: '#eef2e6', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
             <Ico n="shield" s={17} c="#4c5e42" />
@@ -315,23 +302,6 @@ export default function HomePage() {
             <span key={s} style={{ color: '#4c5e42', fontWeight: 800, fontSize: 15, letterSpacing: -0.2, padding: '8px 18px', background: '#f6f7f2', borderRadius: 999, border: '1px solid #eceee3' }}>
               {s}
             </span>
-          ))}
-        </div>
-      </section>
-
-      {/* ===== Statistiques animées ===== */}
-      <section className="cs-sec" style={{ padding: '84px 24px 30px', maxWidth: 1200, margin: '0 auto' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 24, textAlign: 'center' }}>
-          {[
-            { n: <Teller doel={500} suffix="+" />, l: t('stat1_l') },
-            { n: <Teller doel={200} suffix="+" />, l: t('stat2_l') },
-            { n: <Teller doel={4.9} decimalen={1} />, l: t('stat3_l') },
-            { n: <Teller doel={1000} suffix="+" />, l: t('stat4_l') },
-          ].map((s) => (
-            <div key={s.l} className="cs-card" style={{ background: '#fff', borderRadius: 20, border: '1px solid #eceee3', padding: '34px 20px', boxShadow: '0 3px 12px rgba(46,52,43,0.05)' }}>
-              <div style={{ fontSize: 'clamp(34px, 4vw, 48px)', fontWeight: 800, letterSpacing: -1.5, color: '#46553c' }}>{s.n}</div>
-              <div style={{ color: '#6b7268', fontSize: 14, fontWeight: 600, marginTop: 6 }}>{s.l}</div>
-            </div>
           ))}
         </div>
       </section>
@@ -492,38 +462,25 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ===== Wat gebruikers zeggen (témoignages — textes inchangés) ===== */}
+      {/* ===== Debut assume : ce que gagnent les premiers inscrits =====
+           Remplace les temoignages. Sans utilisateurs, toute preuve sociale
+           serait inventee ; assumer le demarrage convertit mieux. */}
       <section className="cs-sec2" style={{ padding: '0 24px 96px', maxWidth: 1200, margin: '0 auto' }}>
         <div style={kopStijl}>
-          <span style={overStijl}>{t('rev_over')}</span>
-          <h2 style={h2Stijl}>{t('rev_title')}</h2>
-          <p style={subStijl}>{t('rev_sub')}</p>
+          <span style={overStijl}>{t('start_over')}</span>
+          <h2 style={h2Stijl}>{t('start_title')}</h2>
+          <p style={subStijl}>{t('start_sub')}</p>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 26 }}>
-          {temoignages.map((a) => (
-            <div key={a.a} className="cs-card" style={{ background: '#fff', borderRadius: 20, border: '1px solid #eceee3', boxShadow: '0 3px 12px rgba(46,52,43,0.05)', padding: '30px 28px', display: 'flex', flexDirection: 'column', gap: 14 }}>
-              <span style={{ display: 'inline-flex', gap: 2 }}>
-                {[1, 2, 3, 4, 5].map((i) => (
-                  <IcoStar key={i} s={15} plein={i <= a.score} />
-                ))}
-              </span>
-              <p style={{ color: '#3c4436', fontSize: 15, lineHeight: 1.65, margin: 0, flex: 1 }}>
-                &ldquo;{a.q}&rdquo;
-              </p>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <span style={{
-                  width: 38, height: 38, borderRadius: 12, flexShrink: 0,
-                  background: 'linear-gradient(135deg, #eef2e6, #dfe7d1)',
-                  color: '#4c5e42', display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                  fontWeight: 800, fontSize: 15,
-                }}>
-                  {a.a.charAt(0).toUpperCase()}
-                </span>
-                <div>
-                  <div style={{ fontWeight: 800, fontSize: 14, letterSpacing: -0.2 }}>{a.a}</div>
-                  <div style={{ color: '#9aa39b', fontSize: 12.5 }}>{a.r}</div>
-                </div>
-              </div>
+          {[
+            { n: '01', t: t('start1_t'), d: t('start1_d') },
+            { n: '02', t: t('start2_t'), d: t('start2_d') },
+            { n: '03', t: t('start3_t'), d: t('start3_d') },
+          ].map((c) => (
+            <div key={c.n} className="cs-card" style={{ background: '#fff', borderRadius: 20, border: '1px solid #eceee3', boxShadow: '0 3px 12px rgba(46,52,43,0.05)', padding: '30px 28px' }}>
+              <div style={{ fontSize: 13, fontWeight: 800, letterSpacing: 2, color: '#9aa39b' }}>{c.n}</div>
+              <div style={{ fontWeight: 800, fontSize: 17, letterSpacing: -0.3, margin: '10px 0 8px' }}>{c.t}</div>
+              <p style={{ color: '#6b7268', fontSize: 14.5, lineHeight: 1.7, margin: 0 }}>{c.d}</p>
             </div>
           ))}
         </div>
