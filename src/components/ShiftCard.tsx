@@ -108,7 +108,7 @@ export default function ShiftCard({
         className="cs-hide-mob"
         style={{ width: 74, height: 74, borderRadius: 16, objectFit: 'cover', flexShrink: 0, alignSelf: 'center' }}
       />
-      <div style={{ flex: 1, minWidth: 220 }}>
+      <div style={{ flex: 1, minWidth: 170 }}>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
           <h3 style={{ fontSize: 17, fontWeight: 800, letterSpacing: -0.3 }}>{shift.title}</h3>
           {shift.function && (
@@ -154,7 +154,10 @@ export default function ShiftCard({
           )}
         </p>
       </div>
-      <div className="cs-end" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 7 }}>
+      {/* Colonne droite bornee : un badge long ("Open, wachten op koks")
+          poussait la colonne au-dela de la place disponible et repliait
+          toute la carte, d'ou une mise en page differente selon le statut. */}
+      <div className="cs-end" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 7, flexShrink: 0, maxWidth: 190, textAlign: 'right' }}>
         <div>
           <div style={{ fontSize: 20, fontWeight: 800, color: '#4c5e42', letterSpacing: -0.5 }}>€{shift.hourlyRate / 100}{parHeure}</div>
           {shift.totalAmount != null && (
@@ -169,6 +172,7 @@ export default function ShiftCard({
             display: 'inline-flex', alignItems: 'center', gap: 5,
             background: TOON_STIJLEN[statut.toon].bg, color: TOON_STIJLEN[statut.toon].color,
             fontSize: 12, fontWeight: 800, padding: '5px 13px', borderRadius: 999,
+            lineHeight: 1.35, textAlign: 'right',
           }}>
             <Ico n={statut.icone} s={13} /> {t(statut.cle)}
           </span>
