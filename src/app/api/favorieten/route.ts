@@ -33,7 +33,7 @@ export async function GET(_req: NextRequest) {
             name: true,
             kokProfile: {
               select: {
-                function: true,
+                functions: true,
                 city: true,
                 averageScore: true,
                 reviewCount: true,
