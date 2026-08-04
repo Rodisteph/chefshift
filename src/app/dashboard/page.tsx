@@ -36,6 +36,7 @@ export default function DashboardPage() {
   const [shifts, setShifts] = useState<ShiftData[]>([])
   const [shiftsPasses, setShiftsPasses] = useState<ShiftData[]>([])
   const [stats, setStats] = useState<Stats | null>(null)
+  const estKok = user?.role === 'KOK'
 
   useEffect(() => {
     async function charger() {
@@ -73,6 +74,14 @@ export default function DashboardPage() {
     boxShadow: '0 3px 12px rgba(46,52,43,0.05)', padding: 26,
   }
 
+  const [nbFavoris, setNbFavoris] = useState(0)
+  useEffect(() => {
+    if (estKok) return
+    fetch('/api/favorieten')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => setNbFavoris(d?.kokIds?.length ?? 0))
+      .catch(() => {})
+  }, [estKok])
   if (chargement) {
     return (
       <main style={{ fontFamily: FONT, background: 'hsl(var(--background))', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -81,7 +90,6 @@ export default function DashboardPage() {
     )
   }
 
-  const estKok = user?.role === 'KOK'
   const locale = lang === 'en' ? 'en-GB' : 'nl-NL'
   const aujourdhui = new Date(new Date().toDateString())
 
@@ -103,14 +111,6 @@ export default function DashboardPage() {
   const depenseMois = serieBrute.length > 0 ? serieBrute[serieBrute.length - 1].value : 0
 
   // Nombre de koks favoris, affiche comme tuile menant a /mijn-koks
-  const [nbFavoris, setNbFavoris] = useState(0)
-  useEffect(() => {
-    if (estKok) return
-    fetch('/api/favorieten')
-      .then((r) => (r.ok ? r.json() : null))
-      .then((d) => setNbFavoris(d?.kokIds?.length ?? 0))
-      .catch(() => {})
-  }, [estKok])
 
   const statsCartes = estKok
     ? [

@@ -28,7 +28,7 @@ export const metadata = {
     siteName: 'ChefShift',
     images: [
       {
-        url: 'https://www.kimi.com/apiv2-files/sign-obj/kimi-fs%2Ffiles%2Fblob%2F27b665a925688f5be2e3e4a8cb9c3d9a2e7e646e33aa32d129d44e5cdd26d54e?filename=hero-chefshift.jpg&sig=1974T8mF3RlDIwOmP3yXKXTFq5DvJ5-l2Pt9nFGwyDQ=&t=o',
+        url: '/og-image.jpg',
         width: 2048,
         height: 1062,
         alt: 'ZZP-kok aan het werk in een professionele horecakeuken',
