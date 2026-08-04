@@ -77,6 +77,16 @@ export default function NewShiftPage() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [autorise, setAutorise] = useState(false)
+  // Nombre de koks favoris : affiche avant publication pour montrer que
+  // la shift ne part pas dans le vide.
+  const [nbFavoris, setNbFavoris] = useState<number | null>(null)
+
+  useEffect(() => {
+    fetch('/api/favorieten')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => setNbFavoris(d?.kokIds?.length ?? 0))
+      .catch(() => setNbFavoris(null))
+  }, [])
 
   useEffect(() => {
     fetch('/api/auth/session').then((r) => r.json()).then((s) => {
@@ -243,6 +253,22 @@ export default function NewShiftPage() {
           {error && (
             <p style={{ color: '#b91c1c', fontSize: 13.5, marginBottom: 16, background: '#fef2f2', padding: '10px 14px', borderRadius: 10, fontWeight: 600 }}>
               {error}
+            </p>
+          )}
+
+          {/* Ce que la publication declenche vraiment. Sans cette ligne,
+              l'horeca ne sait pas que les koks sont prevenus. */}
+          {nbFavoris !== null && (
+            <p style={{
+              display: 'flex', alignItems: 'flex-start', gap: 8,
+              background: '#f4f7ee', border: '1px solid #e3ebd8', borderRadius: 12,
+              padding: '12px 14px', margin: '0 0 16px',
+              fontSize: 13.5, fontWeight: 600, color: '#4c5e42', lineHeight: 1.55,
+            }}>
+              <span style={{ flexShrink: 0, marginTop: 1 }}><Ico n="check" s={14} c="#4c5e42" /></span>
+              {nbFavoris > 0
+                ? t('pub_favs').replace('{n}', String(nbFavoris))
+                : t('pub_nofavs')}
             </p>
           )}
 

@@ -102,6 +102,16 @@ export default function DashboardPage() {
   const serieBrute = stats?.serie || []
   const depenseMois = serieBrute.length > 0 ? serieBrute[serieBrute.length - 1].value : 0
 
+  // Nombre de koks favoris, affiche comme tuile menant a /mijn-koks
+  const [nbFavoris, setNbFavoris] = useState(0)
+  useEffect(() => {
+    if (estKok) return
+    fetch('/api/favorieten')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => setNbFavoris(d?.kokIds?.length ?? 0))
+      .catch(() => {})
+  }, [estKok])
+
   const statsCartes = estKok
     ? [
         { c: String(aVenir.length), l: t('stat_kok_1'), icone: 'brief', lien: '/shifts?vue=avenir' },
@@ -114,6 +124,7 @@ export default function DashboardPage() {
         { c: String(aBetalen.length), l: t('stat_te_betalen'), icone: 'card', lien: '/shifts?passe=1&filtre=te_betalen' },
         { c: `€${Math.round(depenseMois)}`, l: t('stat_spend_month'), icone: 'cal', lien: '' },
         { c: `€${Math.round(stats?.totalDepense ?? 0)}`, l: t('stat_spend_total'), icone: 'bank', lien: '' },
+        { c: String(nbFavoris), l: t('mk_title'), icone: 'award', lien: '/mijn-koks' },
       ]
 
   const serieGraph = (stats?.serie || []).map((m) => ({
