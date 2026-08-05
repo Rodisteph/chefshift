@@ -214,6 +214,13 @@ model Shift {
   requiredExperience Int?     @default(0) @map("required_experience")
   requiredCerts   String?     @map("required_certs")
 
+  // ===== Informations pratiques du jour J =====
+  // Un kok qui ne sait pas ou entrer, quoi apporter ou qui appeler en cas
+  // de retard devient un no-show qui n'en est pas un.
+  contactPhone    String?     @map("contact_phone")
+  briefing        String?     @db.Text
+  meldMinuten     Int         @default(15) @map("meld_minuten")
+
   hourlyRate      Int         @map("hourly_rate")
   vatRate         Float       @default(21) @map("vat_rate")
   totalAmount     Int?        @map("total_amount")

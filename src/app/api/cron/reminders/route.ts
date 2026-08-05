@@ -95,7 +95,27 @@ export async function GET(req: NextRequest) {
         // 2. Email de rappel au chef
         const kok = await prisma.user.findUnique({ where: { id: shift.chosenKokId as string } })
         if (kok?.email) {
-          const r = await emailRappelShift(kok.email, shift.id, shift.title, f.delai, debut)
+          // Details pratiques : sans eux le kok ne sait pas ou entrer,
+          // quoi apporter ni qui appeler s'il a du retard.
+          const zaak = await prisma.horecaProfile.findUnique({ where: { userId: shift.horecaId } })
+          const hhmm = (d: Date) => new Date(d).toISOString().slice(11, 16)
+          const startMin = new Date(shift.startTime).getUTCHours() * 60 + new Date(shift.startTime).getUTCMinutes()
+          const meld = Math.max(0, startMin - (shift.meldMinuten ?? 15))
+          const r = await emailRappelShift(kok.email, shift.id, shift.title, f.delai, debut, {
+            functie: shift.function,
+            bedrijf: zaak?.companyName,
+            datum: new Date(shift.date).toLocaleDateString('nl-NL', {
+              weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC',
+            }),
+            meldTijd: `${String(Math.floor(meld / 60)).padStart(2, '0')}:${String(meld % 60).padStart(2, '0')}`,
+            start: hhmm(shift.startTime),
+            eind: hhmm(shift.endTime),
+            pauze: shift.breakMinutes,
+            adres: [shift.locationStreet, shift.locationPostal, shift.locationCity].filter(Boolean).join(', ') || null,
+            tarief: Math.round(shift.hourlyRate / 100),
+            telefoon: shift.contactPhone || null,
+            briefing: shift.briefing,
+          })
           if (r.ok) emails++
         }
 

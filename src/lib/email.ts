@@ -158,17 +158,86 @@ export async function emailBetalingOntvangen(kokEmail: string, shiftTitre: strin
 }
 
 // 4. Chef : rappel avant un shift (24h / 2h)
-export async function emailRappelShift(kokEmail: string, shiftId: string, shiftTitre: string, delai: '24 uur' | '2 uur', debut: string) {
+export type RappelDetails = {
+  functie?: string | null
+  datum?: string
+  meldTijd?: string
+  start?: string
+  eind?: string
+  pauze?: number
+  adres?: string
+  tarief?: number
+  telefoon?: string | null
+  briefing?: string | null
+  bedrijf?: string | null
+}
+
+// Rappel de shift. Contient tout ce qu'il faut pour ne pas se planter le jour
+// meme : ou se presenter, a quelle heure, quoi apporter, qui appeler en cas de
+// retard. Un kok sans ces informations devient un no-show evitable.
+export async function emailRappelShift(
+  kokEmail: string,
+  shiftId: string,
+  shiftTitre: string,
+  delai: '24 uur' | '2 uur',
+  debut: string,
+  d: RappelDetails = {}
+) {
   const delaiEn = delai === '24 uur' ? '24 hours' : '2 hours'
+
+  const ligne = (label: string, waarde?: string | null) =>
+    waarde
+      ? `<tr><td style="padding:7px 16px 7px 0;color:#8a8f84;font-size:13px;white-space:nowrap;vertical-align:top">${label}</td><td style="padding:7px 0;font-size:14px;font-weight:700;color:#2e342b">${waarde}</td></tr>`
+      : ''
+
+  const tabel = (nl: boolean) => `
+    <table role="presentation" cellpadding="0" cellspacing="0" style="width:100%;margin:18px 0 0;border-top:1px solid #eceee3;border-bottom:1px solid #eceee3">
+      ${ligne(nl ? 'Zaak' : 'Venue', d.bedrijf)}
+      ${ligne(nl ? 'Functie' : 'Role', d.functie)}
+      ${ligne(nl ? 'Datum' : 'Date', d.datum)}
+      ${ligne(nl ? 'Meld je om' : 'Report at', d.meldTijd)}
+      ${ligne(nl ? 'Werktijd' : 'Working hours', d.start && d.eind ? `${d.start} - ${d.eind}` : null)}
+      ${ligne(nl ? 'Pauze' : 'Break', d.pauze ? `${d.pauze} min` : null)}
+      ${ligne(nl ? 'Adres' : 'Address', d.adres)}
+      ${ligne(nl ? 'Uurtarief' : 'Hourly rate', d.tarief ? `\u20AC${d.tarief}` : null)}
+    </table>`
+
+  const telBlok = (nl: boolean) =>
+    d.telefoon
+      ? `<div style="margin-top:18px;background:#fff7ed;border:1px solid #fed7aa;border-radius:12px;padding:14px 16px">
+           <strong style="color:#9a3412;font-size:14px">${nl ? 'Vertraging of ziekte?' : 'Delayed or sick?'}</strong>
+           <div style="margin-top:5px;font-size:14px;color:#57534e;line-height:1.6">
+             ${nl
+               ? `Bel <a href="tel:${d.telefoon}" style="color:#9a3412;font-weight:700">${d.telefoon}</a> zo snel mogelijk. Noem je naam, je functie en je starttijd.`
+               : `Call <a href="tel:${d.telefoon}" style="color:#9a3412;font-weight:700">${d.telefoon}</a> as soon as possible. State your name, your role and your start time.`}
+           </div>
+         </div>`
+      : ''
+
+  const briefBlok = (nl: boolean) =>
+    d.briefing
+      ? `<div style="margin-top:18px;background:#f6f7f2;border-radius:12px;padding:14px 16px">
+           <strong style="font-size:14px;color:#2e342b">${nl ? 'Van de zaak' : 'From the venue'}</strong>
+           <div style="margin-top:5px;font-size:14px;color:#57534e;line-height:1.65;white-space:pre-line">${d.briefing}</div>
+         </div>`
+      : ''
+
+  const minimum = (nl: boolean) =>
+    `<p style="margin:18px 0 0;font-size:12.5px;color:#8a8f84;line-height:1.6">${
+      nl
+        ? 'De eindtijd is een indicatie. Je krijgt altijd minimaal 1 uur betaald. Geef na afloop je eindtijd door via de app, dan start de betaling.'
+        : 'The end time is an indication. You are always paid for at least 1 hour. Report your end time in the app afterwards to start payment.'
+    }</p>`
+
   return envoyerEmail(
     kokEmail,
-    `Herinnering: je shift begint over ${delai} · Shift reminder`,
+    `Herinnering: je shift begint over ${delai} \u00b7 ${shiftTitre}`,
     gabarit(
       `Je shift begint over ${delai}`,
-      `Herinnering: je shift <strong>${shiftTitre}</strong> begint over <strong>${delai}</strong> (${debut}). Zorg dat je op tijd bent!`,
+      `<strong>${shiftTitre}</strong> begint over <strong>${delai}</strong> (${debut}).${tabel(true)}${telBlok(true)}${briefBlok(true)}${minimum(true)}`,
       'Bekijk shift',
       `Your shift starts in ${delaiEn}`,
-      `Reminder: your shift <strong>${shiftTitre}</strong> starts in <strong>${delaiEn}</strong> (${debut}). Make sure you're on time!`,
+      `<strong>${shiftTitre}</strong> starts in <strong>${delaiEn}</strong> (${debut}).${tabel(false)}${telBlok(false)}${briefBlok(false)}${minimum(false)}`,
       'View shift',
       `${baseUrl()}/shifts/${shiftId}`
     )

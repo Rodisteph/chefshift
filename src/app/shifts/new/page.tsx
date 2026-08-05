@@ -72,6 +72,9 @@ export default function NewShiftPage() {
   const [locationStreet, setLocationStreet] = useState('')
   const [locationPostal, setLocationPostal] = useState('')
   const [locationCity, setLocationCity] = useState('')
+  // Informations pratiques du jour J, reprises dans le mail de rappel
+  const [contactPhone, setContactPhone] = useState('')
+  const [briefing, setBriefing] = useState('')
   const [isUrgent, setIsUrgent] = useState(false)
   const [toeslag, setToeslag] = useState(0)
   const [error, setError] = useState('')
@@ -122,6 +125,8 @@ export default function NewShiftPage() {
           locationStreet,
           locationPostal,
           locationCity,
+          contactPhone,
+          briefing,
           isUrgent,
           spoedtoeslagPct: toeslag,
         }),
@@ -231,6 +236,28 @@ export default function NewShiftPage() {
                 placeholder="Amsterdam" style={champ} />
             </div>
           </div>
+          {/* Informations pratiques : reprises telles quelles dans le mail de
+              rappel envoye 24 h et 2 h avant. Un kok sans numero a appeler
+              devient un no-show evitable. */}
+          <div style={{ marginBottom: 20 }}>
+            <label style={etiquette}>{t('field_phone')}</label>
+            <input value={contactPhone} onChange={(e) => setContactPhone(e.target.value)}
+              type="tel" placeholder="+31 20 123 4567" style={champ} />
+            <div style={{ fontSize: 12.5, color: 'hsl(var(--muted-foreground))', fontWeight: 600, marginTop: 5 }}>
+              {t('field_phone_hint')}
+            </div>
+          </div>
+
+          <div style={{ marginBottom: 20 }}>
+            <label style={etiquette}>{t('field_briefing')}</label>
+            <textarea value={briefing} onChange={(e) => setBriefing(e.target.value)}
+              rows={4} maxLength={1500} placeholder={t('field_briefing_ph')}
+              style={{ ...champ, resize: 'vertical' }} />
+            <div style={{ fontSize: 12.5, color: 'hsl(var(--muted-foreground))', fontWeight: 600, marginTop: 5 }}>
+              {t('field_briefing_hint')}
+            </div>
+          </div>
+
           <label style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20, cursor: 'pointer', fontSize: 14.5, fontWeight: 600 }}>
             <input type="checkbox" checked={isUrgent} onChange={(e) => setIsUrgent(e.target.checked)} style={{ width: 18, height: 18 }} />
             <Ico n="flame" s={15} c="#b91c1c" /> {t('field_urgent')}

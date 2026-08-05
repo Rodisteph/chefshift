@@ -119,7 +119,7 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json()
-    const { title, function: func, date, startTime, endTime, hourlyRate, locationStreet, locationPostal, locationCity, isUrgent, spoedtoeslagPct, breakMinutes } = body
+    const { title, function: func, date, startTime, endTime, hourlyRate, locationStreet, locationPostal, locationCity, isUrgent, spoedtoeslagPct, breakMinutes, contactPhone, briefing } = body
 
     // Supplément d'urgence : uniquement 0, 10, 15 ou 20 (% du tarif de base)
     const pct = [0, 10, 15, 20].includes(Number(spoedtoeslagPct)) ? Number(spoedtoeslagPct) : 0
@@ -159,6 +159,8 @@ export async function POST(req: NextRequest) {
         hourlyRate: rate,
         totalAmount,
         breakMinutes: pauzeMin,
+        contactPhone: contactPhone ? String(contactPhone).trim().slice(0, 40) : null,
+        briefing: briefing ? String(briefing).trim().slice(0, 1500) : null,
         isUrgent: !!isUrgent || pct > 0,
         spoedtoeslagPct: pct,
       },
