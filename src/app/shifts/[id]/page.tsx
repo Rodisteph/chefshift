@@ -732,7 +732,7 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
                         stad: shift.locationCity,
                         bedrijf: shift.horeca.horecaProfile?.companyName,
                         urgent: shift.isUrgent,
-                      }, typeof window !== 'undefined' ? window.location.origin : 'https://www.chefshift.nl'))}
+                      }, typeof window !== 'undefined' ? window.location.origin : (process.env.NEXT_PUBLIC_APP_URL || 'https://chefshift.vercel.app')))}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="cs-btn"

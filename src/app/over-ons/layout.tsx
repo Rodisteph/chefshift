@@ -11,7 +11,7 @@ const jsonLd = {
   '@context': 'https://schema.org',
   '@type': 'AboutPage',
   name: 'Over ChefShift',
-  url: 'https://www.chefshift.nl/over-ons',
+  url: `${process.env.NEXT_PUBLIC_APP_URL || 'https://chefshift.vercel.app'}/over-ons`,
   about: {
     '@type': 'Organization',
     name: 'ChefShift',

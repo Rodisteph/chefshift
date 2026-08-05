@@ -2,7 +2,7 @@ import type { MetadataRoute } from 'next'
 
 // Sitemap des pages publiques et indexables
 export default function sitemap(): MetadataRoute.Sitemap {
-  const base = 'https://www.chefshift.nl'
+  const base = process.env.NEXT_PUBLIC_APP_URL || 'https://chefshift.vercel.app'
   const nu = new Date()
   return [
     { url: `${base}/`, lastModified: nu, changeFrequency: 'weekly', priority: 1 },

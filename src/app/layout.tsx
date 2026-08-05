@@ -7,7 +7,7 @@ export const viewport = {
 }
 
 export const metadata = {
-  metadataBase: new URL('https://www.chefshift.nl'),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'https://chefshift.vercel.app'),
   title: {
     default: 'ZZP-koks en horeca personeel vinden | ChefShift NL',
     template: '%s · ChefShift',

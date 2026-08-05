@@ -57,7 +57,7 @@ export default async function ShiftLayout({
         datePosted: s.createdAt.toISOString().slice(0, 10),
         validThrough: valid.toISOString(),
         employmentType: 'CONTRACTOR',
-        url: `https://www.chefshift.nl/shifts/${s.id}`,
+        url: `${process.env.NEXT_PUBLIC_APP_URL || 'https://chefshift.vercel.app'}/shifts/${s.id}`,
         directApply: true,
         hiringOrganization: {
           '@type': 'Organization',

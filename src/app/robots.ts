@@ -10,6 +10,6 @@ export default function robots(): MetadataRoute.Robots {
         disallow: ['/api/', '/dashboard', '/admin', '/instellingen', '/profiel', '/shifts/new'],
       },
     ],
-    sitemap: 'https://www.chefshift.nl/sitemap.xml',
+    sitemap: `${process.env.NEXT_PUBLIC_APP_URL || 'https://chefshift.vercel.app'}/sitemap.xml`,
   }
 }

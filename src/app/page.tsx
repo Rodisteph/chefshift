@@ -19,10 +19,10 @@ const JSON_LD = {
   '@graph': [
     {
       '@type': 'Organization',
-      '@id': 'https://www.chefshift.nl/#org',
+      '@id': `${process.env.NEXT_PUBLIC_APP_URL || 'https://chefshift.vercel.app'}/#org`,
       name: 'ChefShift',
-      url: 'https://www.chefshift.nl',
-      logo: 'https://www.chefshift.nl/icon.svg',
+      url: process.env.NEXT_PUBLIC_APP_URL || 'https://chefshift.vercel.app',
+      logo: `${process.env.NEXT_PUBLIC_APP_URL || 'https://chefshift.vercel.app'}/icon.svg`,
       description: 'Platform voor zzp-koks en horeca in Nederland.',
       email: CONTACT_EMAIL,
     },

@@ -8,7 +8,7 @@ const FROM = (process.env.EMAIL_FROM || 'ChefShift <onboarding@resend.dev>').tri
 const OWNER_EMAIL = (process.env.OWNER_EMAIL || 'rdrgbouabida@gmail.com').trim()
 
 export function baseUrl(): string {
-  return (process.env.NEXTAUTH_URL || 'https://www.chefshift.nl').trim().replace(/\/+$/, '')
+  return (process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_APP_URL || 'https://chefshift.vercel.app').trim().replace(/\/+$/, '')
 }
 
 // Envoi d'email via Resend. Ne fait rien si la clé n'est pas configurée.
@@ -101,7 +101,7 @@ function gabaritBienvenue(
   </div>
   <p style="font-size:12px;color:#9aa39b;text-align:center;margin-top:16px;line-height:1.6">
     ChefShift · Het platform voor zzp-koks en horeca<br>
-    <a href="https://www.chefshift.nl" style="color:#5f7052;text-decoration:none;font-weight:700">www.chefshift.nl</a> · <a href="mailto:info@chefshift.nl" style="color:#5f7052;text-decoration:none">info@chefshift.nl</a><br>© 2026 ChefShift
+    <a href="${baseUrl()}" style="color:#5f7052;text-decoration:none;font-weight:700">www.chefshift.nl</a> · <a href="mailto:info@chefshift.nl" style="color:#5f7052;text-decoration:none">info@chefshift.nl</a><br>© 2026 ChefShift
   </p>
 </div>`
 }
