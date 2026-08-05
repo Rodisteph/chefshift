@@ -20,6 +20,23 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
       return NextResponse.json({ error: 'Not found' }, { status: 404 })
     }
 
+    // ===== Le shift doit avoir commence =====
+    // Sans cette garde, un kok pouvait declarer ses heures pour une shift a
+    // venir et declencher la facturation d'un travail non effectue.
+    // Reference : l'heure de DEBUT, pas de fin, pour qu'un kok qui termine
+    // plus tot puisse quand meme declarer.
+    const dateJour = new Date(shift.date).toISOString().slice(0, 10)
+    const dep = new Date(shift.startTime)
+    const debutReel = new Date(
+      `${dateJour}T${String(dep.getUTCHours()).padStart(2, '0')}:${String(dep.getUTCMinutes()).padStart(2, '0')}:00.000Z`
+    )
+    if (Date.now() < debutReel.getTime()) {
+      return NextResponse.json(
+        { error: 'Shift has not started yet', startsAt: debutReel.toISOString() },
+        { status: 409 }
+      )
+    }
+
     const body = await req.json()
     const endTime = String(body.endTime || '')
     if (!/^\d{2}:\d{2}$/.test(endTime)) {

@@ -416,6 +416,16 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
   const dateStr = new Date(shift.date).toLocaleDateString(locale, { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' })
   const start = heureHHMM(shift.startTime, locale)
   const end = heureHHMM(shift.endTime, locale)
+  // Une shift a venir ne peut pas encore etre pointee : le formulaire de
+  // declaration reste masque tant qu'elle n'a pas commence. Le serveur
+  // refuse aussi (409), ceci n'est que le confort d'affichage.
+  const startMoment = (() => {
+    const j = new Date(shift.date).toISOString().slice(0, 10)
+    const d = new Date(shift.startTime)
+    return new Date(`${j}T${String(d.getUTCHours()).padStart(2, '0')}:${String(d.getUTCMinutes()).padStart(2, '0')}:00.000Z`)
+  })()
+  const shiftCommence = Date.now() >= startMoment.getTime()
+
   const estPaye = shift.invoice?.status === 'PAID'
   const peutModifier = role === 'HORECA' && shift.status === 'OPEN' && !shift.chosenKokId
   const aujourdhui = new Date(new Date().toDateString())
@@ -911,6 +921,10 @@ export default function ShiftDetailPage({ params }: { params: { id: string } }) 
                     <Ico n="clock" s={14} /> {t('end_wait')} · {eindGemeld} · {pauzeTekst}
                   </span>
                 </div>
+              ) : !shiftCommence ? (
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: '#f1f1ee', color: '#6b7268', fontSize: 13.5, fontWeight: 700, padding: '9px 16px', borderRadius: 999 }}>
+                  <Ico n="clock" s={14} /> {t('end_notyet')}
+                </span>
               ) : (
                 <>
                   <p style={{ color: 'hsl(var(--muted-foreground))', fontSize: 14, fontWeight: 600, marginTop: 0, marginBottom: 16 }}>{t('end_desc')}</p>
