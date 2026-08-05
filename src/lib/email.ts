@@ -160,12 +160,12 @@ export async function emailBetalingOntvangen(kokEmail: string, shiftTitre: strin
 // 4. Chef : rappel avant un shift (24h / 2h)
 export type RappelDetails = {
   functie?: string | null
-  datum?: string
-  meldTijd?: string
-  start?: string
-  eind?: string
+  datum?: string | null
+  meldTijd?: string | null
+  start?: string | null
+  eind?: string | null
   pauze?: number
-  adres?: string
+  adres?: string | null
   tarief?: number
   telefoon?: string | null
   briefing?: string | null
