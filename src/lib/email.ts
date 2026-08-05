@@ -8,7 +8,7 @@ const FROM = (process.env.EMAIL_FROM || 'ChefShift <onboarding@resend.dev>').tri
 const OWNER_EMAIL = (process.env.OWNER_EMAIL || 'rdrgbouabida@gmail.com').trim()
 
 export function baseUrl(): string {
-  return (process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_APP_URL || 'https://chefshift.vercel.app').trim().replace(/\/+$/, '')
+  return (process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_APP_URL || 'https://chefshift.nl').trim().replace(/\/+$/, '')
 }
 
 // Envoi d'email via Resend. Ne fait rien si la clé n'est pas configurée.
