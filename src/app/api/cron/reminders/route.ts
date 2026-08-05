@@ -47,13 +47,34 @@ export async function GET(req: NextRequest) {
     let shiftsTrouves = 0
     const erreurs: string[] = []
 
-    for (const f of fenetres) {
-      const shifts = await prisma.shift.findMany({
-        where: {
-          status: 'CONFIRMED',
-          chosenKokId: { not: null },
-          startTime: { gte: new Date(f.min), lte: new Date(f.max) },
+    // Instant reel de debut : `date` porte le jour, `startTime` est un @db.Time
+    // qui ne contient que l'heure (Prisma le lit comme 1970-01-01T13:00Z).
+    // Les comparer directement a un instant futur ne correspondait jamais :
+    // aucun rappel ne partait.
+    const instantDebut = (sh: { date: Date; startTime: Date }) => {
+      const j = new Date(sh.date).toISOString().slice(0, 10)
+      const t = new Date(sh.startTime)
+      return new Date(
+        `${j}T${String(t.getUTCHours()).padStart(2, '0')}:${String(t.getUTCMinutes()).padStart(2, '0')}:00.000Z`
+      ).getTime()
+    }
+
+    // Presel'ection large sur la date, filtrage fin en memoire sur l'instant.
+    const candidats = await prisma.shift.findMany({
+      where: {
+        status: 'CONFIRMED',
+        chosenKokId: { not: null },
+        date: {
+          gte: new Date(maintenant - 2 * 24 * heure),
+          lte: new Date(maintenant + 3 * 24 * heure),
         },
+      },
+    })
+
+    for (const f of fenetres) {
+      const shifts = candidats.filter((sh) => {
+        const d = instantDebut(sh)
+        return d >= f.min && d <= f.max
       })
       shiftsTrouves += shifts.length
 
@@ -63,8 +84,9 @@ export async function GET(req: NextRequest) {
         `
         if (deja.length > 0) continue
 
-        const debut = new Date(shift.startTime).toLocaleString('nl-NL', {
+        const debut = new Date(instantDebut(shift)).toLocaleString('nl-NL', {
           weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit',
+          timeZone: 'UTC',
         })
 
         // 1. Notifications push
