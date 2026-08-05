@@ -94,7 +94,7 @@ export default function ShiftCard({
   const statut = perspectief ? statutShift(shift, perspectief) : null
 
   const meta: React.CSSProperties = {
-    display: 'inline-flex', alignItems: 'center', gap: 5,
+    display: 'inline-flex', alignItems: 'center', gap: 5, whiteSpace: 'nowrap',
     fontSize: 13.5, color: 'hsl(var(--muted-foreground))', fontWeight: 500,
   }
 
@@ -113,7 +113,7 @@ export default function ShiftCard({
           <h3 style={{ fontSize: 17, fontWeight: 800, letterSpacing: -0.3 }}>{shift.title}</h3>
           {shift.function && (
             <span style={{
-              display: 'inline-flex', alignItems: 'center', gap: 5,
+              display: 'inline-flex', alignItems: 'center', gap: 5, whiteSpace: 'nowrap',
               background: '#23281f', color: '#dfe7d1', fontSize: 11.5, fontWeight: 700,
               padding: '4px 11px', borderRadius: 999,
             }}>
@@ -122,7 +122,7 @@ export default function ShiftCard({
           )}
           {shift.isUrgent && (
             <span style={{
-              display: 'inline-flex', alignItems: 'center', gap: 5,
+              display: 'inline-flex', alignItems: 'center', gap: 5, whiteSpace: 'nowrap',
               background: '#fee2e2', color: '#b91c1c', fontSize: 11.5, fontWeight: 800,
               padding: '4px 11px', borderRadius: 999, textTransform: 'uppercase', letterSpacing: 0.5,
             }}>
@@ -169,7 +169,7 @@ export default function ShiftCard({
         {/* Badge de statut clair, adapté au point de vue */}
         {statut && (
           <span style={{
-            display: 'inline-flex', alignItems: 'center', gap: 5,
+            display: 'inline-flex', alignItems: 'center', gap: 5, whiteSpace: 'nowrap',
             background: TOON_STIJLEN[statut.toon].bg, color: TOON_STIJLEN[statut.toon].color,
             fontSize: 12, fontWeight: 800, padding: '5px 13px', borderRadius: 999,
             lineHeight: 1.35, textAlign: 'right',
@@ -180,7 +180,7 @@ export default function ShiftCard({
         {/* Mention payé : visible des deux côtés (affichage sans point de vue) */}
         {!statut && estPaye && (
           <span style={{
-            display: 'inline-flex', alignItems: 'center', gap: 5,
+            display: 'inline-flex', alignItems: 'center', gap: 5, whiteSpace: 'nowrap',
             background: '#dcfce7', color: '#15803d', fontSize: 12, fontWeight: 800,
             padding: '5px 13px', borderRadius: 999,
           }}>
@@ -189,7 +189,7 @@ export default function ShiftCard({
         )}
         {!statut && !estPaye && (shift.status === 'CONFIRMED' || shift.status === 'COMPLETED') && (
           <span style={{
-            display: 'inline-flex', alignItems: 'center', gap: 5,
+            display: 'inline-flex', alignItems: 'center', gap: 5, whiteSpace: 'nowrap',
             background: '#f0f4ea', color: '#4c5e42', fontSize: 12, fontWeight: 700,
             padding: '5px 13px', borderRadius: 999,
           }}>
@@ -197,7 +197,7 @@ export default function ShiftCard({
           </span>
         )}
         {shift._count && (
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 12.5, color: 'hsl(var(--muted-foreground))' }}>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 5, whiteSpace: 'nowrap', fontSize: 12.5, color: 'hsl(var(--muted-foreground))' }}>
             <Ico n="users" s={13} /> {shift._count.applications} {t('applications')}
           </div>
         )}
@@ -226,7 +226,7 @@ export default function ShiftCard({
           </div>
         )}
         {detailHref && (
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 5, color: '#5f7052', fontWeight: 700, fontSize: 13 }}>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 5, whiteSpace: 'nowrap', color: '#5f7052', fontWeight: 700, fontSize: 13 }}>
             {showApply
               ? t('details')
               /* Rien a choisir sur une shift expiree ou annulee : le libelle
