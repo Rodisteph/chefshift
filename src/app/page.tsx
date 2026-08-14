@@ -9,9 +9,9 @@ const FONT = '"Sora","Inter","Helvetica Neue",Arial,sans-serif'
 const CONTACT_EMAIL = 'info@chefshift.nl'
 
 // Photo du hero générée pour ChefShift (hébergée en ligne)
-const HERO_URL = 'https://www.kimi.com/apiv2-files/sign-obj/kimi-fs%2Ffiles%2Fblob%2F27b665a925688f5be2e3e4a8cb9c3d9a2e7e646e33aa32d129d44e5cdd26d54e?filename=hero-chefshift.jpg&sig=1974T8mF3RlDIwOmP3yXKXTFq5DvJ5-l2Pt9nFGwyDQ=&t=o'
+const HERO_URL = '/og-image.jpg'
 // Visuel côté restaurants (salle élégante au crépuscule)
-const VIS_RESTO = 'https://www.kimi.com/apiv2-files/sign-obj/kimi-fs%2Ffiles%2Fblob%2F2f6ed5f2ed74d6208166b3aa37b3bd9985cb96e3da6419b597eb7cc1dd41c5f0?filename=visuel-restaurant.jpg&sig=eI33ikgivlnhi9vtuxsig4JwEivZADZ9Bc3_453kRpI=&t=o'
+const VIS_RESTO = '/og-image.jpg'
 
 // Données structurées schema.org : organisation, site et FAQ (visible pour Google)
 const JSON_LD = {
